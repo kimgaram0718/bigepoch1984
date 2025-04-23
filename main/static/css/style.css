@@ -1,0 +1,149 @@
+body {
+    background-color: #f5f5f5;
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff; /* 앱 전체도 흰색 */
+  }
+  
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #fff;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 60px;
+    z-index: 999;
+  }
+  
+  .bottom-nav a {
+    flex: 1;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    text-decoration: none;
+  }
+  
+  .bottom-nav a.active {
+    color: #007bff;
+  }
+
+  .navbar {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 그림자 살짝 진하게 */
+  }
+  
+  .dropdown-toggle::after {
+    margin-left: 5px;
+  }
+
+  /* 드롭다운 버튼 스타일 */
+.lang-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1b1e26;
+    padding: 0;
+  }
+  
+  .lang-btn::after {
+    margin-left: 5px;
+  }
+  
+  /* 드롭다운 메뉴 스타일 */
+  .dropdown-lang {
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 80px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .dropdown-lang .dropdown-item {
+    text-align: center;
+    font-size: 14px;
+    padding: 10px 0;
+    color: #1b1e26;
+  }
+  
+  .dropdown-lang .dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: #1b1e26;
+  }
+
+  /* 캐러셀 스타일 */
+#mainBannerCarousel {
+    margin-top: 10px;
+  }
+  
+  .carousel-inner img {
+    height: 180px; /* 모바일 화면에 맞게 높이 조절 */
+    object-fit: cover; /* 이미지 비율 유지하면서 채우기 */
+  }
+  
+  .carousel-indicators [data-bs-target] {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #999;
+  }
+  
+  .carousel-indicators .active {
+    background-color: #007bff;
+  }
+
+  .carousel-inner img {
+    height: 180px;
+    object-fit: cover;
+    width: 100%;
+    border-radius: 12px;
+  }
+  /*캐러셀 스타일 끝*/
+
+  .realtime-search-container {
+    margin: 16px 0;
+  }
+  
+  .collapsed-box {
+    height: 48px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+  }
+  
+  .dropdown-box {
+    z-index: 100;
+    background-color: #ffffff;
+  }
+  
+  .dropdown-box a {
+    display: block;
+    padding: 4px 0;
+    font-size: 14px;
+    color: #1a73e8;
+    text-decoration: none;
+  }
+  
+  .dropdown-box a:hover {
+    text-decoration: underline;
+  }
+  
+  .dropdown-box ul {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .dropdown-box li {
+    list-style: none;
+  }
+
+  #realtimeDropdown {
+    top: 250px; /* 배너 높이에 맞춰서 수치 조정 */
+  }

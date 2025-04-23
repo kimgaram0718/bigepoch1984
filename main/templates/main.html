@@ -1,2 +1,118 @@
-<h1>메인화면_비회원도 일부열람 가능</h1>
-<a href="{% url 'login' %}"><button>로그인 이동</button></a>
+{% extends 'main_footer.html' %}
+
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>코박 모바일 홈</title>
+  <!-- Bootstrap CSS -->
+  <link href="{% static 'node_modules/bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!-- Bootstrap Icons (아이콘용) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+  <!-- 여기서부터 화면 구성 시작 -->
+  <div id="app">
+    <!-- 상단바 (헤더) -->
+    <nav class="navbar navbar-light bg-white px-3 py-2 d-flex justify-content-between align-items-center" style="height: 60px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+        <div class="d-flex align-items-center gap-2">
+          <!-- 오픈 소스 무료 로고 -->
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo_TV_2015.png" alt="로고" style="width:32px;height:32px; border-radius:50%;">
+        </div>
+      
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-search" style="font-size: 24px; font-weight: bold; color: #1b1e26;"></i>
+          <a href="{% url 'account:login' %}"><button type="button" class="btn p-0 m-0" style="background: none; border: none; font-size: 16px; font-weight: 700; color: #1b1e26;">
+            로그인</a>
+          </button>
+          <div class="dropdown">
+            <button class="btn lang-btn dropdown-toggle" type="button" id="langMenu" data-bs-toggle="dropdown" aria-expanded="false">
+              KR
+            </button>
+            <ul class="dropdown-menu dropdown-lang dropdown-menu-end" aria-labelledby="langMenu">
+              <li><a class="dropdown-item" href="#">KR</a></li>
+              <li><a class="dropdown-item" href="#">EN</a></li>
+            </ul>
+          </div>
+        </div>
+    </nav>
+
+    <!-- 김치 프리미엄 / 공포탐욕지수 -->
+    <div class="d-flex justify-content-around align-items-center py-2 bg-white">
+      <div class="text-center">
+        <div class="text-muted" style="font-size: 12px;">김치프리미엄(₩)</div>
+        <div style="font-size: 14px; font-weight: bold; color: #d93025;">1,387,461+(1.10%)</div>
+      </div>
+      <div class="text-center">
+        <div class="text-muted" style="font-size: 12px;">공포탐욕지수</div>
+        <div style="font-size: 14px; font-weight: bold; color: #f9ab00;">47(중립)</div>
+      </div>
+    </div>
+    
+    <!-- 메인 배너 감싸는 div 추가 -->
+    <div class="bg-white pb-2 px-3">
+      <div id="mainBannerCarousel" class="carousel slide position-relative" data-bs-ride="carousel" data-bs-interval="3000">
+        <div class="carousel-inner rounded-4 overflow-hidden" id="carousel-inner">
+          <!-- 여기 JavaScript로 배너 채워 넣음 -->
+        </div>
+        <!-- ✨ 인디케이터(div.carousel-indicators) 아예 삭제 -->
+        
+        <!-- 추가: 숫자 카운트 -->
+        <div id="carousel-count" class="position-absolute bottom-0 end-0 mb-2 me-3 px-2 py-1 bg-dark bg-opacity-50 text-white rounded-3 small" style="font-size: 12px;">
+          1 / 3
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 인기 검색어 -->
+    <!-- 드롭다운 묶어주는 부모 div 추가 -->
+    <div class="position-relative mx-auto my-3" style="width: 90%; max-width: 400px;">
+      <!-- 실시간 Toggle 버튼 -->
+      <div id="realtimeToggle" 
+           class="collapsed-box bg-light rounded-3 d-flex justify-content-between align-items-center px-3 py-2"
+           onclick="toggleRealtime()">
+        <div id="realtimeText" class="text-primary small">실시간 1. 밀크</div>
+        <i id="realtimeArrow" class="bi bi-chevron-down text-secondary"></i>
+      </div>
+  
+      <!-- 드롭다운 박스 -->
+      <div id="realtimeDropdown" 
+           class="d-none position-absolute start-50 translate-middle-x rounded-4 bg-white shadow" 
+           style="top: 100%; margin-top: 8px; width: 100%; z-index: 1000;">
+        <div class="p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="m-0 fw-bold">실시간 인기 검색어</h6>
+            <i id="realtimeClose" class="bi bi-x-lg" style="cursor: pointer;"></i>
+          </div>
+          <ul id="realtimeList" class="list-unstyled mb-0">
+            <!-- JavaScript로 리스트 채워짐 -->
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!--코닥 오리지널 -->
+    <div class="bg-white px-3 py-2 my-3 rounded-3">
+      <h5 class="mb-2" style="font-weight: 700;">Cobak Originals</h5>
+      <p class="text-muted" style="font-size: 12px;">코박만의 오리지널 컨텐츠</p>
+  
+      <div id="originals-list" class="d-flex overflow-auto gap-3 py-2">
+        <!-- 여기 JS로 카드 채움 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="{% static 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+  <!-- Custom JS -->
+  <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
+{% endblock %}
