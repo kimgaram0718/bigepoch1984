@@ -24,4 +24,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include('main.urls', namespace='main')),
     path("account", include('account.urls', namespace='account')),
+    path("chart", include('chart.urls', namespace='chart')),
+    path("predict_info", include('predict_info.urls', namespace='predict_info')),
+    path("community", include('community.urls', namespace='community')),
+    path("mypage", include('mypage.urls', namespace='mypage')),
 ]

@@ -40,9 +40,9 @@
     }
   </style>
 
-  <a href="#" class="active">홈</a>
-  <a href="#">커뮤니티</a>
-  <a href="#">투자정보</a>
-  <a href="#">AI공간</a>
-  <a href="#">마이페이지</a>
+  <a href="{% url 'main:main' %}" class="active">홈</a>
+  <a href="{% url 'chart:chart' %}">차트</a>
+  <a href="{% url 'predict_info:predict_info' %}">예측정보</a>
+  <a href="{% url 'community:community' %}">커뮤니티</a>
+  <a href="{% url 'mypage:mypage' %}">마이페이지</a>
 </footer>
