@@ -39,6 +39,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "main",
     "account",
+    "chart",
+    "predict_info",
+    "community",
+    "mypage",
 ]
 
 MIDDLEWARE = [
