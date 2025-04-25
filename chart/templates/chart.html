@@ -49,10 +49,10 @@
 
     <!-- 시세 그래프 영역 (이미지 대체) -->
     <div class="container my-3">
-        <h6 class="fw-bold mb-2">시세 그래프</h6>
-        <div class="bg-light rounded-3 p-3 text-center">
+      <h6 class="fw-bold mb-2">시세 그래프</h6>
+      <div class="bg-light rounded-3 p-3 text-center">
         <img src="{% static 'img/sample_chart.png' %}" alt="차트" class="img-fluid rounded">
-        </div>
+      </div>
     </div>
     
     <!-- 급등락 종목 리스트 -->
@@ -61,7 +61,8 @@
       <ul class="list-group">
         {% for stock in stocks %}
           <li class="list-group-item d-flex justify-content-between">
-            <span>{{ stock.name }}</span><span class="{{ stock.status }}">{{ stock.change }}</span>
+            <a href="{% url 'chart:chart_detail' stock_id=stock.id %}" class="text-dark text-decoration-none">{{ stock.name }}</a>
+            <span class="{{ stock.status }}">{{ stock.change }}</span>
           </li>
         {% endfor %}
       </ul>

@@ -1,0 +1,41 @@
+INFO 2025-04-24 17:50:59,628 autoreload Watching for file changes with StatReloader
+INFO 2025-04-24 17:56:07,207 autoreload /home/kimgaram0718/projBigepoch1984/ch99/chart/urls.py changed, reloading.
+INFO 2025-04-24 17:56:07,601 autoreload Watching for file changes with StatReloader
+ERROR 2025-04-24 17:57:14,099 log Internal Server Error: /chartdetail/1/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/chart/views.py", line 39, in chart_detail_view
+    stock = get_object_or_404([s for s in stocks], id=stock_id)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 85, in get_object_or_404
+    raise ValueError(
+ValueError: First argument to get_object_or_404() must be a Model, Manager, or QuerySet, not 'list'.
+INFO 2025-04-25 11:53:41,721 autoreload Watching for file changes with StatReloader
+WARNING 2025-04-25 11:53:43,702 log Not Found: /favicon.ico
+ERROR 2025-04-25 11:53:52,778 log Internal Server Error: /chartdetail/1/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/chart/views.py", line 39, in chart_detail_view
+    stock = get_object_or_404(stocks, id=stock_id)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 85, in get_object_or_404
+    raise ValueError(
+ValueError: First argument to get_object_or_404() must be a Model, Manager, or QuerySet, not 'list'.
+INFO 2025-04-25 11:55:49,064 autoreload /home/kimgaram0718/projBigepoch1984/ch99/chart/views.py changed, reloading.
+INFO 2025-04-25 11:55:49,581 autoreload Watching for file changes with StatReloader
+INFO 2025-04-25 11:57:10,129 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-25 12:00:34,788 autoreload /home/kimgaram0718/projBigepoch1984/ch99/chart/views.py changed, reloading.
+INFO 2025-04-25 12:00:35,210 autoreload Watching for file changes with StatReloader
+INFO 2025-04-25 12:02:40,787 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-25 12:03:32,295 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-25 12:04:10,370 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'change': '+4.52%', 'status': 'text-success'}

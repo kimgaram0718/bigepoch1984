@@ -1,3 +1,9 @@
+/* add1 */
+.list-group-item a:hover {
+  text-decoration: underline;
+  color: #007bff;
+}
+/* add2 */
 body {
   background-color: #f5f5f5;
   font-family: 'Noto Sans KR', sans-serif;
