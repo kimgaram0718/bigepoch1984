@@ -3,46 +3,27 @@
 
 <!-- 푸터 -->
 <footer class="footer">
-  <style>
-    .footer {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background-color: #fff;
-      border-top: 1px solid #ddd;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0;
-      z-index: 1000;
-      font-family: 'Noto Sans KR', sans-serif;
-    }
-
-    .footer a {
-      text-decoration: none;
-      color: #666;
-      font-size: 14px;
-      text-align: center;
-      flex: 1;
-      padding: 8px 0;
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .footer a:hover {
-      color: #007bff;
-    }
-
-    .footer a.active {
-      color: #007bff;
-      font-weight: bold;
-    }
-  </style>
-
-  <a href="{% url 'main:main' %}" class="active">홈</a>
-  <a href="{% url 'chart:chart' %}">차트</a>
-  <a href="{% url 'predict_info:predict_info' %}">예측정보</a>
-  <a href="{% url 'community:community' %}">커뮤니티</a>
-  <a href="{% url 'mypage:mypage' %}">마이페이지</a>
+  <!-- 하단 네비게이션 -->
+  <nav class="navbar fixed-bottom bg-white border-top d-flex justify-content-around">
+    <a href="{% url 'main:main' %}" class="text-center text-dark">
+      <div>🏠</div>
+      <small>홈</small>
+    </a>
+    <a href="{% url 'chart:chart' %}" class="text-center text-dark">
+      <div>📊</div>
+      <small>차트</small>
+    </a>
+    <a href="{% url 'predict_info:predict_info' %}" class="text-center text-dark">
+      <div>📈</div>
+      <small>예측정보</small>
+    </a>
+    <a href="{% url 'community:community' %}" class="text-center text-dark">
+      <div>👥</div>
+      <small>커뮤니티</small>
+    </a>
+    <a href="{% url 'mypage:mypage' %}" class="text-center text-dark">
+      <div>👤</div>
+      <small>마이페이지</small>
+    </a>
+  </nav>
 </footer>

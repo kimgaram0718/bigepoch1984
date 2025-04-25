@@ -1,0 +1,220 @@
+/* add1 */
+.list-group-item a:hover {
+  text-decoration: underline;
+  color: #007bff;
+}
+/* add2 */
+body {
+  background-color: #f5f5f5;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  padding-top: 60px; /* 헤더 높이만큼 패딩 */
+  padding-bottom: 60px; /* 푸터 높이만큼 패딩 */
+}
+
+@media (max-width: 576px) {
+  body {
+    padding-top: 50px; /* 작은 화면에서는 헤더 높이가 줄어들 수 있음 */
+  }
+}
+
+#app {
+  min-height: calc(100vh - 120px); /* 화면 높이에서 헤더와 푸터 높이를 뺀 값 */
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff; /* 앱 전체도 흰색 */
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #fff;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 60px;
+  z-index: 999;
+}
+
+.bottom-nav a {
+  flex: 1;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.bottom-nav a.active {
+  color: #007bff;
+}
+
+.navbar {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 그림자 살짝 진하게 */
+}
+
+.dropdown-toggle::after {
+  margin-left: 5px;
+}
+
+/* 드롭다운 버튼 스타일 */
+.lang-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1b1e26;
+  padding: 0;
+}
+
+.lang-btn::after {
+  margin-left: 5px;
+}
+
+/* 드롭다운 메뉴 스타일 */
+.dropdown-lang {
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 80px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dropdown-lang .dropdown-item {
+  text-align: center;
+  font-size: 14px;
+  padding: 10px 0;
+  color: #1b1e26;
+}
+
+.dropdown-lang .dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1b1e26;
+}
+
+/* 캐러셀 스타일 */
+#mainBannerCarousel {
+  margin-top: 10px;
+}
+
+.carousel-inner img {
+  height: 180px;
+  object-fit: cover;
+  width: 100%;
+  border-radius: 12px;
+}
+
+.realtime-search-container {
+  margin: 16px 0;
+}
+
+.collapsed-box {
+  height: 48px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+.dropdown-box {
+  z-index: 100;
+  background-color: #ffffff;
+}
+
+.dropdown-box a {
+  display: block;
+  padding: 4px 0;
+  font-size: 14px;
+  color: #1a73e8;
+  text-decoration: none;
+}
+
+.dropdown-box a:hover {
+  text-decoration: underline;
+}
+
+.dropdown-box ul {
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown-box li {
+  list-style: none;
+}
+
+/* 스크롤 기능되지만 스크롤 바는 안보이게 하고싶어서 적용 */
+#originals-list {
+  -ms-overflow-style: none;  /* IE, Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+#originals-list::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari */
+}
+
+#realtimeDropdown {
+  top: 100%; /* 부모 요소 하단에 위치 */
+  margin-top: 8px; /* 간격 추가 */
+}
+
+/* NOW Headlines 섹션 시작 */
+#headline-list li {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#headline-list {
+  margin-bottom: 8px; /* 기본이 너무 커서 줄임 */
+}
+
+.tab-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.tab-btn {
+  font-weight: 700;
+  font-size: 16px;
+  color: #adb5bd;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.tab-btn.active {
+  color: #212529; /* 텍스트 진하게 */
+}
+
+.btn-tab {
+  width: 100%;
+  flex: 1;
+  font-weight: bold;
+  border-radius: 6px;
+}
+
+.btn-filter-group {
+  display: flex;
+  height: 36px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.btn-filter-group > button {
+  flex: 1;
+  border: none;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+#filtered-list li {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* 반응형 이므로 화면 사이즈 줄어들면 리스트 띄어쓰기 안하고 ..으로 표시 */
+#headline-list li a,
+#filtered-list li a {
+  display: inline-block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

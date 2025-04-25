@@ -1,1 +1,73 @@
-<h1>community_html 입니다</h1>
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>커뮤니티 페이지</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!-- Bootstrap Icons (아이콘용) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <!-- Dashboard CSS -->
+  <link rel="stylesheet" href="{% static 'css/community.css' %}">
+</head>
+<body>
+
+  <!-- 헤더 삽입 -->
+  {% include 'main_header.html' %}
+
+  <!-- 본문 감싸는 div 추가 -->
+  <div id="app">
+    <!-- 커뮤니티 메뉴 -->
+    <div class="container my-3">
+      <div class="d-flex justify-content-around">
+        {% for menu in community_menus %}
+          <button class="btn btn-outline-secondary btn-sm">{{ menu.name }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 예측 정보 티커 -->
+    <div class="bg-light text-center py-2 my-3 fw-semibold border-top border-bottom">
+      {{ ticker_message }}
+    </div>
+
+    <!-- 게시판 리스트 -->
+    <div class="container my-3">
+      {% for post in posts %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <img src="{% static 'img/netflix_logo.png' %}" class="rounded-circle me-2">
+              <div>
+                <div class="fw-bold">{{ post.username }}</div>
+                <small class="text-muted">{{ post.category }} · {{ post.time_ago }}</small>
+              </div>
+            </div>
+            <h6 class="card-title">{{ post.title }}</h6>
+            <p class="card-text small">{{ post.content }}</p>
+            <div class="d-flex justify-content-start gap-4">
+              <span class="text-primary small">👍 {{ post.likes }}</span>
+              <span class="text-secondary small">💬 {{ post.comments }}</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 푸터 삽입 -->
+  {% include 'main_footer.html' %}
+
+  <!-- Bootstrap JS -->
+  <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <!-- Custom JS -->
+  <script src="{% static 'js/community.js' %}"></script>
+</body>
+</html>
