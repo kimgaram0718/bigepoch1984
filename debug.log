@@ -269,3 +269,10 @@ INFO 2025-04-25 17:35:53,507 autoreload /home/kimgaram0718/projBigepoch1984/ch99
 INFO 2025-04-25 17:35:53,860 autoreload Watching for file changes with StatReloader
 INFO 2025-04-25 17:38:26,712 views User user1 logged in successfully
 INFO 2025-04-25 17:38:29,147 views User user1 logged out
+INFO 2025-04-28 12:54:48,442 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 12:55:01,909 views User user1 logged in successfully
+INFO 2025-04-28 12:56:00,942 views User user1 updated profile: nickname=유저1_변경
+INFO 2025-04-28 12:56:06,263 views User user1 logged out
+WARNING 2025-04-28 12:56:14,593 views Failed login attempt for user1: Incorrect password
+INFO 2025-04-28 12:56:23,291 views User user1 logged in successfully
+INFO 2025-04-28 12:56:40,959 views User user1 updated profile: nickname=유저1

@@ -180,4 +180,6 @@ LOGGING = {
 
 SESSION_COOKIE_AGE = 3600  # 1시간(3600초) 후 세션 만료
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 닫을 시 세션 만료
+
+
 #add2
