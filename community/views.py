@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect
 
-# Create your views here.
 def community_view(request):
+    # 로그인 여부 확인
+    is_authenticated = 'user_id' in request.session
+
     context = {
         'community_menus': [
+            {'name': '커뮤니티'},
             {'name': '뉴스'},
             {'name': '종목'},
             {'name': '예측'},
-            {'name': '커뮤니티'},
             {'name': '공지'},
         ],
         'ticker_message': '예측 정보 티커 영역 예시: 비트코인 1억 돌파 예측 중!',
@@ -32,5 +34,17 @@ def community_view(request):
                 'comments': 2,
             },
         ],
+        'is_authenticated': is_authenticated,
     }
     return render(request, 'community.html', context)
+
+def write_view(request):
+    # 로그인 여부 확인
+    if 'user_id' not in request.session:
+        return HttpResponseRedirect('/account/login/?next=/community/write/')
+    
+    if request.method == 'POST':
+        # TODO: 게시글 저장 로직 (모델 필요)
+        return redirect('community:community')
+    
+    return render(request, 'community_write.html')

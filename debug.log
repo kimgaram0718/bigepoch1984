@@ -276,3 +276,22 @@ INFO 2025-04-28 12:56:06,263 views User user1 logged out
 WARNING 2025-04-28 12:56:14,593 views Failed login attempt for user1: Incorrect password
 INFO 2025-04-28 12:56:23,291 views User user1 logged in successfully
 INFO 2025-04-28 12:56:40,959 views User user1 updated profile: nickname=유저1
+INFO 2025-04-28 14:22:36,523 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:22:36,960 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:41:21,678 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:41:22,079 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:42:19,528 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-28 14:42:19,888 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:42:41,888 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-28 14:42:42,250 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:43:52,153 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-28 14:43:52,531 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:44:05,188 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:44:05,568 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:45:00,001 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:45:00,375 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:51:55,555 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:51:55,886 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:52:21,618 views User user1 logged in successfully
+INFO 2025-04-28 15:21:48,682 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mysite/settings.py changed, reloading.
+INFO 2025-04-28 15:21:49,060 autoreload Watching for file changes with StatReloader
