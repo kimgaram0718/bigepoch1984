@@ -733,3 +733,24 @@ INFO 2025-04-29 16:45:38,684 autoreload Watching for file changes with StatReloa
 INFO 2025-04-29 16:46:30,379 autoreload Watching for file changes with StatReloader
 INFO 2025-04-29 16:46:33,926 views User user1 logged out
 INFO 2025-04-29 16:46:41,576 views User user1 logged in successfully
+WARNING 2025-04-29 17:22:34,754 views Unauthorized access to mypage_view - redirecting to login
+INFO 2025-04-29 17:22:40,091 views User user1 logged out
+INFO 2025-04-29 17:22:52,051 views User user1 logged in successfully
+INFO 2025-04-29 17:28:54,919 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-29 17:28:55,399 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 17:35:31,857 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-29 17:35:32,382 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 17:37:03,911 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 17:37:06,911 views User user1 logged out
+INFO 2025-04-29 17:37:15,684 views User user1 logged in successfully
+INFO 2025-04-29 17:37:40,017 views User user1 updated profile: nickname=유저1_수정
+WARNING 2025-04-29 17:37:40,033 views Unauthorized access to mypage_view - redirecting to login
+INFO 2025-04-29 17:37:47,388 views User user1 logged in successfully
+INFO 2025-04-29 17:38:02,971 views User user1 updated profile: nickname=유저1
+WARNING 2025-04-29 17:38:02,988 views Unauthorized access to mypage_view - redirecting to login
+INFO 2025-04-29 17:38:12,637 views User user1 logged in successfully
+INFO 2025-04-29 17:58:29,821 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-29 17:58:34,958 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-29 17:59:12,133 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-29 17:59:17,342 views Chart Detail Accessed - Stock ID: 2, Stock: {'id': 2, 'name': '카카오', 'ticker': '035720', 'change': '-3.21%', 'status': 'text-danger'}
+INFO 2025-04-29 18:00:05,635 views Chart Detail Accessed - Stock ID: 4, Stock: {'id': 4, 'name': 'LG전자', 'ticker': '066570', 'change': '-1.90%', 'status': 'text-danger'}

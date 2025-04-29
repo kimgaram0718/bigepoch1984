@@ -26,6 +26,11 @@
   <!-- 헤더 삽입 -->
   {% include 'main_header.html' %}
 
+  <nav class="navbar bg-white px-3 py-2 border-bottom">
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="history.back()">←</button>
+    <span class="ms-2 fw-bold">게시글 작성</span>
+  </nav>
+
   <!-- 본문 감싸는 div 추가 -->
   <div id="app" style="padding-top: 60px;">
     <div class="container py-4">

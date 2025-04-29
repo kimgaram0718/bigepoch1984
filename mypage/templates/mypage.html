@@ -28,7 +28,10 @@
         <img src="{% static 'img/netflix_logo.png' %}" alt="profile" class="rounded-circle">
         <div>
           <div class="fw-bold">{{ user.nickname }}</div>
-          <small class="text-muted">{{ user.greeting_message|default:"인사 메시지를 입력하세요" }}</small>
+          <small class="text-muted">
+            {% if user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
+            | {{ user.greeting_message|default:"인사 메시지를 입력하세요" }}
+          </small>
         </div>
       </div>
       <a href="{% url 'mypage:edit_profile' %}" class="btn btn-outline-secondary btn-sm">회원정보 수정</a>
@@ -60,6 +63,8 @@
       <ul class="list-group">
         {% for post in user_posts %}
           <li class="list-group-item">{{ post.title }}</li>
+        {% empty %}
+          <li class="list-group-item">작성한 게시물이 없습니다.</li>
         {% endfor %}
       </ul>
     </div>
