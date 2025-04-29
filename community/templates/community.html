@@ -22,6 +22,17 @@
 
   <!-- 본문 감싸는 div 추가 -->
   <div id="app">
+    <!-- 성공 메시지 표시 -->
+    {% if messages %}
+      <div class="container my-3">
+        {% for message in messages %}
+          <div class="alert alert-success" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- 커뮤니티 메뉴 -->
     <div class="container my-3">
       <div class="d-flex justify-content-around">
@@ -34,7 +45,7 @@
     <!-- 예측 정보 티커 -->
     <div class="bg-light text-center py-2 my-3 fw-semibold border-top border-bottom d-flex justify-content-between align-items-center px-3">
       <span>{{ ticker_message }}</span>
-      {% if is_authenticated %}
+      {% if request.user.is_authenticated %}
         <a href="{% url 'community:write' %}" class="btn btn-primary btn-sm">
           <i class="bi bi-pencil-square me-1"></i>글쓰기
         </a>
@@ -53,7 +64,9 @@
                 <small class="text-muted">{{ post.category }} · {{ post.time_ago }}</small>
               </div>
             </div>
-            <h6 class="card-title">{{ post.title }}</h6>
+            <h6 class="card-title">
+              <a href="{% url 'community:detail' post.id %}" class="text-decoration-none text-dark">{{ post.title }}</a>
+            </h6>
             <p class="card-text small">{{ post.content }}</p>
             <div class="d-flex justify-content-start gap-4">
               <span class="text-primary small">👍 {{ post.likes }}</span>

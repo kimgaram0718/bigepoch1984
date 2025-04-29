@@ -10,9 +10,9 @@
   
     <div class="d-flex align-items-center gap-3">
       <i class="bi bi-search" style="font-size: 24px; font-weight: bold; color: #1b1e26;"></i>
-      {% if request.session.user_id %}
+      {% if request.user.is_authenticated %}
         <!-- 로그인 상태: 닉네임과 로그아웃 버튼 표시 -->
-        <span class="text-dark" style="font-size: 16px; font-weight: 700;">{{ request.session.user_nickname }}</span>
+        <span class="text-dark" style="font-size: 16px; font-weight: 700;">{{ request.user.nickname }}</span>
         <a href="{% url 'account:logout' %}">
           <button type="button" class="btn p-0 m-0" style="background: none; border: none; font-size: 16px; font-weight: 700; color: #1b1e26;">
             로그아웃

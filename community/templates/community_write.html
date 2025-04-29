@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>게시글 작성</title>
+  <title>{% if is_edit %}게시글 수정{% else %}게시글 작성{% endif %}</title>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
   <!-- Bootstrap CSS -->
@@ -29,18 +29,24 @@
   <!-- 본문 감싸는 div 추가 -->
   <div id="app" style="padding-top: 60px;">
     <div class="container py-4">
-      <h5 class="mb-3 fw-bold">게시글 작성</h5>
+      <h5 class="mb-3 fw-bold">{% if is_edit %}게시글 수정{% else %}게시글 작성{% endif %}</h5>
 
-      <form method="POST" action="{% url 'community:write' %}">
+      {% if error %}
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% if is_edit %}{% url 'community:edit' post_id %}{% else %}{% url 'community:write' %}{% endif %}">
         {% csrf_token %}
         <div class="mb-3">
-          <input type="text" class="form-control" id="title" name="title" placeholder="제목" required>
+          <input type="text" class="form-control" id="title" name="title" placeholder="제목" value="{{ title|default_if_none:'' }}" required>
         </div>
         <div class="mb-3">
           <input type="text" class="form-control" id="tags" name="tags" placeholder="태그">
         </div>
         <div class="mb-3">
-          <textarea class="form-control" id="content" name="content" rows="8" placeholder="텍스트 입력" required></textarea>
+          <textarea class="form-control" id="content" name="content" rows="8" placeholder="텍스트 입력" required>{{ content|default_if_none:'' }}</textarea>
         </div>
 
         <div class="d-flex gap-2 mb-3">
@@ -49,8 +55,8 @@
         </div>
 
         <div class="d-flex gap-3">
-          <a href="{% url 'community:community' %}" class="btn btn-secondary flex-fill btn-rounded">취소</a>
-          <button type="submit" class="btn btn-primary flex-fill btn-rounded">등록</button>
+          <a href="{% if is_edit %}{% url 'community:detail' post_id %}{% else %}{% url 'community:community' %}{% endif %}" class="btn btn-secondary flex-fill btn-rounded">취소</a>
+          <button type="submit" class="btn btn-primary flex-fill btn-rounded">{% if is_edit %}수정{% else %}등록{% endif %}</button>
         </div>
       </form>
     </div>
