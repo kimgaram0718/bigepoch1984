@@ -25,7 +25,8 @@ SECRET_KEY = "django-insecure-n$%a1=cz0=_e!zx=$0c3&)y)4knsz$m3j9by0*c^q+(7zbc@3m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1']
+#aws ec2 퍼블릭 ip도 추가
+ALLOWED_HOSTS = ['localhost','127.0.0.1','15.165.59.78']
 
 
 # Application definition
@@ -180,4 +181,5 @@ LOGGING = {
 
 SESSION_COOKIE_AGE = 3600  # 1시간(3600초) 후 세션 만료
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 닫을 시 세션 만료
+AUTH_USER_MODEL = 'account.User'
 #add2

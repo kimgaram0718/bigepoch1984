@@ -269,3 +269,488 @@ INFO 2025-04-25 17:35:53,507 autoreload /home/kimgaram0718/projBigepoch1984/ch99
 INFO 2025-04-25 17:35:53,860 autoreload Watching for file changes with StatReloader
 INFO 2025-04-25 17:38:26,712 views User user1 logged in successfully
 INFO 2025-04-25 17:38:29,147 views User user1 logged out
+INFO 2025-04-28 12:54:48,442 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 12:55:01,909 views User user1 logged in successfully
+INFO 2025-04-28 12:56:00,942 views User user1 updated profile: nickname=유저1_변경
+INFO 2025-04-28 12:56:06,263 views User user1 logged out
+WARNING 2025-04-28 12:56:14,593 views Failed login attempt for user1: Incorrect password
+INFO 2025-04-28 12:56:23,291 views User user1 logged in successfully
+INFO 2025-04-28 12:56:40,959 views User user1 updated profile: nickname=유저1
+INFO 2025-04-28 14:22:36,523 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:22:36,960 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:41:21,678 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:41:22,079 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:42:19,528 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-28 14:42:19,888 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:42:41,888 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-28 14:42:42,250 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:43:52,153 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-28 14:43:52,531 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:44:05,188 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:44:05,568 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:45:00,001 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:45:00,375 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:51:55,555 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-28 14:51:55,886 autoreload Watching for file changes with StatReloader
+INFO 2025-04-28 14:52:21,618 views User user1 logged in successfully
+INFO 2025-04-28 15:21:48,682 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mysite/settings.py changed, reloading.
+INFO 2025-04-28 15:21:49,060 autoreload Watching for file changes with StatReloader
+WARNING 2025-04-28 17:53:34,088 views Unauthorized access to mypage_view - redirecting to login
+WARNING 2025-04-28 17:53:34,100 log Not Found: /account/login/
+WARNING 2025-04-28 17:53:36,904 views Unauthorized access to mypage_view - redirecting to login
+WARNING 2025-04-28 17:53:36,917 log Not Found: /account/login/
+WARNING 2025-04-28 17:53:52,399 views Unauthorized access to mypage_view - redirecting to login
+WARNING 2025-04-28 17:53:52,409 log Not Found: /account/login/
+INFO 2025-04-28 17:54:06,322 views User user1 logged in successfully
+INFO 2025-04-28 17:54:40,407 views User user1 logged out
+INFO 2025-04-28 17:54:49,529 views User user1 logged in successfully
+INFO 2025-04-29 12:13:09,981 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 12:13:23,987 views User user1 logged in successfully
+INFO 2025-04-29 12:41:51,284 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/models.py changed, reloading.
+INFO 2025-04-29 12:41:51,902 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 12:58:07,437 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 12:59:45,520 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mysite/settings.py changed, reloading.
+INFO 2025-04-29 12:59:46,288 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 12:59:55,970 views User user1 logged out
+INFO 2025-04-29 13:00:12,167 views User user1 logged in successfully
+WARNING 2025-04-29 13:00:19,005 log Not Found: /account/login/
+INFO 2025-04-29 13:15:56,216 autoreload Watching for file changes with StatReloader
+ERROR 2025-04-29 13:16:06,166 log Internal Server Error: /accountlogout/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/account/views.py", line 12, in logout_view
+    username = User.objects.get(user_id=request.session['user_id']).login_id
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+ERROR 2025-04-29 13:16:08,552 log Internal Server Error: /accountlogout/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/account/views.py", line 12, in logout_view
+    username = User.objects.get(user_id=request.session['user_id']).login_id
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+INFO 2025-04-29 13:16:28,009 autoreload Watching for file changes with StatReloader
+ERROR 2025-04-29 13:16:32,018 log Internal Server Error: /accountlogout/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/account/views.py", line 12, in logout_view
+    username = User.objects.get(user_id=request.session['user_id']).login_id
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+INFO 2025-04-29 13:18:35,512 autoreload Watching for file changes with StatReloader
+ERROR 2025-04-29 13:18:38,431 log Internal Server Error: /accountlogout/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/account/views.py", line 12, in logout_view
+    username = User.objects.get(user_id=request.session['user_id']).login_id
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.ProgrammingError: (1146, "Table 'mysql_db.account_user' doesn't exist")
+INFO 2025-04-29 14:13:11,506 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 14:42:47,419 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 14:44:44,453 views User user1 signed up successfully
+INFO 2025-04-29 14:46:27,678 views User user1 logged in successfully
+INFO 2025-04-29 14:56:30,328 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 14:56:34,536 views User user1 logged out
+INFO 2025-04-29 14:56:42,371 views User user1 logged in successfully
+INFO 2025-04-29 14:59:19,258 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 14:59:19,659 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 14:59:37,617 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/urls.py changed, reloading.
+INFO 2025-04-29 14:59:38,021 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 14:59:45,543 autoreload /home/kimgaram0718/projBigepoch1984/ch99/predict_info/urls.py changed, reloading.
+INFO 2025-04-29 14:59:46,017 autoreload Watching for file changes with StatReloader
+WARNING 2025-04-29 14:59:55,581 views Unauthorized access to mypage_view - redirecting to login
+WARNING 2025-04-29 14:59:55,594 log Not Found: /account/login/
+INFO 2025-04-29 15:24:39,545 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 15:35:00,985 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 15:35:01,587 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 15:36:53,406 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-29 15:36:53,814 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 15:44:57,697 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 15:44:58,016 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 15:49:23,155 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-29 15:49:23,504 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:32:41,443 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-29 16:32:42,138 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:33:51,128 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 16:33:51,621 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:34:58,887 views User user1 logged in successfully
+ERROR 2025-04-29 16:35:21,216 log Internal Server Error: /community1/delete/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/community/views.py", line 162, in delete_view
+    return render(request, 'community_delete.html', {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'detail' with arguments '('',)' not found. 1 pattern(s) tried: ['community(?P<post_id>[0-9]+)/\\Z']
+INFO 2025-04-29 16:36:05,291 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 16:36:05,804 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:36:34,340 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 16:36:34,851 autoreload Watching for file changes with StatReloader
+WARNING 2025-04-29 16:36:37,241 views Unauthorized access to mypage_view - redirecting to login
+WARNING 2025-04-29 16:36:37,255 log Not Found: /account/login/
+ERROR 2025-04-29 16:36:50,232 log Internal Server Error: /communitydelete/2/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/community/views.py", line 162, in delete_view
+    return render(request, 'community_delete.html', {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'detail' with arguments '('',)' not found. 1 pattern(s) tried: ['community/(?P<post_id>[0-9]+)/\\Z']
+INFO 2025-04-29 16:41:51,016 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-04-29 16:41:51,353 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:42:39,448 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mysite/urls.py changed, reloading.
+INFO 2025-04-29 16:42:39,788 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:44:52,469 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-29 16:44:53,025 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:45:38,283 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-04-29 16:45:38,684 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:46:30,379 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 16:46:33,926 views User user1 logged out
+INFO 2025-04-29 16:46:41,576 views User user1 logged in successfully
+WARNING 2025-04-29 17:22:34,754 views Unauthorized access to mypage_view - redirecting to login
+INFO 2025-04-29 17:22:40,091 views User user1 logged out
+INFO 2025-04-29 17:22:52,051 views User user1 logged in successfully
+INFO 2025-04-29 17:28:54,919 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-29 17:28:55,399 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 17:35:31,857 autoreload /home/kimgaram0718/projBigepoch1984/ch99/mypage/views.py changed, reloading.
+INFO 2025-04-29 17:35:32,382 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 17:37:03,911 autoreload Watching for file changes with StatReloader
+INFO 2025-04-29 17:37:06,911 views User user1 logged out
+INFO 2025-04-29 17:37:15,684 views User user1 logged in successfully
+INFO 2025-04-29 17:37:40,017 views User user1 updated profile: nickname=유저1_수정
+WARNING 2025-04-29 17:37:40,033 views Unauthorized access to mypage_view - redirecting to login
+INFO 2025-04-29 17:37:47,388 views User user1 logged in successfully
+INFO 2025-04-29 17:38:02,971 views User user1 updated profile: nickname=유저1
+WARNING 2025-04-29 17:38:02,988 views Unauthorized access to mypage_view - redirecting to login
+INFO 2025-04-29 17:38:12,637 views User user1 logged in successfully
+INFO 2025-04-29 17:58:29,821 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-29 17:58:34,958 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-29 17:59:12,133 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
+INFO 2025-04-29 17:59:17,342 views Chart Detail Accessed - Stock ID: 2, Stock: {'id': 2, 'name': '카카오', 'ticker': '035720', 'change': '-3.21%', 'status': 'text-danger'}
+INFO 2025-04-29 18:00:05,635 views Chart Detail Accessed - Stock ID: 4, Stock: {'id': 4, 'name': 'LG전자', 'ticker': '066570', 'change': '-1.90%', 'status': 'text-danger'}
