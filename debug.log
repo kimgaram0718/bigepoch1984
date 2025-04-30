@@ -760,3 +760,7 @@ INFO 2025-04-30 16:23:29,275 autoreload Watching for file changes with StatReloa
 WARNING 2025-04-30 16:23:29,833 log Not Found: /favicon.ico
 INFO 2025-04-30 16:23:59,454 views User user1 signed up successfully
 INFO 2025-04-30 16:24:02,001 views User user1 logged in successfully
+
+INFO 2025-04-30 18:08:24,454 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 18:08:30,311 views User user1 logged in successfully
+INFO 2025-04-30 18:08:31,396 views User user1 logged out
