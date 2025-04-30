@@ -754,3 +754,9 @@ INFO 2025-04-29 17:58:34,958 views Chart Detail Accessed - Stock ID: 1, Stock: {
 INFO 2025-04-29 17:59:12,133 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
 INFO 2025-04-29 17:59:17,342 views Chart Detail Accessed - Stock ID: 2, Stock: {'id': 2, 'name': '카카오', 'ticker': '035720', 'change': '-3.21%', 'status': 'text-danger'}
 INFO 2025-04-29 18:00:05,635 views Chart Detail Accessed - Stock ID: 4, Stock: {'id': 4, 'name': 'LG전자', 'ticker': '066570', 'change': '-1.90%', 'status': 'text-danger'}
+INFO 2025-04-30 15:54:56,054 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 16:02:28,782 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 16:23:29,275 autoreload Watching for file changes with StatReloader
+WARNING 2025-04-30 16:23:29,833 log Not Found: /favicon.ico
+INFO 2025-04-30 16:23:59,454 views User user1 signed up successfully
+INFO 2025-04-30 16:24:02,001 views User user1 logged in successfully
