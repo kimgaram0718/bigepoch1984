@@ -765,3 +765,5 @@ INFO 2025-04-30 12:12:22,038 views Chart Detail Accessed - Stock ID: 1, Stock: {
 INFO 2025-04-30 12:12:47,024 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
 INFO 2025-04-30 17:06:42,623 autoreload /home/kimgaram0718/projBigepoch1984/ch99/main/views.py changed, reloading.
 INFO 2025-04-30 17:06:43,180 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 17:37:48,101 autoreload /home/kimgaram0718/projBigepoch1984/ch99/main/views.py changed, reloading.
+INFO 2025-04-30 17:37:48,532 autoreload Watching for file changes with StatReloader
