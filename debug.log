@@ -1342,3 +1342,5 @@ Traceback (most recent call last):
   File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
     _mysql.connection.query(self, query)
 django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+INFO 2025-05-01 12:50:00,499 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 12:50:19,637 views User user1 logged in successfully
