@@ -754,16 +754,591 @@ INFO 2025-04-29 17:58:34,958 views Chart Detail Accessed - Stock ID: 1, Stock: {
 INFO 2025-04-29 17:59:12,133 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
 INFO 2025-04-29 17:59:17,342 views Chart Detail Accessed - Stock ID: 2, Stock: {'id': 2, 'name': '카카오', 'ticker': '035720', 'change': '-3.21%', 'status': 'text-danger'}
 INFO 2025-04-29 18:00:05,635 views Chart Detail Accessed - Stock ID: 4, Stock: {'id': 4, 'name': 'LG전자', 'ticker': '066570', 'change': '-1.90%', 'status': 'text-danger'}
-INFO 2025-04-29 18:05:36,746 autoreload Watching for file changes with StatReloader
-INFO 2025-04-29 18:05:48,534 views User user1 logged out
-INFO 2025-04-29 18:05:56,605 views User user1 logged in successfully
-INFO 2025-04-30 10:36:21,042 autoreload Watching for file changes with StatReloader
-INFO 2025-04-30 12:07:26,045 autoreload Watching for file changes with StatReloader
-INFO 2025-04-30 12:09:07,841 views User user1 logged in successfully
-INFO 2025-04-30 12:11:52,142 views User user1 logged out
-INFO 2025-04-30 12:12:22,038 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
-INFO 2025-04-30 12:12:47,024 views Chart Detail Accessed - Stock ID: 1, Stock: {'id': 1, 'name': '삼성전자', 'ticker': '005930', 'change': '+4.52%', 'status': 'text-success'}
-INFO 2025-04-30 17:06:42,623 autoreload /home/kimgaram0718/projBigepoch1984/ch99/main/views.py changed, reloading.
-INFO 2025-04-30 17:06:43,180 autoreload Watching for file changes with StatReloader
-INFO 2025-04-30 17:37:48,101 autoreload /home/kimgaram0718/projBigepoch1984/ch99/main/views.py changed, reloading.
-INFO 2025-04-30 17:37:48,532 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 15:54:56,054 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 16:02:28,782 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 16:23:29,275 autoreload Watching for file changes with StatReloader
+WARNING 2025-04-30 16:23:29,833 log Not Found: /favicon.ico
+INFO 2025-04-30 16:23:59,454 views User user1 signed up successfully
+INFO 2025-04-30 16:24:02,001 views User user1 logged in successfully
+
+INFO 2025-04-30 18:08:24,454 autoreload Watching for file changes with StatReloader
+INFO 2025-04-30 18:08:30,311 views User user1 logged in successfully
+INFO 2025-04-30 18:08:31,396 views User user1 logged out
+INFO 2025-05-01 09:49:01,009 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-01 09:49:04,835 log Not Found: /favicon.ico
+ERROR 2025-05-01 09:49:25,466 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/community/views.py", line 13, in community_view
+    for post in posts:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+ERROR 2025-05-01 09:49:29,813 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/community/views.py", line 13, in community_view
+    for post in posts:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+WARNING 2025-05-01 09:50:13,716 views Unauthorized access to mypage_view - redirecting to login
+ERROR 2025-05-01 09:50:35,709 log Internal Server Error: /account/signup/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/account/views.py", line 54, in signup_view
+    user = User.objects.create_user(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/account/models.py", line 21, in create_user
+    user.save(using=self._db)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/contrib/auth/base_user.py", line 62, in save
+    super().save(*args, **kwargs)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/base.py", line 892, in save
+    self.save_base(
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/base.py", line 998, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/base.py", line 1161, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/base.py", line 1202, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1847, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1836, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'password' in 'field list'")
+INFO 2025-05-01 09:51:52,253 autoreload Watching for file changes with StatReloader
+ERROR 2025-05-01 09:51:55,492 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/community/views.py", line 13, in community_view
+    for post in posts:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+INFO 2025-05-01 10:02:32,434 autoreload Watching for file changes with StatReloader
+ERROR 2025-05-01 10:02:56,954 views LSTM 예측 오류: File not found: filepath=saved_model/samsung_model.keras. Please ensure the file is an accessible `.keras` zip file.
+ERROR 2025-05-01 10:03:10,152 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/community/views.py", line 13, in community_view
+    for post in posts:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+INFO 2025-05-01 10:05:22,036 autoreload /home/taeyoung/bigepoch1984/chart/data_fetcher.py changed, reloading.
+INFO 2025-05-01 10:05:23,251 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:06:19,233 autoreload /home/taeyoung/bigepoch1984/chart/data_fetcher.py changed, reloading.
+INFO 2025-05-01 10:06:20,739 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:06:54,546 autoreload /home/taeyoung/bigepoch1984/chart/data_fetcher.py changed, reloading.
+INFO 2025-05-01 10:06:55,905 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:07:13,454 autoreload /home/taeyoung/bigepoch1984/chart/data_fetcher.py changed, reloading.
+INFO 2025-05-01 10:07:14,750 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:08:12,245 autoreload /home/taeyoung/bigepoch1984/chart/train_model.py changed, reloading.
+INFO 2025-05-01 10:08:13,526 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:15:21,025 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 10:15:22,341 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:18:49,225 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 10:18:49,830 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:19:06,813 autoreload /home/taeyoung/bigepoch1984/chart/urls.py changed, reloading.
+INFO 2025-05-01 10:19:07,389 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:35:32,697 autoreload Watching for file changes with StatReloader
+ERROR 2025-05-01 10:35:35,004 log Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/main/views.py", line 9, in main
+    return render(request, 'main.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 1008, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 969, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 1008, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/base.py", line 969, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/template/defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'chart' not found. 'chart' is not a valid view function or pattern name.
+INFO 2025-05-01 10:37:34,389 autoreload /home/taeyoung/bigepoch1984/chart/urls.py changed, reloading.
+INFO 2025-05-01 10:37:35,231 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:37:38,201 autoreload /home/taeyoung/bigepoch1984/chart/urls.py changed, reloading.
+INFO 2025-05-01 10:37:38,610 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:48:43,586 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 10:48:44,013 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:48:45,690 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 10:48:46,145 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:55:51,537 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 10:55:52,112 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 10:56:03,145 autoreload /home/taeyoung/bigepoch1984/chart/urls.py changed, reloading.
+INFO 2025-05-01 10:56:03,697 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:00:27,901 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:00:28,376 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:00:36,370 autoreload /home/taeyoung/bigepoch1984/chart/urls.py changed, reloading.
+INFO 2025-05-01 11:00:36,985 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:03:16,655 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:03:17,158 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:07:55,124 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:07:55,621 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:15:05,380 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:15:06,265 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:19:19,392 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:19:17,405 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:19:27,383 autoreload /home/taeyoung/bigepoch1984/chart/urls.py changed, reloading.
+INFO 2025-05-01 11:19:28,014 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:39:08,076 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:39:08,587 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 11:39:10,296 autoreload /home/taeyoung/bigepoch1984/chart/views.py changed, reloading.
+INFO 2025-05-01 11:39:08,287 autoreload Watching for file changes with StatReloader
+ERROR 2025-05-01 11:53:06,915 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/community/views.py", line 13, in community_view
+    for post in posts:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+ERROR 2025-05-01 11:53:08,558 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/bigepoch1984/community/views.py", line 13, in community_view
+    for post in posts:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/home/taeyoung/VENV/v_test/lib/python3.12/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
