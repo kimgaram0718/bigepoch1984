@@ -1906,3 +1906,8 @@ WARNING 2025-05-02 16:40:20,762 log Not Found: /layout/footer.html
 INFO 2025-05-02 16:52:49,940 autoreload Watching for file changes with StatReloader
 WARNING 2025-05-02 16:52:53,029 log Not Found: /layout/header.html
 WARNING 2025-05-02 16:52:53,031 log Not Found: /layout/footer.html
+INFO 2025-05-02 17:40:00,449 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 17:40:04,050 log Not Found: /layout/footer.html
+WARNING 2025-05-02 17:40:04,065 log Not Found: /layout/header.html
+WARNING 2025-05-02 17:45:15,071 log Not Found: /layout/header.html
+WARNING 2025-05-02 17:45:15,231 log Not Found: /layout/footer.html
