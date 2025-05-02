@@ -1,29 +1,28 @@
-{% block content %}
-{% endblock %}
+{% load static %}
 
 <!-- 푸터 -->
 <footer class="footer">
   <!-- 하단 네비게이션 -->
-  <nav class="navbar fixed-bottom bg-white border-top d-flex justify-content-around">
-    <a href="{% url 'main:main' %}" class="text-center text-dark">
-      <div>🏠</div>
-      <small>홈</small>
+  <nav class="navbar navbar-light bg-white fixed-bottom border-top d-flex justify-content-around align-items-center" style="height: 60px;">
+    <a href="{% url 'main:main' %}" class="footer-item" id="footer-home">
+      <i class="bi bi-house-door-fill footer-icon"></i>
+      <div class="footer-text">홈</div>
     </a>
-    <a href="{% url 'chart:chart' %}" class="text-center text-dark">
-      <div>📊</div>
-      <small>차트</small>
+    <a href="{% url 'chart:chart' %}" class="footer-item" id="footer-chart">
+      <i class="bi bi-broadcast-pin footer-icon"></i>
+      <div class="footer-text">차트</div>
     </a>
-    <a href="{% url 'predict_info:predict_info' %}" class="text-center text-dark">
-      <div>📈</div>
-      <small>예측정보</small>
+    <a href="{% url 'predict_info:predict_info' %}" class="footer-item" id="footer-predict">
+      <i class="bi bi-bar-chart-fill footer-icon"></i>
+      <div class="footer-text">예측정보</div>
     </a>
-    <a href="{% url 'community:community' %}" class="text-center text-dark">
-      <div>👥</div>
-      <small>커뮤니티</small>
+    <a href="{% url 'community:community' %}" class="footer-item" id="footer-community">
+      <i class="bi bi-chat-dots-fill footer-icon"></i>
+      <div class="footer-text">커뮤니티</div>
     </a>
-    <a href="{% url 'mypage:mypage' %}" class="text-center text-dark">
-      <div>👤</div>
-      <small>마이페이지</small>
+    <a href="{% url 'mypage:mypage' %}" class="footer-item" id="footer-mypage">
+      <i class="bi bi-person-fill footer-icon"></i>
+      <div class="footer-text">마이페이지</div>
     </a>
   </nav>
 </footer>
