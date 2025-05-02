@@ -43,7 +43,7 @@
     <form method="post">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">삭제 확인</button>
-      <a href="{% url 'community:detail' post.free_board_id %}" class="btn btn-secondary">취소</a>
+      <a href="{% url 'community:detail' post.id %}" class="btn btn-secondary">취소</a>
     </form>
   </div>
 
