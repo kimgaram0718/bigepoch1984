@@ -1344,3 +1344,254 @@ Traceback (most recent call last):
 django.db.utils.OperationalError: (1054, "Unknown column 'account_user.password' in 'field list'")
 INFO 2025-05-01 12:50:00,499 autoreload Watching for file changes with StatReloader
 INFO 2025-05-01 12:50:19,637 views User user1 logged in successfully
+INFO 2025-05-01 14:38:05,428 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-01 14:38:14,575 log Not Found: /community/layout/footer.html
+WARNING 2025-05-01 14:38:14,579 log Not Found: /community/layout/header.html
+INFO 2025-05-01 14:46:26,375 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-01 14:46:26,922 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 14:48:45,146 views User user1 logged in successfully
+INFO 2025-05-01 14:55:55,817 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-01 14:55:56,338 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 15:36:25,452 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-01 15:36:25,953 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 15:36:34,345 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-05-01 15:36:34,841 autoreload Watching for file changes with StatReloader
+ERROR 2025-05-01 15:39:55,540 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: community/header.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/community/views.py", line 77, in community_view
+    return render(request, 'community.html', context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: community/header.html
+WARNING 2025-05-01 15:47:01,927 log Not Found: /community/notice2.html
+INFO 2025-05-01 15:56:50,844 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/models.py changed, reloading.
+INFO 2025-05-01 15:56:51,396 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 15:58:07,673 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-01 15:58:08,162 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 15:58:21,622 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/urls.py changed, reloading.
+INFO 2025-05-01 15:58:22,191 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 15:59:14,883 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 15:59:27,535 views User user1 logged in successfully
+ERROR 2025-05-01 15:59:31,008 log Internal Server Error: /community/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/community/views.py", line 24, in community_view
+    'id': post.free_board_id,
+          ^^^^^^^^^^^^^^^^^^
+AttributeError: 'FreeBoard' object has no attribute 'free_board_id'
+INFO 2025-05-01 16:34:23,109 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-01 16:34:23,903 autoreload Watching for file changes with StatReloader
+INFO 2025-05-01 16:36:47,694 autoreload Watching for file changes with StatReloader
+ERROR 2025-05-01 16:36:55,668 log Internal Server Error: /community/1/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: community/header.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/community/views.py", line 140, in community_detail_view
+    return render(request, 'community_detail.html', {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: community/header.html
+INFO 2025-05-01 16:37:33,562 views User user1 logged out
+INFO 2025-05-01 16:38:13,911 views User user2 signed up successfully
+INFO 2025-05-01 16:38:22,893 views User user2 logged in successfully
+INFO 2025-05-01 16:39:03,267 views User user2 logged out
+INFO 2025-05-01 16:39:12,620 views User user1 logged in successfully
+INFO 2025-05-02 10:02:14,121 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 10:02:16,304 log Not Found: /layout/header.html
+WARNING 2025-05-02 10:02:16,310 log Not Found: /layout/footer.html
+INFO 2025-05-02 10:02:39,648 views User user1 logged in successfully
+WARNING 2025-05-02 10:02:39,799 log Not Found: /layout/header.html
+WARNING 2025-05-02 10:02:39,811 log Not Found: /layout/footer.html
+INFO 2025-05-02 10:12:38,324 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/models.py changed, reloading.
+INFO 2025-05-02 10:12:38,844 autoreload Watching for file changes with StatReloader
+INFO 2025-05-02 10:19:05,048 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 10:19:07,273 log Not Found: /layout/header.html
+WARNING 2025-05-02 10:19:07,286 log Not Found: /layout/footer.html
+INFO 2025-05-02 10:51:56,414 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 10:51:58,311 log Not Found: /layout/header.html
+WARNING 2025-05-02 10:51:58,317 log Not Found: /layout/footer.html
+INFO 2025-05-02 10:57:09,497 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-02 10:57:10,145 autoreload Watching for file changes with StatReloader
+INFO 2025-05-02 10:57:40,520 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 10:57:42,586 log Not Found: /layout/header.html
+WARNING 2025-05-02 10:57:42,597 log Not Found: /layout/footer.html
+WARNING 2025-05-02 11:47:55,121 log Not Found: /layout/header.html
+WARNING 2025-05-02 11:47:55,137 log Not Found: /layout/footer.html
+INFO 2025-05-02 11:48:01,313 views User user1 logged in successfully
+WARNING 2025-05-02 11:48:01,442 log Not Found: /layout/header.html
+WARNING 2025-05-02 11:48:01,453 log Not Found: /layout/footer.html
+INFO 2025-05-02 11:51:40,588 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-02 11:51:41,265 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 11:51:57,075 log Not Found: /layout/header.html
+WARNING 2025-05-02 11:51:57,091 log Not Found: /layout/footer.html
+WARNING 2025-05-02 11:52:02,823 log Forbidden (CSRF token from the 'X-Csrftoken' HTTP header has incorrect length.): /community/4/like/
+INFO 2025-05-02 11:54:58,549 autoreload /home/kimgaram0718/projBigepoch1984/ch99/community/views.py changed, reloading.
+INFO 2025-05-02 11:54:59,184 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 11:55:16,361 log Not Found: /layout/header.html
+WARNING 2025-05-02 11:55:16,374 log Not Found: /layout/footer.html
+INFO 2025-05-02 11:55:22,224 views like_post called for post_id=4, user=user1
+INFO 2025-05-02 11:55:22,232 views Like added for post_id=4, likes_count=1
+WARNING 2025-05-02 11:59:40,170 log Not Found: /layout/header.html
+WARNING 2025-05-02 11:59:40,185 log Not Found: /layout/footer.html
+ERROR 2025-05-02 11:59:50,503 log Internal Server Error: /community/1/delete/
+Traceback (most recent call last):
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/projBigepoch1984/ch99/community/views.py", line 216, in delete_view
+    return render(request, 'community_delete.html', {'post': post})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/template/defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/urls/base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kimgaram0718/VENV/v_bigepoch1984/lib/python3.12/site-packages/django/urls/resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'detail' with arguments '('',)' not found. 1 pattern(s) tried: ['community/(?P<post_id>[0-9]+)/\\Z']
+INFO 2025-05-02 12:00:27,540 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 12:00:29,718 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:00:29,730 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:00:44,437 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:00:44,438 log Not Found: /layout/header.html
+INFO 2025-05-02 12:00:45,761 views User user1 logged out
+INFO 2025-05-02 12:00:55,285 views User user2 logged in successfully
+WARNING 2025-05-02 12:00:55,415 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:00:55,416 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:01:02,009 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:01:02,018 log Not Found: /layout/footer.html
+INFO 2025-05-02 12:01:02,853 views User user2 logged out
+INFO 2025-05-02 12:01:11,470 views User user1 logged in successfully
+WARNING 2025-05-02 12:01:11,601 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:01:11,613 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:06:48,429 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:06:48,442 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:07:30,413 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:07:30,420 log Not Found: /layout/footer.html
+INFO 2025-05-02 12:07:31,493 views User user1 logged out
+INFO 2025-05-02 12:07:40,123 views User user2 logged in successfully
+WARNING 2025-05-02 12:07:40,234 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:07:40,245 log Not Found: /layout/footer.html
+INFO 2025-05-02 12:08:01,390 views like_post called for post_id=5, user=user2
+INFO 2025-05-02 12:08:01,400 views Like added for post_id=5, likes_count=1
+WARNING 2025-05-02 12:08:34,263 log Not Found: /mypage/layout/header.html
+WARNING 2025-05-02 12:08:34,271 log Not Found: /mypage/layout/footer.html
+WARNING 2025-05-02 12:08:40,216 log Not Found: /mypage/layout/footer.html
+WARNING 2025-05-02 12:08:40,222 log Not Found: /mypage/layout/header.html
+WARNING 2025-05-02 12:08:42,789 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:08:42,800 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:10:26,567 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:10:26,581 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:11:01,255 log Not Found: /mypage/layout/header.html
+WARNING 2025-05-02 12:11:01,264 log Not Found: /mypage/layout/footer.html
+WARNING 2025-05-02 12:11:07,938 log Not Found: /layout/header.html
+WARNING 2025-05-02 12:11:07,950 log Not Found: /layout/footer.html
+WARNING 2025-05-02 12:11:21,381 log Not Found: /community/1/

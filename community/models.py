@@ -1,17 +1,34 @@
 from django.db import models
+from account.models import User
 
 class FreeBoard(models.Model):
-    free_board_id = models.AutoField(primary_key=True)  # 기본키: 자동 증가
-    user = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='free_boards')  # 외래키: account.User 모델 참조
-    title = models.CharField(max_length=200)  # 제목, 최대 200자
-    content = models.TextField()  # 내용
-    reg_dt = models.DateTimeField(auto_now_add=True)  # 등록일, 자동 생성
-    mod_dt = models.DateTimeField(auto_now=True)  # 수정일, 자동 갱신
-    is_deleted = models.BooleanField(default=False)  # 삭제 여부, 기본값 False
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    reg_dt = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+    likes_count = models.PositiveIntegerField(default=0)  # 좋아요 수
+    comments_count = models.PositiveIntegerField(default=0)  # 댓글 수
 
     class Meta:
-        db_table = 'free_board'  # 테이블 이름 지정
-        ordering = ['-reg_dt']  # 최신 게시물 먼저 정렬
+        db_table = 'free_board'
 
-    def __str__(self):
-        return self.title
+class FreeBoardLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    free_board = models.ForeignKey(FreeBoard, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'free_board_like'
+        unique_together = ('user', 'free_board')  # 사용자당 게시글에 1번만 좋아요
+
+class FreeBoardComment(models.Model):
+    free_board = models.ForeignKey(FreeBoard, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'free_board_comment'
+        ordering = ['created_at']

@@ -1,3 +1,125 @@
+// header.html 가져오기
+fetch('./layout/header.html')
+  .then(response => response.text())
+  .then(data => {
+    const headerContainer = document.getElementById('header-container');
+    if (headerContainer) {
+      headerContainer.innerHTML = data;
+      setHeaderContent();
+    }
+  });
+
+  function setHeaderContent() {
+    const headerContent = document.getElementById('header-content');
+    if (!headerContent) return;
+  
+    if (window.location.pathname.includes('community.html')) {
+      // 커뮤니티 화면
+      headerContent.innerHTML = `
+    <div class="d-flex align-items-center justify-content-between w-100">
+      <div class="bg-light rounded-pill p-1 d-flex align-items-center" style="gap: 8px;">
+        <button id="btn-community" class="btn btn-sm fw-bold text-dark bg-white rounded-pill px-3 py-1">커뮤니티</button>
+        <button id="btn-news" class="btn btn-sm fw-bold text-muted bg-transparent rounded-pill px-3 py-1">뉴스</button>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <i class="bi bi-search" style="font-size: 20px;"></i>
+        <i class="bi bi-list" style="font-size: 24px;"></i>
+      </div>
+    </div>
+  `;
+  
+      // 토글 버튼 클릭 이벤트
+      const btnCommunity = document.getElementById('btn-community');
+      const btnNews = document.getElementById('btn-news');
+  
+      btnCommunity.addEventListener('click', () => {
+        btnCommunity.classList.remove('text-muted');
+        btnCommunity.classList.add('text-dark');
+        btnNews.classList.remove('text-dark');
+        btnNews.classList.add('text-muted');
+      });
+  
+      btnNews.addEventListener('click', () => {
+        btnCommunity.classList.remove('text-dark');
+        btnCommunity.classList.add('text-muted');
+        btnNews.classList.remove('text-muted');
+        btnNews.classList.add('text-dark');
+      });
+  
+    } else {
+      // 홈 화면 (또는 다른 기본 화면)
+      headerContent.innerHTML = `
+        <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo_TV_2015.png" alt="로고" style="width:32px;height:32px; border-radius:50%;">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-search" style="font-size: 24px; font-weight: bold; color: #1b1e26;"></i>
+          <button type="button" class="btn p-0 m-0" style="background: none; border: none; font-size: 16px; font-weight: 700; color: #1b1e26;">로그인</button>
+          <div class="dropdown">
+            <button class="btn lang-btn dropdown-toggle" type="button" id="langMenu" data-bs-toggle="dropdown" aria-expanded="false">KR</button>
+            <ul class="dropdown-menu dropdown-lang dropdown-menu-end" aria-labelledby="langMenu">
+              <li><a class="dropdown-item" href="#">KR</a></li>
+              <li><a class="dropdown-item" href="#">EN</a></li>
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+// footer.html 불러오기
+fetch('./layout/footer.html')
+  .then(response => response.text())
+  .then(data => {
+    const footerContainer = document.getElementById('footer-container');
+    if (footerContainer) {
+      footerContainer.innerHTML = data;
+
+      const footerItems = footerContainer.querySelectorAll('.footer-item');
+
+      // 🔥 여기 추가
+      const currentPath = window.location.pathname.split('/').pop(); // ex) community.html
+      footerItems.forEach(item => {
+        const href = item.getAttribute('href');
+        if (href === currentPath) {
+          footerItems.forEach(i => i.classList.remove('active')); // 다 지우고
+          item.classList.add('active'); // 현재 경로에 맞는 것만 active
+        }
+      });
+
+      // 원래 있던 클릭 이벤트 (필요하면 유지)
+      footerItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          footerItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+    }
+  });
+
+// 페이지가 로딩되자마자 초기 필터값 표시
+window.addEventListener('DOMContentLoaded', () => {
+  toggleMainTab('popular');
+});
+
+// 스크롤 최상단 이동 버튼 기능
+const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+// 스크롤 내릴 때 버튼 보이기
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 80) {
+    scrollTopBtn.style.display = 'block';
+  } else {
+    scrollTopBtn.style.display = 'none';
+  }
+});
+
+// 버튼 클릭하면 맨 위로 부드럽게 이동
+scrollTopBtn.addEventListener('click', () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+});
+
 const banners = [
     {
       link: "https://example.com/banner1",
@@ -376,8 +498,248 @@ document.getElementById('btn-main-curation').addEventListener('click', () => {
   toggleMainTab('curation');
 });
 
-// 🔥 페이지가 로딩되자마자 초기 필터값 표시
+// 페이지가 로딩되자마자 초기 필터값 표시
 window.addEventListener('DOMContentLoaded', () => {
   toggleMainTab('popular');
 });
   /* NOW Headlines 섹션 밑 인기 큐레이션 */
+
+  /*Investing Insight 영역*/
+  const coinInfoData = [
+    { title: "비트코인과 수익", commentCount: 2, views: 63, time: "1시간 전", img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?crop=entropy&cs=tinysrgb&fit=crop&w=100&h=100", link: "coin1.html" },
+    { title: "비트코인과 수익", commentCount: 0, views: 47, time: "1시간 전", img: "", link: "coin2.html" },
+    { title: "비트코인이 양지에서 더 빛나는 이유?", commentCount: 4, views: 92, time: "4시간 전", img: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?crop=entropy&cs=tinysrgb&fit=crop&w=100&h=100", link: "coin3.html" },
+    { title: "[기대] 트론(TRX) 저스틴 선, 트럼프표", commentCount: 5, views: 117, time: "4시간 전", img: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?crop=entropy&cs=tinysrgb&fit=crop&w=100&h=100", link: "coin4.html" },
+    { title: "트럼프코인 대단하군요", commentCount: 13, views: 128, time: "5시간 전", img: "https://images.unsplash.com/photo-1593642634367-d91a135587b5?crop=entropy&cs=tinysrgb&fit=crop&w=100&h=100", link: "coin5.html" }
+  ];
+  
+  function renderCoinInfoList() {
+    const list = document.getElementById('coin-info-list');
+    list.innerHTML = '';
+  
+    coinInfoData.forEach(item => {
+      const li = document.createElement('li');
+      li.className = "mb-4 py-2";
+  
+      li.innerHTML = `
+        <a href="${item.link || '#'}" class="d-flex justify-content-between align-items-center w-100 text-decoration-none text-dark">
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="fw-bold text-truncate" style="max-width: calc(100% - 60px); font-size: 14px;">
+              ${item.title} ${item.commentCount !== undefined ? `<span class="text-primary">(${item.commentCount})</span>` : ''}
+            </div>
+            <div class="text-muted small mt-1">조회 ${item.views} · ${item.time}</div>
+          </div>
+          ${item.img ? `<img src="${item.img}" alt="썸네일" class="ms-2 rounded-3 flex-shrink-0" style="width: 40px; height: 40px; object-fit: cover;">` : ''}
+        </a>
+      `;
+  
+      list.appendChild(li);
+    });
+  }
+  
+  // 페이지 로드될 때 호출
+  renderCoinInfoList();
+    /*Investing Insight 영역 끝*/
+
+// 공지 데이터
+const noticeListData = [
+  { title: "[공지] CBK 스테이킹 서비스 종료 안내", link: "./notice1.html" },
+  { title: "[EVENT] 🏆 CBK 에어드랍 이벤트! 코비가 되어 꿀캐기", link: "./notice2.html" },
+  { title: "[공지] (4/14 수정) 코박블랙 유지 자격 오류 발생 및 복구", link: "./notice3.html" },
+  { title: "[EVENT] CBK 트위터 팔로워를 위한 CBK 에어드랍!", link: "./notice4.html" },
+  { title: "[공지] 회원가입, 약관 동의, 이메일 인증 절차 도입을 안내합니다", link: "./notice5.html" }
+];
+
+function renderNoticeList() {
+  const list = document.getElementById('notice-list');
+  list.innerHTML = '';
+
+  noticeListData.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'mb-2';
+    li.innerHTML = `
+      <a href="${item.link}" class="text-decoration-none text-dark d-block text-truncate" style="font-size: 14px;">
+        ${item.title}
+      </a>
+    `;
+    list.appendChild(li);
+  });
+}
+
+renderNoticeList();
+
+// 거래소 리스트 채우는 데이터
+const exchangeData = [
+  { name: "Upbit", link: "https://upbit.com" },
+  { name: "Bithumb", link: "https://www.bithumb.com" },
+  { name: "HTX", link: "https://www.htx.com" },
+  { name: "Coinstore", link: "https://www.coinstore.com" },
+  { name: "XT.COM", link: "https://www.xt.com" },
+  { name: "Bybit", link: "https://www.bybit.com" },
+  { name: "Binance", link: "https://www.binance.com" },
+  { name: "Bitget", link: "https://www.bitget.com" }
+];
+
+// 더미이미지 링크 하나 공통으로
+const sampleExchangeLogo = "https://dummyimage.com/100x100/cccccc/000000.png&text=EX";
+
+// 거래소 렌더링 함수
+function renderExchangeList() {
+  const container = document.getElementById('exchange-list');
+  if (!container) {
+    console.error('exchange-list 요소를 찾을 수 없습니다.');
+    return;
+  }
+  container.innerHTML = '';
+
+  exchangeData.forEach(exchange => {
+    const a = document.createElement('a');
+    a.href = exchange.link;
+    a.target = '_blank';
+    a.className = 'exchange-item';
+
+    a.innerHTML = `
+      <img src="${sampleExchangeLogo}" alt="${exchange.name}">
+      <span>${exchange.name}</span>
+    `;
+    container.appendChild(a);
+  });
+
+  // 무한처럼 보이게 복제
+  exchangeData.forEach(exchange => {
+    const a = document.createElement('a');
+    a.href = exchange.link;
+    a.target = '_blank';
+    a.className = 'exchange-item';
+
+    a.innerHTML = `
+      <img src="${sampleExchangeLogo}" alt="${exchange.name}">
+      <span>${exchange.name}</span>
+    `;
+    container.appendChild(a);
+  });
+}
+
+// 거래소 자동 스크롤
+const exchangeList = document.querySelector('.exchange-list');
+
+let scrollAmount = 0;
+let scrollStep = 73; // 한 번에 이동할 거리 (px)
+let scrollDelay = 2000; // 1초 간격 (ms)
+
+function autoScrollExchange() {
+  if (exchangeList.scrollWidth - exchangeList.clientWidth === 0) return; // 스크롤 필요 없으면 return
+
+  scrollAmount += scrollStep;
+  
+  if (scrollAmount >= exchangeList.scrollWidth - exchangeList.clientWidth) {
+    scrollAmount = 0; // 끝까지 가면 다시 처음으로
+  }
+  
+  exchangeList.scrollTo({
+    left: scrollAmount,
+    behavior: 'smooth'
+  });
+}
+
+setInterval(autoScrollExchange, scrollDelay);
+
+// 페이지 로딩될 때 거래소 리스트도 같이 로딩
+window.addEventListener('DOMContentLoaded', () => {
+  renderExchangeList();
+});
+/* 거래소 리스트 로직 끝 */
+
+/* 코인 시세 조회 로직 시작작 */
+const coinData = [
+  { name: "코박토큰", price: 816.4, change: 0.52, link: "coin1.html" },
+  { name: "비트코인", price: 135314694, change: -0.22, link: "coin2.html" },
+  { name: "이더리움", price: 2602300, change: 0.19, link: "coin3.html" },
+  { name: "테더", price: 1438, change: -0.01, link: "coin4.html" },
+  { name: "리플", price: 3136, change: -1.32, link: "coin5.html" },
+  { name: "바이낸스 코인", price: 864676, change: -0.54, link: "coin6.html" },
+  { name: "솔라나", price: 213641, change: -0.5, link: "coin7.html" },
+  { name: "유에스디 코인", price: 1438, change: 0, link: "coin8.html" },
+  { name: "도지코인", price: 260.2, change: -1.34, link: "coin9.html" },
+  { name: "에이다", price: 1006, change: -2.64, link: "coin10.html" },
+  { name: "트론", price: 359.4, change: -0.32, link: "coin11.html" },
+  { name: "리도 스테이크 이더", price: 2598560, change: 0.12, link: "coin12.html" },
+  { name: "랩피드 비트코인", price: 135511751, change: -0.04, link: "coin13.html" },
+  { name: "수이", price: 5164, change: 2.54, link: "coin14.html" },
+  { name: "체인링크", price: 20943, change: -2.67, link: "coin15.html" },
+  { name: "아발란체", price: 32061, change: 0.18, link: "coin16.html" },
+  { name: "스텔라", price: 410.6, change: -2.97, link: "coin17.html" },
+  { name: "레오 토큰", price: 12960, change: -0.81, link: "coin18.html" },
+  { name: "톤코인", price: 4703, change: 0.6, link: "coin19.html" }
+];
+
+let currentPage = 1;
+const itemsPerPage = 10;
+let filteredCoins = [...coinData];
+
+// 코인 리스트 렌더링 함수
+function renderCoinList() {
+  const list = document.getElementById('coin-list');
+  list.innerHTML = '';
+
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const coinsToShow = filteredCoins.slice(start, end);
+
+  coinsToShow.forEach(coin => {
+    const li = document.createElement('li');
+    li.className = 'd-flex align-items-center px-2 py-2';  
+    li.style.cursor = 'pointer';
+    li.onclick = () => window.location.href = coin.link;
+
+    li.innerHTML = `
+      <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+        <img src="https://dummyimage.com/24x24/cccccc/000000.png&text=⧉" alt="coin" style="width: 24px; height: 24px; object-fit: cover; border-radius: 50%; margin-right: 8px;">
+        <span class="text-truncate" style="font-size: 14px;">${coin.name}</span>
+      </div>
+      <div style="width: 100px; text-align: right; font-size: 14px; ${coin.change >= 0 ? 'color:red;' : 'color:blue;'}">
+        ${coin.price.toLocaleString()}
+      </div>
+      <div style="width: 80px; text-align: right; font-size: 14px; ${coin.change >= 0 ? 'color:red;' : 'color:blue;'}">
+        ${coin.change > 0 ? '+' : ''}${coin.change}%
+      </div>
+    `;
+
+    list.appendChild(li);
+  });
+
+  updatePagination();
+}
+
+// 페이지네이션 버튼 활성/비활성 처리
+function updatePagination() {
+  const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
+  document.getElementById('prevPage').disabled = (currentPage === 1);
+  document.getElementById('nextPage').disabled = (currentPage === totalPages);
+}
+
+// 검색 필터링 기능
+document.getElementById('coinSearch').addEventListener('input', (e) => {
+  const keyword = e.target.value.trim().toLowerCase();
+  filteredCoins = coinData.filter(coin => coin.name.toLowerCase().includes(keyword));
+  currentPage = 1;
+  renderCoinList();
+});
+
+// 페이지 이동
+document.getElementById('prevPage').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderCoinList();
+  }
+});
+document.getElementById('nextPage').addEventListener('click', () => {
+  const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderCoinList();
+  }
+});
+
+// 최초 로딩
+renderCoinList();
