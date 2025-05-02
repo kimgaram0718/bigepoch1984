@@ -1906,3 +1906,56 @@ WARNING 2025-05-02 16:40:20,762 log Not Found: /layout/footer.html
 INFO 2025-05-02 16:52:49,940 autoreload Watching for file changes with StatReloader
 WARNING 2025-05-02 16:52:53,029 log Not Found: /layout/header.html
 WARNING 2025-05-02 16:52:53,031 log Not Found: /layout/footer.html
+INFO 2025-05-02 21:50:35,097 autoreload Watching for file changes with StatReloader
+WARNING 2025-05-02 21:50:39,049 log Not Found: /node_modules/bootstrap/dist/js/bootstrap.bundle.min.js
+WARNING 2025-05-02 21:50:39,062 log Not Found: /js/script.js
+WARNING 2025-05-02 21:50:39,800 log Not Found: /favicon.ico
+WARNING 2025-05-02 21:51:07,362 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:51:07,373 log Not Found: /layout/footer.html
+WARNING 2025-05-02 21:53:13,311 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:53:13,337 log Not Found: /layout/footer.html
+WARNING 2025-05-02 21:53:18,064 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:53:18,071 log Not Found: /layout/footer.html
+WARNING 2025-05-02 21:54:23,751 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:54:23,764 log Not Found: /layout/footer.html
+WARNING 2025-05-02 21:54:28,032 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:54:28,049 log Not Found: /layout/footer.html
+WARNING 2025-05-02 21:54:29,599 log Not Found: /predict_info/{% static 'img/icon_BTC.png' %}
+WARNING 2025-05-02 21:54:29,607 log Not Found: /predict_info/{% static 'img/icon_ETH.png' %}
+WARNING 2025-05-02 21:54:29,716 log Not Found: /predict_info/{% static 'img/icon_USDT.png' %}
+WARNING 2025-05-02 21:54:29,765 log Not Found: /predict_info/{% static 'img/icon_XRP.png' %}
+WARNING 2025-05-02 21:54:29,771 log Not Found: /predict_info/{% static 'img/icon_BNB.png' %}
+WARNING 2025-05-02 21:54:29,782 log Not Found: /predict_info/{% static 'img/icon_USDC.png' %}
+WARNING 2025-05-02 21:54:29,795 log Not Found: /predict_info/{% static 'img/icon_SOL.png' %}
+WARNING 2025-05-02 21:54:29,797 log Not Found: /predict_info/{% static 'img/icon_DOGE.png' %}
+WARNING 2025-05-02 21:54:29,812 log Not Found: /predict_info/{% static 'img/icon_ADA.png' %}
+WARNING 2025-05-02 21:54:29,820 log Not Found: /predict_info/{% static 'img/icon_TRX.png' %}
+WARNING 2025-05-02 21:54:29,837 log Not Found: /predict_info/{% static 'img/icon_STETH.png' %}
+WARNING 2025-05-02 21:54:29,774 views Unauthorized access to mypage_view - redirecting to login
+WARNING 2025-05-02 21:54:32,212 log Not Found: /layout/footer.html
+WARNING 2025-05-02 21:54:32,221 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:55:10,052 log Not Found: /layout/header.html
+WARNING 2025-05-02 21:55:10,075 log Not Found: /layout/footer.html
+INFO 2025-05-02 22:01:23,912 views User user1 signed up successfully
+INFO 2025-05-02 22:01:28,298 views User user1 logged in successfully
+WARNING 2025-05-02 22:01:28,473 log Not Found: /layout/header.html
+WARNING 2025-05-02 22:01:28,494 log Not Found: /layout/footer.html
+WARNING 2025-05-02 22:01:31,549 log Not Found: /layout/footer.html
+WARNING 2025-05-02 22:01:31,551 log Not Found: /layout/header.html
+WARNING 2025-05-02 22:01:38,753 log Not Found: /predict_info/{% static 'img/icon_ETH.png' %}
+WARNING 2025-05-02 22:01:38,761 log Not Found: /predict_info/{% static 'img/icon_BTC.png' %}
+WARNING 2025-05-02 22:01:38,767 log Not Found: /predict_info/{% static 'img/icon_USDT.png' %}
+WARNING 2025-05-02 22:01:38,791 log Not Found: /predict_info/{% static 'img/icon_XRP.png' %}
+WARNING 2025-05-02 22:01:38,799 log Not Found: /predict_info/{% static 'img/icon_BNB.png' %}
+WARNING 2025-05-02 22:01:38,816 log Not Found: /predict_info/{% static 'img/icon_SOL.png' %}
+WARNING 2025-05-02 22:01:38,838 log Not Found: /predict_info/{% static 'img/icon_USDC.png' %}
+WARNING 2025-05-02 22:01:38,873 log Not Found: /predict_info/{% static 'img/icon_ADA.png' %}
+WARNING 2025-05-02 22:01:38,889 log Not Found: /predict_info/{% static 'img/icon_DOGE.png' %}
+WARNING 2025-05-02 22:01:38,901 log Not Found: /predict_info/{% static 'img/icon_STETH.png' %}
+WARNING 2025-05-02 22:01:38,901 log Not Found: /predict_info/{% static 'img/icon_TRX.png' %}
+WARNING 2025-05-02 22:01:42,192 log Not Found: /mypage/layout/footer.html
+WARNING 2025-05-02 22:01:42,199 log Not Found: /mypage/layout/header.html
+WARNING 2025-05-02 22:01:45,196 log Not Found: /mypage/edit/layout/header.html
+WARNING 2025-05-02 22:01:45,205 log Not Found: /mypage/edit/layout/footer.html
+WARNING 2025-05-02 22:01:58,428 log Not Found: /layout/header.html
+WARNING 2025-05-02 22:01:58,444 log Not Found: /layout/footer.html
