@@ -1,51 +1,39 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const scrollTopBtn = document.getElementById('scrollTopBtn');
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 200) {
-      scrollTopBtn.style.display = 'block';
-    } else {
-      scrollTopBtn.style.display = 'none';
-    }
-  });
-  scrollTopBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-});
-
 function closeUpdateBox() {
-  document.getElementById('update-container').style.display = 'none';
+  const container = document.getElementById('update-container');
+  if (container) container.style.display = 'none';
 }
 
 function openFilterPopup() {
-  document.getElementById('filter-popup').style.display = 'flex';
+  const popup = document.getElementById('filter-popup');
+  popup.style.display = 'block';
+  setTimeout(() => popup.classList.add('show'), 10);
 }
 
 function closeFilterPopup() {
-  document.getElementById('filter-popup').style.display = 'none';
+  const popup = document.getElementById('filter-popup');
+  popup.classList.remove('show');
+  setTimeout(() => popup.style.display = 'none', 300);
 }
 
 function selectPeriod(period) {
   document.querySelectorAll('#period-options .filter-option').forEach(option => {
-    option.classList.remove('active');
-    if (option.textContent === period) {
-      option.classList.add('active');
-    }
+    option.classList.toggle('active', option.textContent === period);
   });
 }
 
 function selectSort(sort) {
   document.querySelectorAll('#sort-options .filter-option').forEach(option => {
-    option.classList.remove('active');
-    if (option.textContent === sort) {
-      option.classList.add('active');
-    }
+    option.classList.toggle('active', option.textContent === sort);
   });
 }
 
 function confirmFilter() {
-  const period = document.querySelector('#period-options .filter-option.active').textContent;
-  const sort = document.querySelector('#sort-options .filter-option.active').textContent;
-  window.location.href = `/community/?period=${encodeURIComponent(period)}&sort=${encodeURIComponent(sort)}`;
+  const period = document.querySelector('#period-options .filter-option.active')?.textContent || '한달';
+  const sort = document.querySelector('#sort-options .filter-option.active')?.textContent || '최신순';
+  const url = new URL(window.location);
+  url.searchParams.set('period', period);
+  url.searchParams.set('sort', sort);
+  window.location.href = url.toString();
 }
 
 function openSharePopup() {
@@ -58,7 +46,7 @@ function closeSharePopup() {
 
 function goShare(platform) {
   const url = window.location.href;
-  let shareUrl;
+  let shareUrl = '';
   switch (platform) {
     case 'kakao':
       shareUrl = `https://story.kakao.com/s/share?url=${encodeURIComponent(url)}`;
@@ -72,38 +60,20 @@ function goShare(platform) {
     case 'twitter':
       shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`;
       break;
-    default:
-      return;
   }
   window.open(shareUrl, '_blank');
 }
 
-function toggleLike(button) {
-  const postId = button.getAttribute('data-post-id');
-  fetch(`/community/${postId}/like/`, {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCsrfToken(),
-      'Content-Type': 'application/json',
-    },
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        alert(data.error);
-      } else {
-        button.querySelector('span').textContent = data.likes_count;
-        if (data.is_liked) {
-          button.classList.add('liked');
-        } else {
-          button.classList.remove('liked');
-        }
-      }
-    })
-    .catch(error => console.error('Error:', error));
-}
+// 푸터 항목 활성화
+document.addEventListener('DOMContentLoaded', () => {
+  const footerItems = document.querySelectorAll('.footer-item');
+  const currentPath = window.location.pathname;
 
-function getCsrfToken() {
-  return document.querySelector('meta[name="csrf-token"]')?.content ||
-         document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-}
+  footerItems.forEach(item => {
+    const href = item.getAttribute('href');
+    if (currentPath === href) {
+      footerItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    }
+  });
+});

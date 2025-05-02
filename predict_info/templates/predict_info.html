@@ -10,12 +10,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
   <!-- Bootstrap CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons (아이콘용) -->
+  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <!-- Dashboard CSS -->
-  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/invest.css' %}">
 </head>
 <body>
 
@@ -70,6 +69,52 @@
         {% endfor %}
       </div>
     </div>
+
+    <!-- 투자 정보 -->
+    <div class="container my-3">
+      <h6 class="fw-bold">투자 정보</h6>
+      <div class="invest-filter-wrapper px-3 pt-3">
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn filter-tab active" data-type="all">전체</button>
+          <button class="btn filter-tab" data-type="up">상승률</button>
+          <button class="btn filter-tab" data-type="down">하락률</button>
+          <button class="btn filter-tab" data-type="hot">지금 인기 있는</button>
+        </div>
+      
+        <div class="invest-filter-description">
+          <div data-type="all" class="desc active">
+            <strong>전체</strong><br />
+            시가총액이 가장 높은 코인으로 모았어요.
+          </div>
+          <div data-type="up" class="desc">
+            <i class="bi bi-arrow-up-short text-success fw-bold"></i> <strong>상승률</strong><br />
+            지난 24시간 동안 가장 수익률이 좋은 코인을 모았어요.
+          </div>
+          <div data-type="down" class="desc">
+            <i class="bi bi-arrow-down-short text-danger fw-bold"></i> <strong>하락률</strong><br />
+            지난 24시간 동안 가장 하락률이 높은 코인을 모았어요.
+          </div>
+          <div data-type="hot" class="desc">
+            <i class="bi bi-fire text-danger fw-bold"></i> <strong>지금 인기 있는 코인</strong><br />
+            지난 3시간 동안 가장 많이 검색된 코인을 모았어요.
+          </div>
+        </div>
+      </div>
+
+      <!-- 상단 필터 버튼 -->
+      <div class="d-flex gap-2 px-3 py-2">
+        <button class="filter-btn active" id="btn-all">모두</button>
+        <button class="filter-btn" id="btn-favorite">★</button>
+        <select id="currency-select">
+          <option value="KRW">원화</option>
+          <option value="USD">달러</option>
+        </select>
+        <input type="text" id="search-input" placeholder="주식검색" />
+      </div>
+  
+      <!-- 코인 리스트 -->
+      <div id="coin-list" class="px-3 pb-5"></div>
+    </div>
   </div>
 
   <!-- 푸터 삽입 -->
@@ -79,5 +124,6 @@
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <!-- Custom JS -->
   <script src="{% static 'js/dashboard.js' %}"></script>
+  <script src="{% static 'js/invest.js' %}"></script>
 </body>
 </html>

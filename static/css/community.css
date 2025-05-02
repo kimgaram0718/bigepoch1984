@@ -24,11 +24,25 @@
   background-color: #007bff;
 }
 
-/* ======================== */
-/* 여기부터 필터 팝업 관련 수정 */
-/* ======================== */
+.carousel-item .text-muted {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
 
-/* 기본 항목 */
+.notice-description {
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
 .filter-option {
   font-size: 15px;
   padding: 8px 16px;
@@ -56,21 +70,20 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
   z-index: 2000;
-  opacity: 0; /* 처음엔 투명하게 */
-  transition: opacity 0.3s ease; /* 부드럽게 변하게 */
-  pointer-events: none; /* 기본적으로 클릭 막기 */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-/* 보여줄 때 추가 클래스 */
 #filter-popup.show {
   display: block;
   opacity: 1;
-  pointer-events: auto; /* show 클래스가 붙으면 클릭 가능 */
+  pointer-events: auto;
 }
 
 #filter-popup .filter-box {
   position: absolute;
-  top: 60px; /* 상단에 60px 여백 */
+  top: 60px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -98,7 +111,6 @@
   padding: 14px 0;
 }
 
-/* 드래그 핸들 */
 .filter-drag-handle {
   width: 40px;
   height: 4px;
@@ -125,7 +137,6 @@
   background: #fff;
 }
 
-/* 공유하기 팝업 */
 .share-popup {
   position: fixed;
   top: 50%;
@@ -161,16 +172,11 @@
   gap: 20px;
 }
 
-.share-thumbnail-title {
-  padding: 16px;
-  border-bottom: 1px solid #eee;
-}
-
 .share-icon {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 80px; /* 3개씩 한줄 나오게 크기 고정 */
+  width: 80px;
   text-decoration: none;
   color: #333;
   font-size: 12px;
@@ -205,12 +211,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: break-word;
-  white-space: normal; /* 추가!! */
+  white-space: normal;
   font-weight: bold;
   font-size: 16px;
   color: #212529;
-  line-height: 1.4; /* 줄 높이 조정 */
-  max-height: calc(1.4em * 2); /* 2줄까지만 */
+  line-height: 1.4;
+  max-height: calc(1.4em * 2);
 }
 
 .community-text-area .content {
@@ -223,4 +229,22 @@
   font-size: 14px;
   color: #666;
   margin-top: 4px;
+}
+
+/* 푸터 스타일 */
+.footer-item {
+  text-align: center;
+  text-decoration: none;
+  color: #6c757d; /* 회색 */
+  font-size: 12px;
+}
+
+.footer-item.active {
+  color: #0066ff; /* 파란색 */
+}
+
+.footer-item .footer-icon {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 2px;
 }

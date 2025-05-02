@@ -9,6 +9,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 def community_view(request):
+    tab = request.GET.get('tab', 'community')
+    subtab = request.GET.get('subtab', '')
+    context = {
+        'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
+        'active_tab': tab,
+        'active_subtab': subtab,
+    }
+
+    if tab == 'news':
+        if subtab == 'realtime':
+            return render(request, 'community_realtime.html', context)
+        elif subtab == 'popular':
+            return render(request, 'community_popular.html', context)
+        elif subtab == 'disclosure':
+            return render(request, 'community_disclosure.html', context)
+        return render(request, 'community_news.html', context)
+
+    # 기존 커뮤니티 로직
     period = request.GET.get('period', '한달')
     sort = request.GET.get('sort', '최신순')
     posts = FreeBoard.objects.filter(is_deleted=False).select_related('user')
@@ -57,20 +75,13 @@ def community_view(request):
         post_list.sort(key=lambda x: x['important'], reverse=True)
     elif sort == '걱정순':
         post_list.sort(key=lambda x: x['comments_count'], reverse=True)
-    context = {
-        'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
+    context.update({
         'ticker_message': '예측 정보 티커 영역 예시: 비트코인 1억 돌파 예측 중!',
         'posts': post_list,
         'period': period,
         'sort': sort,
-    }
+    })
     return render(request, 'community.html', context)
-
-def news_view(request):
-    context = {
-        'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
-    }
-    return render(request, 'news.html', context)
 
 def write_view(request):
     if not request.user.is_authenticated:
@@ -122,7 +133,7 @@ def community_detail_view(request, post_id):
     return render(request, 'community_detail.html', {
         'post': post_data,
         'comments': comments,
-        'messages': messages.get_messages(request),  # 메시지 컨텍스트
+        'messages': messages.get_messages(request),
     })
 
 def like_post(request, post_id):
