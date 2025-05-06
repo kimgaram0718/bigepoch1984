@@ -1,24 +1,35 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>차트 페이지</title>
-  <!-- Bootstrap CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons (아이콘용) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <style>
+    @media (max-width: 768px) {
+      .legend-container {
+        position: relative;
+        margin-top: 1rem;
+        text-align: center;
+      }
+    }
+    @media (min-width: 769px) {
+      .legend-container {
+        position: absolute;
+        top: 80px;
+        right: 40px;
+        z-index: 10;
+      }
+    }
+  </style>
 </head>
 <body>
-
-  <!-- 헤더 삽입 -->
   {% include 'main_header.html' %}
 
-  <!-- 본문 감싸는 div 추가 -->
   <div id="app" style="padding-top: 60px;">
     <!-- 국가 증시 요약 -->
     <div class="container my-3">
@@ -34,7 +45,7 @@
         {% endfor %}
       </div>
     </div>
-    
+
     <!-- 실시간 뉴스 -->
     <div class="container my-3">
       <h6 class="fw-bold mb-2">실시간 뉴스</h6>
@@ -44,31 +55,31 @@
         {% endfor %}
       </ul>
     </div>
-
+  
+   
     <!-- 시세 그래프 영역 -->
     <div class="container my-3">
-      <h6 class="fw-bold mb-2">
-        시세 그래프
-        {% if stock_name and ticker %}
-          : {{ stock_name }} ({{ ticker }})
-        {% endif %}
-      </h6>
-      <div class="bg-light rounded-3 p-3">
-        {% if stock_name and ticker and candle_dates and open_prices and high_prices and low_prices and close_prices %}
-          <div id="stock-chart" style="width: 100%; height: 600px;"></div>
-        {% else %}
-          <img src="{% static 'img/sample_chart.png' %}" alt="차트" class="img-fluid rounded">
-        {% endif %}
+      <!-- 종목명 입력창 -->
+      <div class="container my-3">
+        <form method="get" class="mb-3 d-flex gap-2">
+          <input type="text" name="query" value="{{ request.GET.query|default:'삼성전자' }}" placeholder="종목명 또는 코드 입력" class="form-control" style="max-width: 300px;">
+          <button type="submit" class="btn btn-primary">조회</button>
+        </form>
+      </div>
+      <h6 class="fw-bold mb-2">시세 그래프{% if stock_name %} : {{ stock_name }}{% endif %}</h6>
+      <div class="bg-light rounded-3 p-3 position-relative">
+        <div id="stock-chart" style="width: 100%; height: 600px;"></div>
+        <div id="chart-legend" class="legend-container"></div>
       </div>
     </div>
-    
+
     <!-- 급등락 종목 리스트 -->
     <div class="container my-3">
       <h6 class="fw-bold mb-2">급등락 종목 Top 5</h6>
       <ul class="list-group">
         {% for stock in stocks %}
           <li class="list-group-item d-flex justify-content-between">
-            <a href="{% url 'chart:chart_detail' stock_id=stock.id %}" class="text-dark text-decoration-none">{{ stock.name }}</a>
+            <span class="text-dark">{{ stock.name }}</span>
             <span class="{{ stock.status }}">{{ stock.change }}</span>
           </li>
         {% endfor %}
@@ -76,20 +87,17 @@
     </div>
   </div>
 
-  <!-- 푸터 삽입 -->
   {% include 'main_footer.html' %}
 
-  <!-- Bootstrap JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <!-- Plotly JS -->
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-  <!-- Custom JS -->
-  <script src="{% static 'js/chart.js' %}"></script>
-  <!-- Plotly 차트 스크립트 -->
-  {% if stock_name and ticker and candle_dates and open_prices and high_prices and low_prices and close_prices %}
   <script>
+    const allDates = {{ candle_dates|safe }};
+    const futureEnd = '{{ future_date }}';
+    const initialStart = allDates[Math.max(0, allDates.length - 288 * 12)]; // 최근 1년 (5분봉)
+
     const candlestick = {
-      x: {{ candle_dates|safe }},
+      x: allDates,
       open: {{ open_prices|safe }},
       high: {{ high_prices|safe }},
       low: {{ low_prices|safe }},
@@ -100,16 +108,8 @@
       decreasing: { line: { color: 'blue' } }
     };
 
-    const pred_line = {
-      x: {{ pred_dates|safe }},
-      y: {{ pred_prices|safe }},
-      name: '예측',
-      mode: 'lines',
-      line: { dash: 'dot', color: 'gold' }
-    };
-
     const ma5_line = {
-      x: {{ candle_dates|safe }},
+      x: allDates,
       y: {{ ma5|safe }},
       name: '5일 이동평균선',
       mode: 'lines',
@@ -117,7 +117,7 @@
     };
 
     const ma20_line = {
-      x: {{ candle_dates|safe }},
+      x: allDates,
       y: {{ ma20|safe }},
       name: '20일 이동평균선',
       mode: 'lines',
@@ -125,39 +125,54 @@
     };
 
     const layout = {
-      paper_bgcolor: '#0e1117',
-      plot_bgcolor: '#0e1117',
-      font: { color: '#ffffff', family: 'Arial, sans-serif' },
+      paper_bgcolor: '#1e1e1e',
+      plot_bgcolor: '#2c2c2c',
+      font: { color: '#ffffff' },
+      uirevision: 'lock',
       xaxis: {
-        title: { text: '날짜', font: { color: '#ffffff' } },
-        rangeslider: { visible: false },
-        tickcolor: '#ffffff',
+        tickangle: 45,
+        tickformat: '%Y-%m-%d',
+        showgrid: true,
         gridcolor: '#444',
-        tickformat: '%Y-%m-%d'
+        range: [initialStart, futureEnd],
+        autorange: false,
+        fixedrange: false,
+        constrain: 'range',
+        rangeslider: { visible: false },
+        type: 'date'
       },
       yaxis: {
-        title: { text: '가격 (₩)', font: { color: '#ffffff' } },
+        showgrid: true,
         gridcolor: '#444',
-        tickcolor: '#ffffff'
-      },
-      dragmode: 'zoom',
-      hovermode: 'x unified',
-      hoverlabel: {
-        bgcolor: '#222',
-        font: { color: '#fff' }
+        tickformat: ',.0f'
       },
       margin: { t: 50, b: 80 },
+      dragmode: 'pan',
       showlegend: true,
       legend: {
+        orientation: window.innerWidth <= 768 ? 'h' : 'v',
         x: 0,
-        y: 1,
-        font: { color: '#ffffff' },
-        bgcolor: 'rgba(0,0,0,0.5)'
-      }
+        y: 1.15,
+        xanchor: 'left',
+        bgcolor: 'rgba(0,0,0,0)'
+      },
+      hovermode: 'x unified'
     };
 
-    Plotly.newPlot('stock-chart', [candlestick, pred_line, ma5_line, ma20_line], layout);
+    const config = { displaylogo: false, responsive: true };
+
+    Plotly.newPlot('stock-chart', [candlestick, ma5_line, ma20_line], layout, config);
+
+    // 미래 영역으로 드래그 방지
+    const upperBound = new Date(futureEnd);
+    document.getElementById('stock-chart').on('plotly_relayout', function(event) {
+      const newRange = event['xaxis.range[1]'];
+      if (newRange && new Date(newRange) > upperBound) {
+        Plotly.relayout('stock-chart', {
+          'xaxis.range[1]': futureEnd
+        });
+      }
+    });
   </script>
-  {% endif %}
 </body>
 </html>

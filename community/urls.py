@@ -7,6 +7,8 @@ urlpatterns = [
     path('', views.community_view, name='community'),
     path('write/', views.write_view, name='write'),
     path('<int:post_id>/', views.community_detail_view, name='detail'),
-    path('edit/<int:post_id>/', views.edit_view, name='edit'),
-    path('delete/<int:post_id>/', views.delete_view, name='delete'),
+    path('<int:post_id>/comment/', views.comment_create, name='comment_create'),
+    path('<int:post_id>/like/', views.like_post, name='like_post'),
+    path('<int:post_id>/edit/', views.edit_view, name='edit'),
+    path('<int:post_id>/delete/', views.delete_view, name='delete'),
 ]

@@ -5,85 +5,216 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>커뮤니티 페이지</title>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Bootstrap CSS -->
+  <title>커뮤니티</title>
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons (아이콘용) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/community.css' %}">
 </head>
 <body>
-
-  <!-- 헤더 삽입 -->
-  {% include 'main_header.html' %}
-
-  <!-- 본문 감싸는 div 추가 -->
   <div id="app">
-    <!-- 성공 메시지 표시 -->
-    {% if messages %}
-      <div class="container my-3">
-        {% for message in messages %}
-          <div class="alert alert-success" role="alert">
-            {{ message }}
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
+    <!-- 최상단 헤더 -->
+    {% include 'main_header.html' %}
 
-    <!-- 커뮤니티 메뉴 -->
-    <div class="container my-3">
-      <div class="d-flex justify-content-around">
-        {% for menu in community_menus %}
-          <button class="btn btn-outline-secondary btn-sm {% if menu.name == '커뮤니티' %}active{% endif %}">{{ menu.name }}</button>
-        {% endfor %}
-      </div>
-    </div>
+    <!-- 커뮤니티 탭 헤더 -->
+    {% include 'community_header.html' %}
 
-    <!-- 예측 정보 티커 -->
-    <div class="bg-light text-center py-2 my-3 fw-semibold border-top border-bottom d-flex justify-content-between align-items-center px-3">
-      <span>{{ ticker_message }}</span>
-      {% if request.user.is_authenticated %}
-        <a href="{% url 'community:write' %}" class="btn btn-primary btn-sm">
-          <i class="bi bi-pencil-square me-1"></i>글쓰기
+    <div style="height: 55px;"></div> 
+
+    <!-- 업데이트 박스 -->
+    <div id="update-container" class="px-3 pt-3">
+      <div class="d-flex align-items-center justify-content-between bg-light text-decoration-none px-3" style="border-radius: 30px; height: 36px;">
+        <a href="{% url 'community:detail' 1 %}" class="d-flex align-items-center gap-2 flex-grow-1 text-decoration-none">
+          <span class="badge rounded-pill bg-success bg-opacity-10 text-success fw-bold px-2 py-1" style="font-size: 12px;">업데이트</span>
+          <span class="fw-semibold text-dark" style="font-size: 12px;">코박 시세조회 리뉴얼!</span>
         </a>
-      {% endif %}
+        <i class="bi bi-x-lg text-muted" role="button" style="font-size: 16px;" onclick="closeUpdateBox()"></i>
+      </div>
     </div>
 
-    <!-- 게시판 리스트 -->
-    <div class="container my-3">
-      {% for post in posts %}
-        <div class="card mb-3">
-          <div class="card-body">
-            <div class="d-flex align-items-center mb-2">
-              <img src="{% static 'img/netflix_logo.png' %}" class="rounded-circle me-2">
+    <!-- 공지 캐러셀 -->
+    <div class="px-3 mt-3">
+      <div id="noticeCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
+        <div class="carousel-inner rounded-4 bg-light p-3">
+          <div class="carousel-item active">
+            <a href="{% url 'community:detail' 1 %}" class="text-decoration-none text-dark">
               <div>
-                <div class="fw-bold">{{ post.username }}</div>
-                <small class="text-muted">{{ post.category }} · {{ post.time_ago }}</small>
+                <div class="fw-bold mb-1" style="font-size: 14px;">
+                  <i class="bi bi-lightning-fill text-primary me-1"></i> 트럼프 취임 100일 소식
+                </div>
+                <div class="text-muted notice-description">이번 주 애플과 마이크로소프트 등 기업 실적 발표가 예정되어 있습니다.</div>
+              </div>
+            </a>
+          </div>
+          <div class="carousel-item">
+            <a href="{% url 'community:detail' 2 %}" class="text-decoration-none text-dark">
+              <div>
+                <div class="fw-bold mb-1" style="font-size: 14px;">
+                  <i class="bi bi-lightning-fill text-primary me-1"></i> 트럼프와 바이낸스 회동
+                </div>
+                <div class="text-muted notice-description">트럼프 일가의 WLFI 공동 설립자와 자오창펑이 회동하여 암호화폐 채택을 논의했습니다.</div>
+              </div>
+            </a>
+          </div>
+          <div class="carousel-item">
+            <a href="{% url 'community:detail' 3 %}" class="text-decoration-none text-dark">
+              <div>
+                <div class="fw-bold mb-1" style="font-size: 14px;">
+                  <i class="bi bi-lightning-fill text-primary me-1"></i> 리플 갈 이유
+                </div>
+                <div class="text-muted notice-description">리플이 가는 이유는 사장 이름 때문입니다.</div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="carousel-indicators position-static mt-2">
+          <button type="button" data-bs-target="#noticeCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+          <button type="button" data-bs-target="#noticeCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+          <button type="button" data-bs-target="#noticeCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 필터 헤더 -->
+    <div id="filter-header" class="d-flex align-items-center justify-content-end px-3" style="height: 43px; background: #f5f6f8;">
+      <button id="filterButton" class="btn border-0 p-0 m-0" style="background: transparent; font-size: 14px; font-weight: 500; color: #212529;" onclick="openFilterPopup()">
+        {{ period }} {{ sort }} ▼
+      </button>
+    </div>
+
+    <!-- 필터 팝업 -->
+    <div id="filter-popup" onclick="closeFilterPopup()">
+      <div class="filter-box" onclick="event.stopPropagation()">
+        <div class="filter-drag-handle" onclick="closeFilterPopup()"></div>
+        <div class="filter-content">
+          <strong class="d-block mb-3">필터를 선택해주세요.</strong>
+          <div class="section-title">기간</div>
+          <div id="period-options">
+            <div class="filter-option" onclick="selectPeriod('하루')">하루</div>
+            <div class="filter-option" onclick="selectPeriod('일주일')">일주일</div>
+            <div class="filter-option" onclick="selectPeriod('한달')">한달</div>
+            <div class="filter-option" onclick="selectPeriod('반년')">반년</div>
+          </div>
+          <hr class="my-4" />
+          <div class="section-title">정렬</div>
+          <div id="sort-options">
+            <div class="filter-option" onclick="selectSort('최신순')">최신순</div>
+            <div class="filter-option" onclick="selectSort('인기순')">인기순</div>
+            <div class="filter-option" onclick="selectSort('중요순')">중요순</div>
+            <div class="filter-option" onclick="selectSort('걱정순')">걱정순</div>
+          </div>
+        </div>
+        <div class="filter-footer">
+          <button class="btn btn-primary w-100" onclick="confirmFilter()">선택 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 커뮤니티 리스트 -->
+    <div id="community-list" class="community-list">
+      {% for post in posts %}
+        <div class="community-item d-flex p-3 border-bottom">
+          <div class="flex-grow-1 d-flex flex-column">
+            <div class="d-flex align-items-center mb-2">
+              <img src="https://randomuser.me/api/portraits/women/{{ forloop.counter|add:40 }}.jpg" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;">
+              <div>
+                <div class="small">
+                  <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
+                  <span class="badge bg-primary ms-1">운영자</span>
+                </div>
+                <div class="text-muted small">
+                  <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}
+                </div>
               </div>
             </div>
-            <h6 class="card-title">
-              <a href="{% url 'community:detail' post.id %}" class="text-decoration-none text-dark">{{ post.title }}</a>
-            </h6>
-            <p class="card-text small">{{ post.content }}</p>
-            <div class="d-flex justify-content-start gap-4">
-              <span class="text-primary small">👍 {{ post.likes }}</span>
-              <span class="text-secondary small">💬 {{ post.comments }}</span>
+            <div class="mb-2 d-flex">
+              <div class="community-text-area">
+                <a href="{% url 'community:detail' post.id %}" class="title text-decoration-none d-block">{{ post.title }}</a>
+                <div class="content">{{ post.content|truncatechars:100 }}</div>
+              </div>
+              <div class="ms-3 flex-shrink-0">
+                <img src="{% if post.thumbnail %}{{ post.thumbnail }}{% else %}https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400{% endif %}" alt="썸네일" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'community:community' %}?coin=CBK" class="coin-price-badge text-decoration-none d-flex align-items-center gap-1 px-2 py-1 border rounded-pill small">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg" alt="코인" style="width:20px;height:20px;"> CBK
+                  <span class="text-danger">-0.38%</span>
+                </a>
+                <a href="{% url 'community:community' %}?coin=BTC" class="coin-price-badge text-decoration-none d-flex align-items-center gap-1 px-2 py-1 border rounded-pill small">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg" alt="코인" style="width:20px;height:20px;"> BTC
+                  <span class="text-success">+0.41%</span>
+                </a>
+              </div>
+              <div class="d-flex align-items-center gap-4 mt-2">
+                <a href="{% url 'community:detail' post.id %}#comments" class="d-flex align-items-center text-muted text-decoration-none">
+                  <i class="bi bi-emoji-smile"></i> <span class="ms-1">{{ post.likes_count }}</span>
+                </a>
+                <a href="{% url 'community:detail' post.id %}#comments" class="d-flex align-items-center text-muted text-decoration-none">
+                  <i class="bi bi-chat"></i> <span class="ms-1">{{ post.comments_count }}</span>
+                </a>
+                <button onclick="openSharePopup()" class="ms-auto btn p-0 border-0 bg-transparent">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       {% endfor %}
+      <div class="p-3">
+        <a href="{% url 'community:write' %}" class="btn btn-primary w-100">글쓰기</a>
+      </div>
     </div>
+
+    <!-- 공유 팝업 -->
+    <div id="share-popup" class="share-popup" style="display:none;">
+      <div class="share-popup-inner">
+        <div class="share-popup-header">
+          <strong>공유하기</strong>
+          <button type="button" class="btn-close" onclick="closeSharePopup()">✖️</button>
+        </div>
+        <div class="share-popup-body p-3 d-flex flex-wrap justify-content-center gap-4">
+          <a class="share-icon" onclick="goShare('kakao')">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/kakaotalk.svg" alt="카카오톡">
+            <div>카카오톡</div>
+          </a>
+          <a class="share-icon" onclick="goShare('telegram')">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/telegram.svg" alt="텔레그램">
+            <div>텔레그램</div>
+          </a>
+          <a class="share-icon" onclick="goShare('facebook')">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg" alt="페이스북">
+            <div>페이스북</div>
+          </a>
+          <a class="share-icon" onclick="goShare('twitter')">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/twitter.svg" alt="트위터">
+            <div>트위터</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하단 네비게이션 -->
+    {% include 'main_footer.html' %}
+
+    <!-- 스크롤 최상단 이동 버튼 -->
+    <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="
+      position: fixed;
+      bottom: 90px;
+      right: 15px;
+      display: none;
+      z-index: 1000;
+      width: 45px;
+      height: 45px;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    ">
+      <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
+    </button>
   </div>
 
-  <!-- 푸터 삽입 -->
-  {% include 'main_footer.html' %}
-
-  <!-- Bootstrap JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <!-- Custom JS -->
   <script src="{% static 'js/community.js' %}"></script>
 </body>
 </html>
