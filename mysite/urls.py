@@ -28,4 +28,4 @@ urlpatterns = [
     path("predict_info/", include('predict_info.urls', namespace='predict_info')),
     path("community/", include('community.urls', namespace='community')),
     path("mypage/", include('mypage.urls', namespace='mypage')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

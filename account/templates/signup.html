@@ -6,30 +6,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>코박 회원가입</title>
-  <!-- Bootstrap CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/community.css' %}">
 </head>
 <body class="bg-light">
-  <!-- 헤더 삽입 (login.html 및 chart.html 참고) -->
   {% include 'main_header.html' %}
-
-  <!-- 본문 감싸는 div 추가 (login.html 및 chart.html 참고) -->
   <div id="app" style="padding-top: 60px;">
     <div class="container py-4" style="max-width: 400px;">
-      <div class="text-center mb-4">
-        <div class="rounded-circle bg-secondary mx-auto" style="width: 100px; height: 100px;"></div>
-      </div>
-
-      {% if error %}
-      <div class="alert alert-danger" role="alert">{{ error }}</div>
-      {% endif %}
-      <form id="signupForm" method="POST" action="{% url 'account:signup' %}">
+      <form id="signupForm" method="POST" action="{% url 'account:signup' %}" enctype="multipart/form-data">
         {% csrf_token %}
+        <div class="text-center mb-4">
+          <div id="preview" class="rounded-circle bg-secondary mx-auto" style="width: 100px; height: 100px; background-size: cover; background-position: center; background-image: url('{% static 'profile_images/default.jpg' %}');"></div>
+          <label for="profile_image" class="btn btn-outline-secondary mt-2">프로필 사진 선택</label>
+          <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;">
+          <div id="imageError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">이미지 형식이 올바르지 않습니다.</div>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+        {% endif %}
         <div class="mb-3">
           <input type="text" class="form-control" id="login_id" name="login_id" placeholder="아이디" required minlength="4">
           <div id="idError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">아이디는 최소 4자 이상이어야 합니다.</div>
@@ -49,45 +46,50 @@
         <div class="mb-3">
           <input type="email" class="form-control" id="email" name="email" placeholder="이메일" required>
         </div>
-        <!-- 퍼블리셔의 추가 필드 (선택적으로 유지, 필요 시 주석 해제) -->
-        <!--
-        <div class="mb-3">
-          <input type="text" class="form-control" id="name" name="name" placeholder="이름">
-        </div>
-        <div class="mb-3">
-          <input type="date" class="form-control" id="birth_date" name="birth_date" placeholder="생년월일">
-        </div>
-        <div class="mb-3">
-          <input type="tel" class="form-control" id="phone" name="phone" placeholder="전화번호">
-        </div>
-        <div class="mb-3">
-          <input type="text" class="form-control" id="account_number" name="account_number" placeholder="계좌번호">
-        </div>
-        -->
         <button type="submit" id="signupBtn" class="btn btn-primary w-100" disabled>가입하기</button>
       </form>
       <div class="text-center mt-4">
         <p class="text-muted">이미 계정이 있으신가요? <a href="{% url 'account:login' %}" class="text-primary">로그인</a></p>
       </div>
     </div>
-
-    <!-- 하단 네비게이션 (main_footer.html에서 처리) -->
   </div>
-
-  <!-- 푸터 삽입 (login.html 및 chart.html 참고) -->
   {% include 'main_footer.html' %}
 
-  <!-- JavaScript for Form Validation -->
   <script>
     const idInput = document.getElementById('login_id');
     const nicknameInput = document.getElementById('nickname');
     const pwdInput = document.getElementById('pwd');
     const pwdConfirmInput = document.getElementById('pwd_confirm');
+    const profileImageInput = document.getElementById('profile_image');
     const idError = document.getElementById('idError');
     const nicknameError = document.getElementById('nicknameError');
     const pwdError = document.getElementById('pwdError');
     const pwdLengthError = document.getElementById('pwdLengthError');
+    const imageError = document.getElementById('imageError');
     const signupBtn = document.getElementById('signupBtn');
+    const preview = document.getElementById('preview');
+
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        if (!file.type.startsWith('image/')) {
+          imageError.style.display = 'block';
+          profileImageInput.value = '';
+          preview.style.backgroundImage = "url('{% static 'profile_images/default.jpg' %}')";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.style.backgroundImage = `url(${e.target.result})`;
+          imageError.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.backgroundImage = "url('{% static 'profile_images/default.jpg' %}')";
+        imageError.style.display = 'none';
+      }
+      checkForm();
+    }
 
     function checkForm() {
       const id = idInput.value;
@@ -95,19 +97,11 @@
       const pwd = pwdInput.value;
       const pwdConfirm = pwdConfirmInput.value;
 
-      // 아이디 길이 확인
       idError.style.display = id.length < 4 ? 'block' : 'none';
-
-      // 닉네임 길이 확인
       nicknameError.style.display = nickname.length < 2 ? 'block' : 'none';
-
-      // 비밀번호 길이 확인
       pwdLengthError.style.display = pwd.length < 8 ? 'block' : 'none';
-
-      // 비밀번호 일치 확인
       pwdError.style.display = (pwd && pwdConfirm && pwd !== pwdConfirm) ? 'block' : 'none';
 
-      // 모든 조건 충족 시 버튼 활성화
       signupBtn.disabled = !(id.length >= 4 && nickname.length >= 2 && pwd.length >= 8 && pwd === pwdConfirm);
     }
 
@@ -115,9 +109,13 @@
     nicknameInput.addEventListener('input', checkForm);
     pwdInput.addEventListener('input', checkForm);
     pwdConfirmInput.addEventListener('input', checkForm);
-  </script>
+    profileImageInput.addEventListener('change', previewImage);
 
-  <!-- Bootstrap JS -->
+    document.querySelector('label[for="profile_image"]').addEventListener('click', function(e) {
+      e.preventDefault();
+      profileImageInput.click();
+    });
+  </script>
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>
