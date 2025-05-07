@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.conf import settings
 
 class UserManager(BaseUserManager):
     def create_user(self, login_id, email, nickname, password=None, **extra_fields):
@@ -45,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     auth_id = models.CharField(max_length=10, choices=AUTH_CHOICES, default='user')
     nickname = models.CharField(max_length=50, unique=True)
     email = models.EmailField(unique=True)
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True, default='profile_images/default.jpg')
     created_at = models.DateTimeField(auto_now_add=True)  # 생성 시간
     is_active = models.BooleanField(default=True)  # 계정 활성화 여부
     is_staff = models.BooleanField(default=False)  # 관리자 페이지 접근 권한

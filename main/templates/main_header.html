@@ -14,7 +14,7 @@
         {% if request.user.is_authenticated %}
             <i class="bi bi-bell" id="alertIcon" style="font-size: 24px; cursor: pointer;" title="알림"></i>
             <i class="bi bi-person-circle" id="profileIcon" style="font-size: 24px; cursor: pointer; color: #9376e0;" title="프로필"></i>
-            {% else %}
+        {% else %}
             <a href="{% url 'account:login' %}" style="text-decoration: none;">
                 <button type="button" class="btn p-0 m-0" style="background: none; border: none; font-size: 16px; font-weight: 700; color: #1b1e26;">
                     로그인
@@ -28,3 +28,7 @@
     </div>
 </nav>
 
+<body data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+      data-login-url="{% url 'account:login' %}"
+      data-logout-url="{% url 'account:logout' %}"
+      data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}">
