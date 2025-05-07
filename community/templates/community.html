@@ -76,7 +76,10 @@
     </div>
 
     <!-- 필터 헤더 -->
-    <div id="filter-header" class="d-flex align-items-center justify-content-end px-3" style="height: 43px; background: #f5f6f8;">
+    <div id="filter-header" class="d-flex align-items-center justify-content-between px-3" style="height: 43px; background: #f5f6f8;">
+      <a href="{% url 'community:write' %}" class="btn btn-primary rounded-pill px-3 py-1 d-flex align-items-center gap-1" style="font-size: 14px; font-weight: 500;">
+        <i class="bi bi-pencil-fill" style="font-size: 12px;"></i> 글쓰기
+      </a>
       <button id="filterButton" class="btn border-0 p-0 m-0" style="background: transparent; font-size: 14px; font-weight: 500; color: #212529;" onclick="openFilterPopup()">
         {{ period }} {{ sort }} ▼
       </button>
@@ -120,7 +123,7 @@
               <div>
                 <div class="small">
                   <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
-                  <span class="badge bg-primary ms-1">운영자</span>
+                  <span class="badge bg-primary ms-1">{% if user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
                 </div>
                 <div class="text-muted small">
                   <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}
@@ -162,9 +165,6 @@
           </div>
         </div>
       {% endfor %}
-      <div class="p-3">
-        <a href="{% url 'community:write' %}" class="btn btn-primary w-100">글쓰기</a>
-      </div>
     </div>
 
     <!-- 공유 팝업 -->
