@@ -6,6 +6,11 @@ from django.contrib import messages
 from django.db import transaction
 import logging
 
+#add1
+from django.contrib.auth.decorators import login_required
+from account.models import User
+#add2
+
 logger = logging.getLogger(__name__)
 
 def community_view(request):
@@ -100,7 +105,7 @@ def write_view(request):
             title=title,
             content=content,
         )
-        messages.success(request, '게시물이 성공적으로 등록되었습니다.')
+        # messages.success(request, '게시물이 성공적으로 등록되었습니다.')
         return redirect('community:community')
     return render(request, 'community_write.html')
 
@@ -205,7 +210,7 @@ def edit_view(request, post_id):
         post.title = title
         post.content = content
         post.save()
-        messages.success(request, '게시물이 성공적으로 수정되었습니다.')
+        # messages.success(request, '게시물이 성공적으로 수정되었습니다.')
         return redirect('community:detail', post_id=post_id)
     return render(request, 'community_write.html', {
         'title': post.title,
@@ -222,6 +227,42 @@ def delete_view(request, post_id):
     if request.method == 'POST':
         post.is_deleted = True
         post.save()
-        messages.success(request, '게시물이 성공적으로 삭제되었습니다.')
+        # messages.success(request, '게시물이 성공적으로 삭제되었습니다.')
         return redirect('community:community')
     return render(request, 'community_delete.html', {'post': post})
+
+@login_required
+def comment_edit(request, pk):
+    comment = get_object_or_404(FreeBoardComment, pk=pk, is_deleted=False)
+    if request.user != comment.user:
+        messages.error(request, "본인이 작성한 댓글만 수정할 수 있습니다.")
+        return redirect('community:detail', post_id=comment.free_board.id)
+    
+    if request.method == "POST":
+        content = request.POST.get('content')
+        if content:
+            comment.content = content
+            comment.save()
+            messages.success(request, "댓글이 수정되었습니다.")
+            return redirect('community:detail', post_id=comment.free_board.id)
+        else:
+            messages.error(request, "댓글 내용을 입력해 주세요.")
+    
+    return render(request, 'comment_edit.html', {'comment': comment})
+
+@login_required
+def comment_delete(request, pk):
+    comment = get_object_or_404(FreeBoardComment, pk=pk, is_deleted=False)
+    if request.user != comment.user:
+        messages.error(request, "본인이 작성한 댓글만 삭제할 수 있습니다.")
+        return redirect('community:detail', post_id=comment.free_board.id)
+    
+    if request.method == "POST":
+        comment.is_deleted = True
+        comment.free_board.comments_count -= 1
+        comment.free_board.save()
+        comment.save()
+        messages.success(request, "댓글이 삭제되었습니다.")
+        return redirect('community:detail', post_id=comment.free_board.id)
+    
+    return redirect('community:detail', post_id=comment.free_board.id)
