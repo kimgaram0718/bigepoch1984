@@ -119,11 +119,11 @@
         <div class="community-item d-flex p-3 border-bottom">
           <div class="flex-grow-1 d-flex flex-column">
             <div class="d-flex align-items-center mb-2">
-              <img src="https://randomuser.me/api/portraits/women/{{ forloop.counter|add:40 }}.jpg" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;">
+              <img src="{% if post.user.profile_image %}{{ post.user.profile_image.url }}{% else %}{% static 'img/person.png' %}{% endif %}" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
               <div>
                 <div class="small">
                   <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
-                  <span class="badge bg-primary ms-1">{% if user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
+                  <span class="badge bg-primary ms-1">{% if post.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
                 </div>
                 <div class="text-muted small">
                   <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}

@@ -514,3 +514,50 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = writeUrl;
     });
   }
+
+  // 네이버 뉴스 가져오기
+  async function fetchNaverNews() {
+    try {
+        const response = await fetch('/api/news/');
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Error fetching news:', data.error);
+            return;
+        }
+        
+        const newsList = document.getElementById('headline-list');
+        newsList.innerHTML = ''; // 기존 내용 초기화
+        
+        data.news.forEach(news => {
+            const newsItem = document.createElement('li');
+            newsItem.className = 'news-item mb-3';
+            
+            // 날짜 포맷팅
+            const pubDate = new Date(news.pubDate);
+            const formattedDate = `${pubDate.getFullYear()}-${String(pubDate.getMonth() + 1).padStart(2, '0')}-${String(pubDate.getDate()).padStart(2, '0')} ${String(pubDate.getHours()).padStart(2, '0')}:${String(pubDate.getMinutes()).padStart(2, '0')}`;
+            
+            newsItem.innerHTML = `
+                <a href="${news.link}" target="_blank" class="text-decoration-none text-dark">
+                    <div class="d-flex flex-column">
+                        <h6 class="mb-1" style="font-size: 14px; line-height: 1.4;">${news.title}</h6>
+                        <p class="text-muted mb-1" style="font-size: 12px;">${news.description}</p>
+                        <small class="text-muted" style="font-size: 11px;">${formattedDate}</small>
+                    </div>
+                </a>
+            `;
+            
+            newsList.appendChild(newsItem);
+        });
+    } catch (error) {
+        console.error('Error:', error);
+    }
+  }
+
+  // 페이지 로드 시 뉴스 가져오기
+  document.addEventListener('DOMContentLoaded', function() {
+    fetchNaverNews();
+    
+    // 5분마다 뉴스 새로고침
+    setInterval(fetchNaverNews, 5 * 60 * 1000);
+  });

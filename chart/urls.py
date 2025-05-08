@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import chart_view
+from . import views
 
 app_name = 'chart'
 
 urlpatterns = [
-    path('', chart_view, name='chart'),
+    path('', views.chart_view, name='chart'),
+    path('api/realtime-price/', views.get_realtime_price, name='realtime_price'),
 ]
