@@ -103,6 +103,35 @@
                                 <span class="fw-bold text-primary">{% if index.previous_close %}{{ index.previous_close|floatformat:0|intcomma }}원{% else %}-{% endif %}</span>
                             </div>
                         </div>
+                        {% if index.name == '코스피 예측 지수' %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold">코스피 급등 TOP 5</h6>
+                            {% if top5_kospi_gainers %}
+                            <table class="table table-sm table-bordered text-center">
+                                <thead><tr><th>종목명</th><th>등락률(%)</th><th>종가</th></tr></thead>
+                                <tbody>
+                                {% for stock in top5_kospi_gainers %}
+                                    <tr><td>{{ stock.name }}</td><td style="color:#d32f2f;">+{{ stock.change|floatformat:2 }}%</td><td>{{ stock.close|intcomma }}원</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}<div class="data-placeholder">데이터 없음</div>{% endif %}
+                        </div>
+                        {% elif index.name == '코스닥 예측 지수' %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold">코스닥 급등 TOP 5</h6>
+                            {% if top5_kosdaq_gainers %}
+                            <table class="table table-sm table-bordered text-center">
+                                <thead><tr><th>종목명</th><th>등락률(%)</th><th>종가</th></tr></thead>
+                                <tbody>
+                                {% for stock in top5_kosdaq_gainers %}
+                                    <tr><td>{{ stock.name }}</td><td style="color:#d32f2f;">+{{ stock.change|floatformat:2 }}%</td><td>{{ stock.close|intcomma }}원</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}<div class="data-placeholder">데이터 없음</div>{% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 {% else %}
