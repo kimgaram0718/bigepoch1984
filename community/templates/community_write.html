@@ -1,0 +1,79 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if is_edit %}게시글 수정{% else %}게시글 작성{% endif %}</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!-- Bootstrap Icons (아이콘용) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <!-- 퍼블리셔의 인라인 스타일 -->
+  <style>
+    body { background-color: #f8f9fa; }
+    .form-control::placeholder { color: #adb5bd; }
+    .btn-rounded { border-radius: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- 헤더 삽입 -->
+  {% include 'main_header.html' %}
+
+  <nav class="navbar bg-white px-3 py-2 border-bottom">
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="history.back()">←</button>
+    <span class="ms-2 fw-bold">게시글 작성</span>
+  </nav>
+
+  <!-- 본문 감싸는 div 추가 -->
+  <div id="app" style="padding-top: 60px;">
+    <div class="container py-4">
+      <h5 class="mb-3 fw-bold">{% if is_edit %}게시글 수정{% else %}게시글 작성{% endif %}</h5>
+
+      {% if error %}
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% if is_edit %}{% url 'community:edit' post_id %}{% else %}{% url 'community:write' %}{% endif %}">
+        {% csrf_token %}
+        <div class="mb-3">
+          <input type="text" class="form-control" id="title" name="title" placeholder="제목" value="{{ title|default_if_none:'' }}" required>
+        </div>
+        <div class="mb-3">
+          <input type="text" class="form-control" id="tags" name="tags" placeholder="태그">
+        </div>
+        <div class="mb-3">
+          <textarea class="form-control" id="content" name="content" rows="8" placeholder="텍스트 입력" required>{{ content|default_if_none:'' }}</textarea>
+        </div>
+
+        <div class="d-flex gap-2 mb-3">
+          <button type="button" class="btn btn-outline-dark w-50" disabled>메크로방지</button>
+          <input type="text" class="form-control w-50" placeholder="메크로 방지 입력" disabled>
+        </div>
+
+        <div class="d-flex gap-3">
+          <a href="{% if is_edit %}{% url 'community:detail' post_id %}{% else %}{% url 'community:community' %}{% endif %}" class="btn btn-secondary flex-fill btn-rounded">취소</a>
+          <button type="submit" class="btn btn-primary flex-fill btn-rounded">{% if is_edit %}수정{% else %}등록{% endif %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 푸터 삽입 -->
+  {% include 'main_footer.html' %}
+
+  <!-- Bootstrap JS -->
+  <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <!-- Custom JS -->
+  <script src="{% static 'js/community.js' %}"></script>
+</body>
+</html>

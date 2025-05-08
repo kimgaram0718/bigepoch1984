@@ -1,0 +1,6 @@
+{% load static %}
+
+<div class="bg-white d-flex gap-2 p-3 border-bottom">
+  <a href="{% url 'community:community' %}?tab=community" class="btn btn-outline-secondary btn-sm {% if active_tab == 'community' %}active{% endif %}">커뮤니티</a>
+  <a href="{% url 'community:community' %}?tab=news" class="btn btn-outline-secondary btn-sm {% if active_tab == 'news' %}active{% endif %}">뉴스</a>
+</div>

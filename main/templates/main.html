@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigEpoch1984 모바일 홈</title>
+  <!-- Bootstrap CSS -->
+  <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!-- Bootstrap Icons (아이콘용) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/investing.css' %}">
+  <link rel="stylesheet" href="{% static 'css/community.css' %}">
+</head>
+<body
+  data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-login-url="{% url 'account:login' %}"
+  data-logout-url="{% url 'account:logout' %}"
+  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+>
+  {% include 'main_header.html' %}
+
+  <!-- 여기서부터 화면 구성 시작 -->
+  <div id="app">
+    <!-- 김치 프리미엄 / 공포탐욕지수 -->
+    <div class="d-flex justify-content-around align-items-center py-2 bg-white">
+      <div class="text-center">
+        <div class="text-muted" style="font-size: 12px;">김치프리미엄(₩)</div>
+        <div style="font-size: 14px; font-weight: bold; color: #d93025;">1,387,461+(1.10%)</div>
+      </div>
+      <div class="text-center">
+        <div class="text-muted" style="font-size: 12px;">공포탐욕지수</div>
+        <div style="font-size: 14px; font-weight: bold; color: #f9ab00;">47(중립)</div>
+      </div>
+    </div>
+
+    <!-- 메인 배너 감싸는 div 추가 -->
+    <div class="bg-white pb-2 px-3">
+      <div id="mainBannerCarousel" class="carousel slide position-relative" data-bs-ride="carousel" data-bs-interval="3000">
+        <div class="carousel-inner rounded-4 overflow-hidden" id="carousel-inner">
+          <!-- 여기 JavaScript로 배너 채워 넣음 -->
+        </div>
+        <!-- 추가: 숫자 카운트 -->
+        <div id="carousel-count" class="position-absolute bottom-0 end-0 mb-2 me-3 px-2 py-1 bg-dark bg-opacity-50 text-white rounded-3 small" style="font-size: 12px;">
+          1 / 3
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 인기 검색어 -->
+    <div class="position-relative mx-auto my-3" style="width: 90%; max-width: 400px;">
+      <!-- 실시간 Toggle 버튼 -->
+      <div id="realtimeToggle" 
+           class="collapsed-box bg-light rounded-3 d-flex justify-content-between align-items-center px-3 py-2"
+           onclick="toggleRealtime()">
+        <div id="realtimeText" class="text-primary small">실시간 1. 밀크</div>
+        <i id="realtimeArrow" class="bi bi-chevron-down text-secondary"></i>
+      </div>
+
+      <!-- 드롭다운 박스 -->
+      <div id="realtimeDropdown" 
+           class="d-none position-absolute start-50 translate-middle-x rounded-4 bg-white shadow" 
+           style="top: 100%; margin-top: 8px; width: 100%; z-index: 1000;">
+        <div class="p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="m-0 fw-bold">실시간 인기 검색어</h6>
+            <i id="realtimeClose" class="bi bi-x-lg" style="cursor: pointer;"></i>
+          </div>
+          <ul id="realtimeList" class="list-unstyled mb-0">
+            <!-- JavaScript로 리스트 채워짐 -->
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 빅 오리지널 -->
+    <div class="bg-white px-3 py-2 my-3 rounded-3">
+      <h5 class="mb-2" style="font-weight: 700;">BigEpoch1984 Originals</h5>
+      <p class="text-muted" style="font-size: 12px;">BigEpoch1984 오리지널 컨텐츠</p>
+      <div id="originals-list" class="d-flex overflow-auto gap-3 py-2">
+        <!-- 여기 JS로 카드 채움 -->
+      </div>
+    </div>
+
+    <!-- 분리선 -->
+    <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
+
+    <!-- NOW Headlines 섹션 -->
+    <div class="bg-white px-3 py-3 my-3 rounded-3">
+      <h5 class="fw-bold mb-1">NOW Headlines</h5>
+      <p class="text-muted small mb-3">크립토 시장 주요 컨텐츠 몰아보기</p>
+
+      <!-- 탭 및 필터 -->
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="tab-toggle">
+          <span id="btn-view-market" class="tab-btn active">시장 관점</span>
+          <span id="btn-view-curation" class="tab-btn">큐레이션</span>
+          <i class="bi bi-info-circle text-secondary ms-1" style="font-size: 14px;"></i>
+        </div>
+      </div>
+
+      <!-- 최신 / 인기 -->
+      <div id="tab-basic" class="d-flex rounded-2 overflow-hidden border mb-3" style="height: 36px;">
+        <button class="btn btn-sm w-50 bg-white border-end fw-bold" id="btn-latest">최신</button>
+        <button class="btn btn-sm w-50 bg-light text-muted fw-bold" id="btn-popular">인기</button>
+      </div>
+
+      <!-- 상승 / 하락 -->
+      <div id="tab-curation" class="d-none mb-3" style="display: flex; height: 36px; border: 1px solid #dee2e6; border-radius: 6px; overflow: hidden;">
+        <button class="btn btn-sm flex-fill border-end fw-bold" id="btn-rising">상승</button>
+        <button class="btn btn-sm flex-fill fw-bold" id="btn-falling">하락</button>
+      </div>
+
+      <!-- 뉴스 리스트 -->
+      <ul id="headline-list" class="list-unstyled">
+        <!-- JS로 채움 -->
+      </ul>
+    </div>
+
+    <!-- 분리선 -->
+    <hr class="my-1" style="border-color: #dee2e6; border-top: 1px solid #adb5bd;" />
+
+    <!-- 인기/큐레이션 섹션 -->
+    <div class="bg-white px-3 py-3 mt-2 rounded-3">
+      <div class="d-flex align-items-center mb-2">
+        <span id="btn-main-popular" class="fw-bold me-2 cursor-pointer text-dark">인기</span>
+        <span id="btn-main-curation" class="fw-bold text-muted cursor-pointer">큐레이션</span>
+        <i class="bi bi-info-circle text-secondary ms-1" style="font-size: 14px;"></i>
+      </div>
+
+      <!-- 인기 필터 버튼 -->
+      <div id="filter-tabs-1to3" class="btn-filter-group mb-3">
+        <button id="btn-1d" class="bg-white" onclick="renderFilteredList('1d')">1D</button>
+        <button id="btn-7d" class="bg-light text-muted" onclick="renderFilteredList('7d')">7D</button>
+        <button id="btn-1m" class="bg-light text-muted" onclick="renderFilteredList('1m')">1M</button>
+      </div>
+
+      <!-- 큐레이션 필터 버튼 -->
+      <div id="filter-tabs-4to6" class="btn-filter-group d-none mb-3">
+        <button id="btn-heart" class="bg-white" onclick="renderFilteredList('heart')">❤️</button>
+        <button id="btn-shock" class="bg-light text-muted" onclick="renderFilteredList('shock')">😳</button>
+        <button id="btn-sad" class="bg-light text-muted" onclick="renderFilteredList('sad')">😢</button>
+      </div>
+
+      <!-- 리스트 출력 -->
+      <ul id="filtered-list" class="list-unstyled">
+        <!-- JS로 채움 -->
+      </ul>
+    </div>
+
+    <!-- 분리선 -->
+    <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
+
+    <!-- Investing Insight 영역 -->
+    <div class="bg-white px-3 py-3 my-3 rounded-3">
+      <h5 class="fw-bold mb-2">Investing Insight</h5>
+      <p class="text-muted small mb-3">심도있는 코인 분석과 전략적 투자 인사이트</p>
+
+      <!-- 코인정보 리스트 -->
+      <div class="border-top pt-3">
+        <h6 class="fw-bold" style="font-weight: 800; font-size: 16px; margin-bottom: 16px;">코인정보</h6>
+        <ul id="coin-info-list" class="list-unstyled mb-0">
+          <!-- JavaScript로 채워짐 -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- 공지/이벤트 영역 -->
+    <div class="bg-white px-3 py-3 mx-3 rounded-4 border mt-2 mb-3" style="border: 1px solid #dee2e6;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="./community.html" class="fw-bold mb-0 text-dark text-decoration-none" style="font-size: 18px;">공지/이벤트</a>
+        <a href="./community.html" class="fw-bold text-dark text-decoration-none" style="font-size: 20px;">></a>
+      </div>
+
+      <ul id="notice-list" class="list-unstyled mb-0">
+        <!-- JS로 리스트 채워짐 -->
+      </ul>
+    </div>
+
+    <!-- 거래소 바로가기 섹션 -->
+    <div class="exchange-wrapper">
+      <h5 class="fw-bold mb-3">거래소 바로가기</h5>
+      <div id="exchange-list" class="exchange-list">
+        <!-- 여기는 JS로 채워넣음 -->
+      </div>
+    </div>
+
+    <!-- 코인 시세 조회 영역 -->
+    <div class="bg-white px-3 py-3 my-3 rounded-4 border" style="margin: 0 12px; border: 1px solid #dee2e6;">
+      <h5 class="fw-bold mb-3">주식 시세 조회</h5>
+
+      <!-- 검색창 -->
+      <div class="input-group mb-3">
+        <span class="input-group-text bg-light border-0">
+          <i class="bi bi-search"></i>
+        </span>
+        <input type="text" id="coinSearch" class="form-control border-0 bg-light" placeholder="무엇을 검색할까요?">
+      </div>
+
+      <!-- 테이블 헤더 -->
+      <div class="d-flex fw-bold text-muted mb-2 px-2" style="font-size: 14px;">
+        <div class="flex-grow-1">이름</div>
+        <div style="width: 100px; text-align: right;">가격(KRW)</div>
+        <div style="width: 80px; text-align: right;">24시간(%)</div>
+      </div>
+
+      <!-- 코인 리스트 -->
+      <ul id="coin-list" class="list-unstyled mb-0">
+        <!-- JS로 채워넣음 -->
+      </ul>
+
+      <!-- 페이지네이션 버튼 -->
+      <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
+        <button id="prevPage" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 36px; height: 36px;">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button id="nextPage" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 36px; height: 36px;">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- FAQ, 제휴문의, 광고문의 영역 -->
+    <div class="inquiry-wrapper">
+      <a href="faq.html" class="inquiry-item">
+        <div class="inquiry-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="FAQ 아이콘">
+        </div>
+        <div class="inquiry-text">FAQ</div>
+      </a>
+      <div class="inquiry-divider"></div>
+      <a href="partnership.html" class="inquiry-item">
+        <div class="inquiry-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" alt="제휴문의 아이콘">
+        </div>
+        <div class="inquiry-text">제휴 문의</div>
+      </a>
+      <div class="inquiry-divider"></div>
+      <a href="advertising.html" class="inquiry-item">
+        <div class="inquiry-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" alt="광고문의 아이콘">
+        </div>
+        <div class="inquiry-text">광고 문의</div>
+      </a>
+    </div>
+
+    <!-- Investing 환율 박스 -->
+    <div class="investing-box">
+      <div class="investing-header">
+        <a href="https://kr.investing.com/?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Logo" target="_blank">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Investing.com_logo.svg" alt="Investing.com" class="investing-logo">
+        </a>
+        <div class="investing-apps">
+          <a href="https://apps.apple.com/us/app/investing-com-stock-market/id909998122?mt=8" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="App Store" class="app-icon">
+          </a>
+          <a href="https://play.google.com/store/apps/details?id=com.fusionmedia.investing&hl=ko-KR&utm_source=WMT&utm_medium=referrer&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=cobak.co&utm_content=Android%20App" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="app-icon">
+          </a>
+        </div>
+      </div>
+
+      <ul class="investing-list">
+        <li>
+          <a href="https://kr.investing.com/currencies/cny-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+            <span class="currency-name">CNY/KRW</span>
+            <span class="currency-value">197.20</span>
+            <span class="currency-change text-red">+1.09 (+0.56%)</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://kr.investing.com/currencies/eur-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+            <span class="currency-name">EUR/KRW</span>
+            <span class="currency-value">1,633.42</span>
+            <span class="currency-change text-red">+5.45 (+0.33%)</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://kr.investing.com/currencies/jpy-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+            <span class="currency-name">JPY/KRW</span>
+            <span class="currency-value">10.0011</span>
+            <span class="currency-change text-blue">-0.0201 (-0.20%)</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://kr.investing.com/currencies/usd-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+            <span class="currency-name">USD/KRW</span>
+            <span class="currency-value">1,437.36</span>
+            <span class="currency-change text-red">+7.94 (+0.56%)</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 하단 탭바 (네비게이션) -->
+    {% include 'main_footer.html' %}
+
+    <!-- 스크롤 최상단 이동 버튼 -->
+    <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="
+      position: fixed;
+      bottom: 90px;
+      right: 15px;
+      display: none;
+      z-index: 1000;
+      width: 45px;
+      height: 45px;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    ">
+      <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
+    </button>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <!-- Custom JS -->
+  <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
