@@ -337,3 +337,26 @@ body.no-scroll {
 .text-center.mt-5.p-3 button:hover {
   background-color: #0056b3; /* 약간 어두운 파란색 */
 }
+
+/* 뉴스 아이템 스타일 */
+.news-item {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+}
+
+.news-item:last-child {
+    border-bottom: none;
+}
+
+.news-item a:hover {
+    text-decoration: none;
+}
+
+.news-item h6 {
+    color: #333;
+    transition: color 0.2s;
+}
+
+.news-item:hover h6 {
+    color: #007bff;
+}

@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -23,6 +24,51 @@
         top: 80px;
         right: 40px;
         z-index: 10;
+      }
+    }
+    .price-change-up {
+      color: #ff4444;
+    }
+    .price-change-down {
+      color: #4444ff;
+    }
+    .price-change-neutral {
+      color: #888888;
+    }
+    .fiftytwo-section {
+      font-size: 2.6rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #f8fafc 60%, #e0e7ef 100%);
+      border: 2px solid #b6c6e3;
+      border-radius: 1.5rem;
+      box-shadow: 0 4px 16px rgba(80,120,200,0.08);
+      color: #1a237e;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem 0.5rem;
+      letter-spacing: 0.02em;
+    }
+    .fiftytwo-section .label {
+      color: #0d47a1;
+      font-weight: 700;
+      margin: 0 0.5rem;
+    }
+    .fiftytwo-section .value {
+      color: #d32f2f;
+      font-weight: 700;
+      margin: 0 0.5rem;
+    }
+    .pretty-chart-box {
+      background: linear-gradient(120deg, #f5f7fa 60%, #c3cfe2 100%);
+      border: 2px solid #b6c6e3;
+      border-radius: 2rem;
+      box-shadow: 0 6px 24px rgba(80,120,200,0.13);
+      padding: 2.5rem 1.5rem 2rem 1.5rem;
+      margin-bottom: 2rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .pretty-chart-box {
+        padding: 1rem 0.2rem 1rem 0.2rem;
       }
     }
   </style>
@@ -66,10 +112,56 @@
           <button type="submit" class="btn btn-primary">조회</button>
         </form>
       </div>
+
+      <!-- 실시간/전일 종가 표시 -->
+      {% if stock_info %}
+      <div class="bg-white rounded-3 p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-1">{{ stock_info.name }}</h5>
+            <div class="text-muted small">전일 종가: {{ stock_info.previous_close|floatformat:0|intcomma }}원</div>
+          </div>
+          <div class="text-end">
+            <h4 class="mb-1">{{ stock_info.current_price|floatformat:0|intcomma }}원</h4>
+            <div class="{% if stock_info.change > 0 %}price-change-up{% elif stock_info.change < 0 %}price-change-down{% else %}price-change-neutral{% endif %}">
+              {{ stock_info.change|floatformat:0|intcomma }}원 ({{ stock_info.change_percent|floatformat:2 }}%)
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="bg-white rounded-3 p-3 mb-3 text-center text-danger">
+        실시간 시세 정보를 불러올 수 없습니다.
+      </div>
+      {% endif %}
+
       <h6 class="fw-bold mb-2">시세 그래프{% if stock_name %} : {{ stock_name }}{% endif %}</h6>
-      <div class="bg-light rounded-3 p-3 position-relative">
+      <div class="pretty-chart-box position-relative">
         <div id="stock-chart" style="width: 100%; height: 600px;"></div>
         <div id="chart-legend" class="legend-container"></div>
+      </div>
+    </div>
+
+    <!-- 52주 최고/최저가 섹션 -->
+    <div class="container my-3">
+      <div class="fiftytwo-section text-center">
+        <span class="label">최근 52주 최고가:</span>
+        <span class="value">
+        {% if fifty_two_week_high %}
+          {{ fifty_two_week_high|floatformat:0|intcomma }}원
+        {% else %}
+          -
+        {% endif %}
+        </span>
+        &nbsp;|&nbsp;
+        <span class="label">최근 52주 최저가:</span>
+        <span class="value">
+        {% if fifty_two_week_low %}
+          {{ fifty_two_week_low|floatformat:0|intcomma }}원
+        {% else %}
+          -
+        {% endif %}
+        </span>
       </div>
     </div>
 
@@ -92,16 +184,56 @@
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script>
-    const allDates = {{ candle_dates|safe }};
+    // 실시간 가격 업데이트 함수
+    function updateStockPrice() {
+      const symbol = '{{ request.GET.query|default:"삼성전자" }}';
+      fetch(`/chart/api/realtime-price/?symbol=${symbol}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            console.error('Error:', data.error);
+            return;
+          }
+          
+          const priceContainer = document.querySelector('.bg-white.rounded-3.p-3.mb-3');
+          if (priceContainer) {
+            const changeClass = data.change > 0 ? 'price-change-up' : 
+                              data.change < 0 ? 'price-change-down' : 
+                              'price-change-neutral';
+            
+            priceContainer.innerHTML = `
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="mb-1">${data.name}</h5>
+                  <div class="text-muted small">전일 종가: ${data.previous_close.toLocaleString()}원</div>
+                </div>
+                <div class="text-end">
+                  <h4 class="mb-1">${data.current_price.toLocaleString()}원</h4>
+                  <div class="${changeClass}">
+                    ${data.change.toLocaleString()}원 (${data.change_percent.toFixed(2)}%)
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // 10초마다 가격 업데이트
+    setInterval(updateStockPrice, 10000);
+
+    // 기존 차트 코드
+    const allDates = JSON.parse('{{ candle_dates|safe }}');
     const futureEnd = '{{ future_date }}';
     const initialStart = allDates[Math.max(0, allDates.length - 288 * 12)]; // 최근 1년 (5분봉)
 
     const candlestick = {
       x: allDates,
-      open: {{ open_prices|safe }},
-      high: {{ high_prices|safe }},
-      low: {{ low_prices|safe }},
-      close: {{ close_prices|safe }},
+      open: JSON.parse('{{ open_prices|safe }}'),
+      high: JSON.parse('{{ high_prices|safe }}'),
+      low: JSON.parse('{{ low_prices|safe }}'),
+      close: JSON.parse('{{ close_prices|safe }}'),
       type: 'candlestick',
       name: '시세',
       increasing: { line: { color: 'red' } },
@@ -110,7 +242,7 @@
 
     const ma5_line = {
       x: allDates,
-      y: {{ ma5|safe }},
+      y: JSON.parse('{{ ma5|safe }}'),
       name: '5일 이동평균선',
       mode: 'lines',
       line: { color: 'cyan', width: 1 }
@@ -118,7 +250,7 @@
 
     const ma20_line = {
       x: allDates,
-      y: {{ ma20|safe }},
+      y: JSON.parse('{{ ma20|safe }}'),
       name: '20일 이동평균선',
       mode: 'lines',
       line: { color: 'magenta', width: 1 }

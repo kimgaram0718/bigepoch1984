@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "predict_info",
     "community",
     "mypage",
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [

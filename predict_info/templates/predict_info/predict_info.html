@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -76,7 +77,32 @@
                 {% if prediction_indices %}
                     {% for index in prediction_indices %}
                     <div class="col-6">
-                        <div class="bg-light rounded-3 p-3">{{ index.name }}</div>
+                        <div class="bg-light rounded-3 p-3 mb-3" style="font-size:1.2rem; border:2px solid #b6c6e3; box-shadow:0 2px 8px rgba(80,120,200,0.08);">
+                            <div class="fw-bold mb-2" style="font-size:1.3rem; color:#1a237e;">{{ index.name }}</div>
+                            <div>
+                                <span class="me-2">실시간 시가:</span>
+                                <span class="fw-bold text-success">
+                                    {% if index.current_price %}
+                                        {{ index.current_price|floatformat:0|intcomma }}원
+                                        {% if index.percent is not None %}
+                                            (
+                                            {% if index.percent > 0 %}
+                                                <span style="color:#d32f2f; font-weight:bold;">+{{ index.percent|floatformat:2 }}%</span>
+                                            {% elif index.percent < 0 %}
+                                                <span style="color:#1976d2; font-weight:bold;">{{ index.percent|floatformat:2 }}%</span>
+                                            {% else %}
+                                                <span style="color:#888; font-weight:bold;">0.00%</span>
+                                            {% endif %}
+                                            )
+                                        {% endif %}
+                                    {% else %}-{% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="me-2">전일 종가:</span>
+                                <span class="fw-bold text-primary">{% if index.previous_close %}{{ index.previous_close|floatformat:0|intcomma }}원{% else %}-{% endif %}</span>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 {% else %}
