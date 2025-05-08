@@ -1,6 +1,18 @@
 from django.db import models
 from account.models import User
 
+from django.db import models
+
+# ... (기존 다른 모델 정의들) ...
+
+class Disclosure(models.Model):
+    disclosure_type = models.CharField(max_length=50)   # 공시 종류 (예: 정기공시, 주요사항보고 등)
+    date = models.DateField(null=True, blank=True)                          # 공시 날짜 (접수일자)
+    title = models.CharField(max_length=255)           # 공시 제목
+    content = models.TextField()                       # 공시 본문 내용 (텍스트)
+
+    def __str__(self):
+        return f"[{self.disclosure_type}] {self.title}"
 class FreeBoard(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
