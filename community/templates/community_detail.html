@@ -42,6 +42,7 @@
             <a href="{% url 'community:community' %}" class="btn btn-outline-secondary btn-sm me-2">
               <i class="bi bi-arrow-left"></i>
             </a>
+            <img src="{% if post.user.profile_image %}{{ post.user.profile_image.url }}{% else %}{% static 'img/person.png' %}{% endif %}" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
             <div>
               <strong>{{ post.username }}</strong>
               <span class="badge bg-primary ms-1">
@@ -93,6 +94,7 @@
         {% for comment in comments %}
           <div class="comment d-flex justify-content-between align-items-start">
             <div>
+              <img src="{% if comment.user.profile_image %}{{ comment.user.profile_image.url }}{% else %}{% static 'img/person.png' %}{% endif %}" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
               <strong>{{ comment.user.nickname }}</strong>
               <span class="badge bg-primary ms-1">
                 {% if comment.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}

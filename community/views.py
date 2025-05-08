@@ -6,10 +6,8 @@ from django.contrib import messages
 from django.db import transaction
 import logging
 
-#add1
 from django.contrib.auth.decorators import login_required
 from account.models import User
-#add2
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +50,7 @@ def community_view(request):
             is_liked = FreeBoardLike.objects.filter(free_board=post, user=request.user).exists()
         post_list.append({
             'id': post.id,
+            'user': post.user,  # 사용자 객체 추가
             'username': post.user.nickname,
             'auth_id': post.user.auth_id,
             'category': '잡담',
@@ -105,7 +104,6 @@ def write_view(request):
             title=title,
             content=content,
         )
-        # messages.success(request, '게시물이 성공적으로 등록되었습니다.')
         return redirect('community:community')
     return render(request, 'community_write.html')
 
@@ -126,6 +124,7 @@ def community_detail_view(request, post_id):
         is_liked = FreeBoardLike.objects.filter(free_board=post, user=request.user).exists()
     post_data = {
         'id': post.id,
+        'user': post.user,  # 사용자 객체 추가
         'username': post.user.nickname,
         'auth_id': post.user.auth_id,
         'title': post.title,
@@ -210,7 +209,6 @@ def edit_view(request, post_id):
         post.title = title
         post.content = content
         post.save()
-        # messages.success(request, '게시물이 성공적으로 수정되었습니다.')
         return redirect('community:detail', post_id=post_id)
     return render(request, 'community_write.html', {
         'title': post.title,
@@ -227,7 +225,6 @@ def delete_view(request, post_id):
     if request.method == 'POST':
         post.is_deleted = True
         post.save()
-        # messages.success(request, '게시물이 성공적으로 삭제되었습니다.')
         return redirect('community:community')
     return render(request, 'community_delete.html', {'post': post})
 
