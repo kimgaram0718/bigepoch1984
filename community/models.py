@@ -22,7 +22,7 @@ class FreeBoard(models.Model):
         ('잡담', '잡담'),
         ('실시간뉴스', '실시간뉴스'),
         ('수동공시', '수동공시'),
-        ('API공시', 'API공시'), # DART API로부터 자동 등록된 공시
+        ('API공시', 'API공시'),
     ]
     category = models.CharField(
         max_length=20,
@@ -30,7 +30,6 @@ class FreeBoard(models.Model):
         default='잡담',
         db_index=True
     )
-    # API 공시의 경우 원본 DART 접수번호를 저장하여 중복 방지 (선택 사항이지만 권장)
     dart_rcept_no = models.CharField(max_length=14, blank=True, null=True, unique=True, help_text="DART API 공시의 경우 원본 접수번호")
 
     class Meta:
@@ -50,6 +49,9 @@ class FreeBoardComment(models.Model):
     up_dt = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
 
+    class Meta:
+        db_table = 'free_board_comment'
+
     def __str__(self):
         return f'Comment by {self.user} on {self.free_board}'
 
@@ -59,6 +61,7 @@ class FreeBoardLike(models.Model):
     reg_dt = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'free_board_like'
         unique_together = ('free_board', 'user')
 
     def __str__(self):
