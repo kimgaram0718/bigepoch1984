@@ -26,7 +26,7 @@
     <!-- 회원 정보 영역 -->
     <div class="bg-white p-3 d-flex justify-content-between align-items-center border-bottom">
       <div class="d-flex align-items-center gap-3">
-        <img src="{% static 'img/netflix_logo.png' %}" alt="profile" class="rounded-circle">
+        <img src="{% if user.profile_image %}{{ user.profile_image.url }}?t={{ now|date:'U' }}{% else %}{% static 'img/person.jpg' %}{% endif %}" alt="프로필 이미지" id="profileIcon" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;" title="프로필">
         <div>
           <div class="fw-bold">{{ user.nickname }}</div>
           <small class="text-muted">

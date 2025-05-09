@@ -13,6 +13,37 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <style>
+    /* Fade-in 애니메이션 정의 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .title-container {
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .system-title {
+      font-size: 1.2rem; /* 크기를 1.8rem에서 1.2rem으로 줄임 */
+      font-weight: 700;
+      background: linear-gradient(90deg, #1b1e26, #3b5bdb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 1s ease-out;
+      white-space: nowrap; /* 텍스트가 한 줄에 표시되도록 설정 */
+    }
+  </style>
 </head>
 <body class="bg-light">
   <!-- 헤더 삽입 (chart.html 참고) -->
@@ -22,9 +53,9 @@
   <div id="app" style="padding-top: 60px;">
     <div class="container py-5" style="max-width: 400px;">
       <div class="text-center mb-4">
-        <img src="{% static 'img/netflix_logo.png' %}" class="rounded-circle mb-3" alt="profile">
-        <hr>
-        <hr>
+        <div class="title-container">
+          <h1 class="system-title">AI 기반 퀀트 투자 예측 시스템</h1>
+        </div>
         <a href="{% url 'account:signup' %}" class="btn btn-secondary btn-sm">회원가입</a>
       </div>
 

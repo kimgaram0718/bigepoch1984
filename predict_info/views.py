@@ -123,11 +123,37 @@ def get_market_realtime_info(symbol, name):
             'percent': None,
         }
 
+def get_top_gainers(market, top_n=5):
+    today = pd.Timestamp.now().strftime('%Y-%m-%d')
+    try:
+        stock_list = fdr.StockListing(market)
+        codes = stock_list['Code'].tolist()
+        gainers = []
+        for code in codes:
+            try:
+                # 최근 7일치 데이터 조회 (휴일/주말 대비)
+                df = fdr.DataReader(code, pd.to_datetime(today) - pd.Timedelta(days=7), today)
+                if df is not None and len(df) >= 2:
+                    today_close = df['Close'].iloc[-1]
+                    prev_close = df['Close'].iloc[-2]
+                    change = round((today_close - prev_close) / prev_close * 100, 2)
+                    name = stock_list[stock_list['Code'] == code]['Name'].values[0]
+                    gainers.append({'code': code, 'name': name, 'change': change, 'close': int(today_close)})
+            except Exception:
+                continue
+        gainers = sorted(gainers, key=lambda x: x['change'], reverse=True)
+        return gainers[:top_n]
+    except Exception as e:
+        print(f"[ERROR] get_top_gainers({market}): {e}")
+        return []
+
 def predict_info_view(request):
     query = request.GET.get('query', '휴젤')
     print(f"[DEBUG predict_info_view] Received query parameter: '{query}'")
     kospi_info = get_market_realtime_info('^KS11', '코스피')
     kosdaq_info = get_market_realtime_info('^KQ11', '코스닥')
+    top5_kospi_gainers = get_top_gainers('KOSPI', 5)
+    top5_kosdaq_gainers = get_top_gainers('KOSDAQ', 5)
     context = {
         'stock_name_for_display': query, 'ticker': None, 'error_message': None,
         'initial_predictions': None, 'prediction_error': None,
@@ -138,6 +164,8 @@ def predict_info_view(request):
         'prediction_tickers': [{'name': '삼성전자', 'price': '80,000원', 'change': '+1.5%'}, {'name': 'SK하이닉스', 'price': '180,000원', 'change': '-0.8%'}],
         'recommended_stocks': [{'rank': 1, 'name': '추천종목A'}, {'rank': 2, 'name': '추천종목B'}, {'rank': 3, 'name': '추천종목C'}],
         'top_contents': [{'rank': 1, 'title': '오늘의 시장 분석과 내일의 전망', 'link': '#'}, {'rank': 2, 'title': 'AI가 선택한 유망 기술주 TOP 5', 'link': '#'}, {'rank': 3, 'title': '하반기 경제 시나리오별 투자 전략', 'link': '#'}],
+        'top5_kospi_gainers': top5_kospi_gainers,
+        'top5_kosdaq_gainers': top5_kosdaq_gainers,
     }
     stock_code, stock_name = get_stock_code_from_query(query)
     print(f"[DEBUG predict_info_view] Resolved stock_code: {stock_code}, stock_name: {stock_name}")
@@ -260,4 +288,3 @@ def predict_stock_price_ajax(request):
         return JsonResponse({'stock_code': stock_code, 'stock_name': stock_name_from_fdr, 'predictions': predictions_output})
 
     return JsonResponse({'error': '잘못된 요청입니다.'}, status=400)
-

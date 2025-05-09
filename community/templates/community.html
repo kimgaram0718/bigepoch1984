@@ -119,7 +119,7 @@
         <div class="community-item d-flex p-3 border-bottom">
           <div class="flex-grow-1 d-flex flex-column">
             <div class="d-flex align-items-center mb-2">
-              <img src="{% if post.user.profile_image %}{{ post.user.profile_image.url }}{% else %}{% static 'img/person.png' %}{% endif %}" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
+              <img src="{% if post.user.profile_image %}{{ post.user.profile_image.url }}{% else %}{% static 'img/person.jpg' %}{% endif %}" alt="프로필" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
               <div>
                 <div class="small">
                   <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>

@@ -103,16 +103,25 @@
     </div>
   
    
+    <!-- 기간 옵션 선택 UI -->
+    <div class="container mb-2">
+      <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="text" name="query" value="{{ request.GET.query|default:'삼성전자' }}" placeholder="종목명 또는 코드 입력" class="form-control" style="max-width: 200px;">
+        <select name="period" class="form-select" style="max-width: 120px;">
+          <option value="1m" {% if period == '1m' %}selected{% endif %}>1개월</option>
+          <option value="3m" {% if period == '3m' %}selected{% endif %}>3개월</option>
+          <option value="6m" {% if period == '6m' or not period %}selected{% endif %}>6개월</option>
+          <option value="1y" {% if period == '1y' %}selected{% endif %}>1년</option>
+          <option value="3y" {% if period == '3y' %}selected{% endif %}>3년</option>
+          <option value="5y" {% if period == '5y' %}selected{% endif %}>5년</option>
+          <option value="all" {% if period == 'all' %}selected{% endif %}>전체</option>
+        </select>
+        <button type="submit" class="btn btn-primary">기간 조회</button>
+      </form>
+    </div>
+
     <!-- 시세 그래프 영역 -->
     <div class="container my-3">
-      <!-- 종목명 입력창 -->
-      <div class="container my-3">
-        <form method="get" class="mb-3 d-flex gap-2">
-          <input type="text" name="query" value="{{ request.GET.query|default:'삼성전자' }}" placeholder="종목명 또는 코드 입력" class="form-control" style="max-width: 300px;">
-          <button type="submit" class="btn btn-primary">조회</button>
-        </form>
-      </div>
-
       <!-- 실시간/전일 종가 표시 -->
       {% if stock_info %}
       <div class="bg-white rounded-3 p-3 mb-3">
@@ -184,56 +193,22 @@
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script>
-    // 실시간 가격 업데이트 함수
-    function updateStockPrice() {
-      const symbol = '{{ request.GET.query|default:"삼성전자" }}';
-      fetch(`/chart/api/realtime-price/?symbol=${symbol}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            console.error('Error:', data.error);
-            return;
-          }
-          
-          const priceContainer = document.querySelector('.bg-white.rounded-3.p-3.mb-3');
-          if (priceContainer) {
-            const changeClass = data.change > 0 ? 'price-change-up' : 
-                              data.change < 0 ? 'price-change-down' : 
-                              'price-change-neutral';
-            
-            priceContainer.innerHTML = `
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h5 class="mb-1">${data.name}</h5>
-                  <div class="text-muted small">전일 종가: ${data.previous_close.toLocaleString()}원</div>
-                </div>
-                <div class="text-end">
-                  <h4 class="mb-1">${data.current_price.toLocaleString()}원</h4>
-                  <div class="${changeClass}">
-                    ${data.change.toLocaleString()}원 (${data.change_percent.toFixed(2)}%)
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
-    // 10초마다 가격 업데이트
-    setInterval(updateStockPrice, 10000);
-
-    // 기존 차트 코드
+    // 차트 데이터
     const allDates = JSON.parse('{{ candle_dates|safe }}');
-    const futureEnd = '{{ future_date }}';
-    const initialStart = allDates[Math.max(0, allDates.length - 288 * 12)]; // 최근 1년 (5분봉)
+    const openPrices = JSON.parse('{{ open_prices|safe }}');
+    const highPrices = JSON.parse('{{ high_prices|safe }}');
+    const lowPrices = JSON.parse('{{ low_prices|safe }}');
+    const closePrices = JSON.parse('{{ close_prices|safe }}');
+    const ma5 = JSON.parse('{{ ma5|safe }}');
+    const ma20 = JSON.parse('{{ ma20|safe }}');
+    const volume = JSON.parse('{{ volume|default:'[]' }}');
 
     const candlestick = {
       x: allDates,
-      open: JSON.parse('{{ open_prices|safe }}'),
-      high: JSON.parse('{{ high_prices|safe }}'),
-      low: JSON.parse('{{ low_prices|safe }}'),
-      close: JSON.parse('{{ close_prices|safe }}'),
+      open: openPrices,
+      high: highPrices,
+      low: lowPrices,
+      close: closePrices,
       type: 'candlestick',
       name: '시세',
       increasing: { line: { color: 'red' } },
@@ -242,41 +217,51 @@
 
     const ma5_line = {
       x: allDates,
-      y: JSON.parse('{{ ma5|safe }}'),
+      y: ma5,
       name: '5일 이동평균선',
       mode: 'lines',
       line: { color: 'cyan', width: 1 }
     };
 
-    const ma20_line = {
+    const volume_bar = {
       x: allDates,
-      y: JSON.parse('{{ ma20|safe }}'),
-      name: '20일 이동평균선',
-      mode: 'lines',
-      line: { color: 'magenta', width: 1 }
+      y: volume,
+      type: 'bar',
+      name: '거래량',
+      marker: { color: '#bfa800' },
+      yaxis: 'y2',
+      opacity: 0.5
     };
+
+    const data = [candlestick, ma5_line, volume_bar];
 
     const layout = {
       paper_bgcolor: '#1e1e1e',
       plot_bgcolor: '#2c2c2c',
       font: { color: '#ffffff' },
-      uirevision: 'lock',
       xaxis: {
         tickangle: 45,
         tickformat: '%Y-%m-%d',
         showgrid: true,
         gridcolor: '#444',
-        range: [initialStart, futureEnd],
-        autorange: false,
-        fixedrange: false,
-        constrain: 'range',
+        autorange: true,
         rangeslider: { visible: false },
         type: 'date'
       },
       yaxis: {
         showgrid: true,
         gridcolor: '#444',
-        tickformat: ',.0f'
+        tickformat: ',.0f',
+        title: '가격'
+      },
+      yaxis2: {
+        overlaying: 'y',
+        side: 'right',
+        showgrid: false,
+        title: '거래량',
+        color: '#bfa800',
+        tickfont: { color: '#bfa800' },
+        titlefont: { color: '#bfa800' }
       },
       margin: { t: 50, b: 80 },
       dragmode: 'pan',
@@ -293,18 +278,7 @@
 
     const config = { displaylogo: false, responsive: true };
 
-    Plotly.newPlot('stock-chart', [candlestick, ma5_line, ma20_line], layout, config);
-
-    // 미래 영역으로 드래그 방지
-    const upperBound = new Date(futureEnd);
-    document.getElementById('stock-chart').on('plotly_relayout', function(event) {
-      const newRange = event['xaxis.range[1]'];
-      if (newRange && new Date(newRange) > upperBound) {
-        Plotly.relayout('stock-chart', {
-          'xaxis.range[1]': futureEnd
-        });
-      }
-    });
+    Plotly.newPlot('stock-chart', data, layout, config);
   </script>
 </body>
 </html>
