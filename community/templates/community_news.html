@@ -5,68 +5,114 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>뉴스 홈</title>
+  <title>뉴스</title>
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <style>
+    .nav-tab-item { text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem; transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out; cursor: pointer; }
+    .nav-tab-item.active { color: #0066ff !important; font-weight: bold; }
+    .nav-tab-item:not(.active) { color: #6c757d; }
+    .nav-tab-item:hover:not(.active) { color: #495057; }
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+  </style>
 </head>
 <body>
   <div id="app">
-    <!-- 최상단 헤더 -->
     {% include 'main_header.html' %}
-
-    <!-- 커뮤니티 탭 헤더 -->
     {% include 'community_header.html' %}
-
     <div style="height: 55px;"></div> 
-
-    <!-- 공지 캐러셀 -->
     {% include 'community_carousel.html' %}
 
-    <!-- 탭 메뉴 (홈/실시간/인기/거래소공시) -->
-    <div class="bg-white d-flex justify-content-around border-bottom py-2 mt-3">
-      <span class="text-primary fw-bold">홈</span>
-      <a href="{% url 'community:community' %}?tab=news&subtab=realtime" class="text-secondary">실시간</a>
-      <a href="{% url 'community:community' %}?tab=news&subtab=popular" class="text-secondary">인기</a>
-      <a href="{% url 'community:community' %}?tab=news&subtab=disclosure" class="text-secondary">거래소 공시</a>
+    <div class="bg-white d-flex justify-content-around border-bottom py-2 mt-3" id="news-tab-menu">
+      <a href="?tab=news&subtab=realtime" class="nav-tab-item" data-subtab="realtime">실시간 뉴스</a>
+      <a href="?tab=news&subtab=disclosure" class="nav-tab-item" data-subtab="disclosure">거래소 공시</a>
     </div>
 
-    <!-- 뉴스 홈 컨텐츠 -->
-    <div class="container mt-3">
-      <h6 class="fw-bold mb-3">최신 뉴스</h6>
-      <ul class="list-group">
-        <li class="list-group-item">
-          <div class="fw-semibold">비트코인 가격 급등, $70,000 돌파</div>
-          <small class="text-muted">코인데스크 · 2025년 5월 1일</small>
-        </li>
-        <li class="list-group-item">
-          <div class="fw-semibold">이더리움 ETF 승인 소식</div>
-          <small class="text-muted">블룸버그 · 2025년 4월 30일</small>
-        </li>
-      </ul>
+    <div id="news-content-area" class="container mt-3 mb-5 pb-3">
+      <div id="realtime-content-section" class="content-section">
+        {% include 'community_realtime.html' with posts=realtime_posts page_obj=realtime_page_obj %}
+      </div>
+      <div id="disclosure-content-section" class="content-section">
+        {# 테스트를 위해 disclosures_list_test 변수를 전달 #}
+        {% include 'community_disclosure.html' with disclosures_list_for_template=disclosures_list_test %}
+        {# 원래 코드: {% include 'community_disclosure.html' with disclosures=disclosures page_obj=disclosure_page_obj %} #}
+      </div>
     </div>
 
-    <!-- 하단 네비게이션 -->
     {% include 'main_footer.html' %}
-
-    <!-- 스크롤 최상단 이동 버튼 -->
-    <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="
-      position: fixed;
-      bottom: 90px;
-      right: 15px;
-      display: none;
-      z-index: 1000;
-      width: 45px;
-      height: 45px;
-      font-size: 24px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    ">
-      <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
-    </button>
+    <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="position: fixed; bottom: 90px; right: 15px; display: none; z-index: 1000; width: 45px; height: 45px; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"><i class="bi bi-chevron-up" style="font-size: 20px;"></i></button>
   </div>
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/news_realtime.js' %}"></script>
+  <script src="{% static 'js/news_realtime.js' %}"></script> 
+  <script>
+    // (이전 JavaScript 코드와 동일)
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabMenu = document.getElementById('news-tab-menu');
+      const tabLinks = tabMenu.querySelectorAll('.nav-tab-item');
+      const contentSections = {
+        realtime: document.getElementById('realtime-content-section'),
+        disclosure: document.getElementById('disclosure-content-section')
+      };
+
+      function setActiveTab(targetSubtab) {
+        let currentSubtab = targetSubtab;
+        if (!currentSubtab) {
+            const params = new URLSearchParams(window.location.search);
+            currentSubtab = params.get('subtab') || 'realtime'; 
+        }
+        
+        tabLinks.forEach(link => {
+          const subtab = link.dataset.subtab;
+          if (subtab === currentSubtab) {
+            link.classList.add('active');
+            if(contentSections[subtab]) contentSections[subtab].classList.add('active');
+          } else {
+            link.classList.remove('active');
+            if(contentSections[subtab]) contentSections[subtab].classList.remove('active');
+          }
+        });
+      }
+
+      setActiveTab();
+
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function(event) {
+          event.preventDefault(); 
+          const targetSubtab = this.dataset.subtab;
+
+          tabLinks.forEach(tl => tl.classList.remove('active'));
+          Object.values(contentSections).forEach(section => {
+            if(section) section.classList.remove('active');
+          });
+          
+          this.classList.add('active');
+          if(contentSections[targetSubtab]) contentSections[targetSubtab].classList.add('active');
+
+          const url = new URL(window.location);
+          url.searchParams.set('tab', 'news'); 
+          url.searchParams.set('subtab', targetSubtab);
+          history.pushState({}, '', url);
+        });
+      });
+
+      const scrollTopBtn = document.getElementById('scrollTopBtn');
+      if (scrollTopBtn) {
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 200) {
+            scrollTopBtn.style.display = 'block';
+          } else {
+            scrollTopBtn.style.display = 'none';
+          }
+        });
+        scrollTopBtn.addEventListener('click', () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+    });
+  </script>
 </body>
 </html>

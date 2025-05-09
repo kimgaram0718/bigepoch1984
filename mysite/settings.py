@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "community",
     "mypage",
     'django.contrib.humanize',
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [
@@ -186,3 +187,19 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 닫을 시 세션 만료
 AUTH_USER_MODEL = 'account.User'
 FILE_UPLOAD_MAX_MEMORY_SIZE = 26214400  # 25MB
 #add2
+
+# Django APScheduler 설정 (선택 사항, 기본값 사용 가능)
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  # Django Admin에 표시될 날짜/시간 형식
+APSCHEDULER_RUN_NOW_TIMEOUT = 25  # 작업 즉시 실행 시 타임아웃 (초)
+
+# jobs.py에서 사용할 스케줄러 설정 (선택 사항)
+SCHEDULER_CONFIG = {
+    "apscheduler.jobstores.default": {
+        "type": "django" # DjangoJobStore 사용
+    },
+    'apscheduler.executors.default': {
+        'class': 'apscheduler.executors.pool:ThreadPoolExecutor',
+        'max_workers': '1' # 동시에 실행할 최대 작업 수
+    },
+    'apscheduler.timezone': TIME_ZONE, # Django 설정의 TIME_ZONE 사용
+}
