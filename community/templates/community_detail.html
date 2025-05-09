@@ -15,6 +15,11 @@
     .like-btn.liked i {
       color: #ff4d4f;
     }
+    .view-count {
+      margin-left: 15px;
+      font-size: 14px;
+      color: #6c757d;
+    }
   </style>
 </head>
 <body class="bg-light"
@@ -69,7 +74,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
         </div>
         <div class="post-title">{{ post.title }}</div>
         <div class="post-content">{{ post.content|linebreaksbr }}</div>
-        <div class="reaction-bar">
+        <div class="reaction-bar d-flex align-items-center">
           {% if request.user.is_authenticated and request.user.nickname != post.username %}
             <form method="POST" action="{% url 'community:like_post' post.id %}">
               {% csrf_token %}
@@ -80,6 +85,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
           {% else %}
             <div class="reaction-icon"><i class="bi bi-emoji-smile"></i><br>{{ post.likes_count }}</div>
           {% endif %}
+          <span class="view-count">조회: {{ post.view_count }}</span> <!-- 조회수 추가 -->
         </div>
       </div>
 
