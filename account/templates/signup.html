@@ -18,7 +18,7 @@
       <form id="signupForm" method="POST" action="{% url 'account:signup' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="text-center mb-4">
-          <div id="preview" class="rounded-circle bg-secondary mx-auto" style="width: 100px; height: 100px; background-size: cover; background-position: center; background-image: url('{% static 'profile_images/default.jpg' %}');"></div>
+          <div id="preview" class="rounded-circle bg-secondary mx-auto" style="width: 100px; height: 100px; background-size: cover; background-position: center; background-image: url('{% static 'img/person.jpg' %}');"></div>
           <label for="profile_image" class="btn btn-outline-secondary mt-2">프로필 사진 선택</label>
           <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;">
           <div id="imageError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">이미지 형식이 올바르지 않습니다.</div>
@@ -75,7 +75,7 @@
         if (!file.type.startsWith('image/')) {
           imageError.style.display = 'block';
           profileImageInput.value = '';
-          preview.style.backgroundImage = "url('{% static 'profile_images/default.jpg' %}')";
+          preview.style.backgroundImage = "url('{% static 'img/person.jpg' %}')";
           return;
         }
         const reader = new FileReader();
@@ -85,7 +85,7 @@
         };
         reader.readAsDataURL(file);
       } else {
-        preview.style.backgroundImage = "url('{% static 'profile_images/default.jpg' %}')";
+        preview.style.backgroundImage = "url('{% static 'img/person.jpg' %}')";
         imageError.style.display = 'none';
       }
       checkForm();
