@@ -103,7 +103,6 @@ def community_view(request):
         return render(request, 'community_news.html', context)
 
     # 기존 커뮤니티 탭 로직
-    # ... (이하 코드는 이전과 동일하게 유지) ...
     period = request.GET.get('period', '한달')
     sort = request.GET.get('sort', '최신순')
     all_posts_queryset = FreeBoard.objects.filter(is_deleted=False, category='잡담').select_related('user')
@@ -153,7 +152,7 @@ def community_view(request):
     if sort == '최신순':
         processed_post_list.sort(key=lambda x: x['reg_dt'], reverse=True)
     elif sort == '인기순':
-        processed_post_list.sort(key=lambda x: x['likes_count'], reverse=True)
+        processed_post_list.sort(key=lambda x: (-x['view_count'], -x['reg_dt'].timestamp()))  # 조회수 내림차순, 동일 시 reg_dt 내림차순
 
     paginator_community = Paginator(processed_post_list, 10)
     page_number_community = request.GET.get('page', 1)

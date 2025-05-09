@@ -28,4 +28,64 @@
             <i class="bi bi-list" style="font-size: 28px; vertical-align: middle;"></i>
         </button>
     </div>
+
+    <!-- 알림 팝업 -->
+    <div id="notification-popup" style="position: fixed; top: 60px; right: 15px; width: 300px; max-height: 400px; overflow-y: auto; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); z-index: 1002; display: none; animation: slideDown 0.3s ease-in-out;">
+        <div class="notification-header d-flex justify-content-between align-items-center p-2" style="border-bottom: 1px solid #dee2e6; background: #f8f9fa; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+            <strong style="font-size: 16px;">알림</strong>
+            <button class="btn-close" onclick="closeNotificationPopup()" style="font-size: 14px;"></button>
+        </div>
+        <div class="notification-body">
+            <div class="notification-item p-2 border-bottom" style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='{% url 'community:community' %}'">
+                <div><span class="comment-user" style="font-weight: bold; color: #007bff;">유저13</span>님이 작성한 댓글</div>
+                <span class="comment-preview" style="font-size: 14px; color: #495057; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">안녕하세요, 유저1님! 정말 멋진 게시물이네요. 저도 비슷한 경험을...</span>
+                <div class="comment-time" style="font-size: 12px; color: #6c757d; margin-top: 2px;">5분 전</div>
+            </div>
+            <div class="notification-item p-2 border-bottom" style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='{% url 'community:community' %}'">
+                <div><span class="comment-user" style="font-weight: bold; color: #007bff;">유저13</span>님이 작성한 댓글</div>
+                <span class="comment-preview" style="font-size: 14px; color: #495057; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">유저1님의 글에 대해 더 이야기하고 싶어요. 다음에...</span>
+                <div class="comment-time" style="font-size: 12px; color: #6c757d; margin-top: 2px;">1시간 전</div>
+            </div>
+            <div class="notification-item p-2" style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='{% url 'community:community' %}'">
+                <div><span class="comment-user" style="font-weight: bold; color: #007bff;">유저13</span>님이 작성한 댓글</div>
+                <span class="comment-preview" style="font-size: 14px; color: #495057; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">좋은 아이디어예요! 저도 참여하고 싶네요. 더...</span>
+                <div class="comment-time" style="font-size: 12px; color: #6c757d; margin-top: 2px;">2시간 전</div>
+            </div>
+        </div>
+    </div>
 </nav>
+
+<script>
+    // 알림 팝업 토글
+    document.getElementById('alertIcon').addEventListener('click', function() {
+        const popup = document.getElementById('notification-popup');
+        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // 알림 팝업 닫기
+    function closeNotificationPopup() {
+        document.getElementById('notification-popup').style.display = 'none';
+    }
+
+    // 팝업 외부 클릭 시 닫기
+    document.addEventListener('click', function(event) {
+        const popup = document.getElementById('notification-popup');
+        const bellIcon = document.getElementById('alertIcon');
+        if (!popup.contains(event.target) && event.target !== bellIcon) {
+            popup.style.display = 'none';
+        }
+    });
+
+    // 슬라이드 다운 애니메이션
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #notification-popup {
+            animation: slideDown 0.3s ease-in-out;
+        }
+    `;
+    document.head.appendChild(style);
+</script>
