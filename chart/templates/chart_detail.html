@@ -14,7 +14,12 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/community.css' %}">
 </head>
-<body>
+<body
+  data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-login-url="{% url 'account:login' %}"
+  data-logout-url="{% url 'account:logout' %}"
+  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+>
 
   <!-- 헤더 삽입 (chart.html 참고) -->
   {% include 'main_header.html' %}
@@ -76,5 +81,6 @@
 
   <!-- Bootstrap JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

@@ -17,7 +17,12 @@
     }
   </style>
 </head>
-<body class="bg-light">
+<body class="bg-light"
+data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-login-url="{% url 'account:login' %}"
+  data-logout-url="{% url 'account:logout' %}"
+  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+>
   <div id="app">
     {% include 'main_header.html' %}
     {% include 'community_header.html' with active_tab='community' %}
@@ -158,5 +163,6 @@
   </div>
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

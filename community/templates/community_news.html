@@ -39,7 +39,12 @@
     }
   </style>
 </head>
-<body>
+<body
+data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-login-url="{% url 'account:login' %}"
+  data-logout-url="{% url 'account:logout' %}"
+  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+>
   <div id="app">
     {% include 'main_header.html' %}
 
@@ -90,6 +95,7 @@
   </div>
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/script.js' %}"></script>
   {# news_realtime.js는 스크롤 이벤트 등 다른 기능을 포함할 수 있으므로 유지합니다. #}
   {# 이 파일에 탭 전환 로직이 있다면, 아래 JavaScript와 충돌하지 않는지 확인 필요 #}
   <script src="{% static 'js/news_realtime.js' %}"></script> 
