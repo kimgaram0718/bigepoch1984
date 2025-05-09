@@ -22,7 +22,12 @@
     .btn-rounded { border-radius: 16px; }
   </style>
 </head>
-<body>
+<body
+data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-login-url="{% url 'account:login' %}"
+  data-logout-url="{% url 'account:logout' %}"
+  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+>
 
   <!-- 헤더 삽입 -->
   {% include 'main_header.html' %}
@@ -75,5 +80,6 @@
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <!-- Custom JS -->
   <script src="{% static 'js/community.js' %}"></script>
+  <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

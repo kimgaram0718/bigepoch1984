@@ -1,5 +1,6 @@
 {% load static %}
 {% load humanize %}
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -21,7 +22,12 @@
         .data-placeholder { color: #6c757d; font-style: italic; }
     </style>
 </head>
-<body>
+<body
+data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-login-url="{% url 'account:login' %}"
+  data-logout-url="{% url 'account:logout' %}"
+  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+>
     {% include 'main_header.html' %}
 
     <div id="app" style="padding-top: 60px;">
@@ -215,6 +221,7 @@
     {% include 'main_footer.html' %}
 
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/script.js' %}"></script>
     <script>
         const ajaxPredictButton = document.getElementById('ajaxPredictButton');
         const stockQueryInput = document.getElementById('stockQueryInput'); // GET 요청 폼의 입력창

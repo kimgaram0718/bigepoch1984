@@ -4,6 +4,30 @@
   color: #007bff;
 }
 
+/* 닫기 버튼 스타일 */
+#closePanelIcon {
+  font-size: 20px;
+  color: #1b1e26; /* 기존 텍스트 색상과 동일 */
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#closePanelIcon:hover {
+  color: #007bff; /* 호버 시 파란색 */
+}
+
+/* 로그인 패널 내부 패딩 조정 */
+#login-panel-inner {
+  padding-top: 10px; /* X 버튼과의 간격 조정 */
+}
+
+/* 로그인 메뉴 그리드 조정 (항목이 2개로 줄어들었으므로) */
+.login-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 3개에서 2개로 변경 */
+  gap: 10px;
+  padding: 15px;
+}
 /* add2 */
 body {
   background-color: #f5f5f5;
