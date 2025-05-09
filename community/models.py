@@ -11,16 +11,13 @@ class FreeBoard(models.Model):
     content = models.TextField()
     reg_dt = models.DateTimeField(auto_now_add=True)
     up_dt = models.DateTimeField(auto_now=True)
-    
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     view_count = models.PositiveIntegerField(default=0)
-    
     is_deleted = models.BooleanField(default=False)
-    
     CATEGORY_CHOICES = [
         ('잡담', '잡담'),
-        ('실시간뉴스', '실시간뉴스'),
+        ('실시간뉴스', '실시간뉴스'), # 이 카테고리는 이제 NewsArticle 모델로 대체될 수 있음
         ('수동공시', '수동공시'),
         ('API공시', 'API공시'),
     ]
@@ -31,9 +28,6 @@ class FreeBoard(models.Model):
         db_index=True
     )
     dart_rcept_no = models.CharField(max_length=14, blank=True, null=True, unique=True, help_text="DART API 공시의 경우 원본 접수번호")
-
-    class Meta:
-        db_table = 'free_board'
 
     def __str__(self):
         return self.title
@@ -48,10 +42,6 @@ class FreeBoardComment(models.Model):
     reg_dt = models.DateTimeField(auto_now_add=True)
     up_dt = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'free_board_comment'
-
     def __str__(self):
         return f'Comment by {self.user} on {self.free_board}'
 
@@ -59,11 +49,8 @@ class FreeBoardLike(models.Model):
     free_board = models.ForeignKey(FreeBoard, on_delete=models.CASCADE, related_name='likes')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='free_board_likes')
     reg_dt = models.DateTimeField(auto_now_add=True)
-
     class Meta:
-        db_table = 'free_board_like'
         unique_together = ('free_board', 'user')
-
     def __str__(self):
         return f'Like by {self.user} on {self.free_board}'
 
@@ -88,3 +75,20 @@ class DartDisclosure(models.Model):
         verbose_name_plural = "DART 공시 정보 목록"
     def __str__(self):
         return f"[{self.rcept_dt}] {self.corp_name} - {self.report_nm}"
+
+# 네이버 뉴스 기사 저장을 위한 모델
+class NewsArticle(models.Model):
+    title = models.CharField(max_length=255, help_text="뉴스 기사 제목")
+    original_link = models.URLField(max_length=500, unique=True, help_text="뉴스 원문 링크 (중복 방지용)")
+    naver_link = models.URLField(max_length=500, blank=True, null=True, help_text="네이버 뉴스 링크 (API 제공 링크)")
+    description = models.TextField(help_text="뉴스 요약 내용")
+    pub_date = models.DateTimeField(help_text="뉴스 발행 일시")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="DB 저장 시각")
+
+    class Meta:
+        ordering = ['-pub_date'] # 최신 발행일 순으로 정렬
+        verbose_name = "네이버 뉴스 기사"
+        verbose_name_plural = "네이버 뉴스 기사 목록"
+
+    def __str__(self):
+        return self.title

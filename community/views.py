@@ -2,7 +2,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
-from .models import FreeBoard, FreeBoardComment, FreeBoardLike, DartDisclosure
+from .models import FreeBoard, FreeBoardComment, FreeBoardLike, DartDisclosure, NewsArticle # NewsArticle 임포트
 from django.utils import timezone as django_timezone
 from django.contrib import messages
 from django.db import transaction
@@ -18,21 +18,18 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 logger = logging.getLogger(__name__)
 
 def extract_api_disclosure_info(content_str):
-    company_name = "정보 없음"
-    report_link = "#"
+    company_name = "정보 없음"; report_link = "#"
     company_match = re.search(r"회사명: (.*?)\n", content_str)
-    if company_match:
-        company_name = company_match.group(1).strip()
+    if company_match: company_name = company_match.group(1).strip()
     link_match = re.search(r"공시 원문 보기: (https?://[^\s]+)", content_str)
-    if link_match:
-        report_link = link_match.group(1).strip()
+    if link_match: report_link = link_match.group(1).strip()
     return company_name, report_link
 
 def community_view(request):
-    print(f"\n--- [VIEWS.PY DEBUG] community_view 함수 호출됨 ---")
+    # print(f"\n--- [VIEWS.PY DEBUG] community_view 함수 호출됨 ---") # 디버깅용
     tab = request.GET.get('tab', 'community')
     subtab = request.GET.get('subtab', '') 
-    print(f"--- [VIEWS.PY DEBUG] 요청 파라미터: tab='{tab}', subtab='{subtab}' ---")
+    # print(f"--- [VIEWS.PY DEBUG] 요청 파라미터: tab='{tab}', subtab='{subtab}' ---") # 디버깅용
 
     context = {
         'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
@@ -41,42 +38,44 @@ def community_view(request):
     }
 
     if tab == 'news':
-        print(f"--- [VIEWS.PY DEBUG] 뉴스 탭 처리 시작 (URL subtab: '{subtab}') ---")
-        current_page_num_realtime = request.GET.get('page', 1) if (subtab == 'realtime' or not subtab) else 1
-        current_page_num_disclosure = request.GET.get('page', 1) if subtab == 'disclosure' else 1
+        # print(f"--- [VIEWS.PY DEBUG] 뉴스 탭 처리 시작 (URL subtab: '{subtab}') ---") # 디버깅용
         
-        # 1. 실시간 뉴스 데이터 항상 준비
-        print("--- [VIEWS.PY DEBUG] '실시간 뉴스' 데이터 준비 중 ---")
-        realtime_list = FreeBoard.objects.filter(
-            is_deleted=False, 
-            category='실시간뉴스'
-        ).select_related('user').order_by('-reg_dt')
-        paginator_realtime = Paginator(realtime_list, 10)
+        # URL의 'page' 파라미터는 현재 활성화된 subtab에만 적용됩니다.
+        # 다른 subtab은 기본적으로 1페이지를 로드합니다.
+        page_param_from_url = request.GET.get('page', '1')
         try:
-            realtime_page_obj = paginator_realtime.page(current_page_num_realtime)
+            current_page_for_active_tab = int(page_param_from_url)
+        except ValueError:
+            current_page_for_active_tab = 1
+
+        url_active_subtab = subtab if subtab else 'realtime' # URL 기준으로 활성화된 서브탭
+
+        # 1. 실시간 뉴스 데이터 항상 준비
+        # print("--- [VIEWS.PY DEBUG] '실시간 뉴스' 데이터 준비 중 ---") # 디버깅용
+        news_article_list = NewsArticle.objects.all().order_by('-pub_date')
+        paginator_realtime = Paginator(news_article_list, 10)
+        # '실시간 뉴스' 탭이 URL에서 활성화된 경우 해당 페이지 번호 사용, 아니면 1페이지
+        page_num_for_realtime = current_page_for_active_tab if url_active_subtab == 'realtime' else 1
+        try:
+            realtime_page_obj = paginator_realtime.page(page_num_for_realtime)
         except (EmptyPage, PageNotAnInteger):
             realtime_page_obj = paginator_realtime.page(1)
-        print(f"--- [VIEWS.PY DEBUG] '실시간 뉴스' Page 객체: {realtime_page_obj}, 항목 수: {len(realtime_page_obj.object_list) if realtime_page_obj else 0} ---")
+        # print(f"--- [VIEWS.PY DEBUG] '실시간 뉴스' Page 객체: {realtime_page_obj}, 항목 수: {len(realtime_page_obj.object_list) if realtime_page_obj else 0} (요청 페이지: {page_num_for_realtime}) ---") # 디버깅용
 
         # 2. 거래소 공시 데이터 항상 준비
-        print("--- [VIEWS.PY DEBUG] '거래소 공시' 데이터 준비 중 ---")
+        # print("--- [VIEWS.PY DEBUG] '거래소 공시' 데이터 준비 중 ---") # 디버깅용
         disclosure_posts_qs = FreeBoard.objects.filter(
             Q(category='API공시') | Q(category='수동공시'),
             is_deleted=False
         ).select_related('user').order_by('-reg_dt')
         
-        print(f"--- [VIEWS.PY DEBUG] '거래소 공시' FreeBoard QuerySet 결과 수: {disclosure_posts_qs.count()} ---")
-        
         processed_disclosure_list = []
         for post in disclosure_posts_qs:
             item_data = {
-                'obj': post, 
-                'display_title': post.title,
+                'obj': post, 'display_title': post.title,
                 'display_company_name': post.user.nickname if hasattr(post.user, 'nickname') and post.user.nickname else post.user.get_username(),
-                'display_date': post.reg_dt,
-                'display_category': post.get_category_display(),
-                'link': post.get_absolute_url(), 
-                'is_api': False
+                'display_date': post.reg_dt, 'display_category': post.get_category_display(),
+                'link': post.get_absolute_url(), 'is_api': False
             }
             if post.category == 'API공시':
                 company_name, report_link = extract_api_disclosure_info(post.content)
@@ -86,17 +85,14 @@ def community_view(request):
             processed_disclosure_list.append(item_data)
 
         paginator_disclosure = Paginator(processed_disclosure_list, 10) 
+        # '거래소 공시' 탭이 URL에서 활성화된 경우 해당 페이지 번호 사용, 아니면 1페이지
+        page_num_for_disclosure = current_page_for_active_tab if url_active_subtab == 'disclosure' else 1
         try:
-            disclosure_page_obj_final = paginator_disclosure.page(current_page_num_disclosure) 
+            disclosure_page_obj_final = paginator_disclosure.page(page_num_for_disclosure) 
         except (EmptyPage, PageNotAnInteger):
             disclosure_page_obj_final = paginator_disclosure.page(1)
         
-        print(f"--- [VIEWS.PY DEBUG] '거래소 공시' Page 객체 (가공된 리스트 기반): {disclosure_page_obj_final}")
-        if disclosure_page_obj_final:
-             print(f"--- [VIEWS.PY DEBUG] '거래소 공시' Page 객체 목록 수: {len(disclosure_page_obj_final.object_list)}")
-             if disclosure_page_obj_final.object_list:
-                 first_item_processed = disclosure_page_obj_final.object_list[0]
-                 print(f"--- [VIEWS.PY DEBUG] 첫 번째 공시 게시글 (가공됨) 제목: {first_item_processed['display_title']}, 회사: {first_item_processed['display_company_name']}, 링크: {first_item_processed['link']} ---")
+        # print(f"--- [VIEWS.PY DEBUG] '거래소 공시' Page 객체: {disclosure_page_obj_final}, 항목 수: {len(disclosure_page_obj_final.object_list) if disclosure_page_obj_final else 0} (요청 페이지: {page_num_for_disclosure}) ---") # 디버깅용
         
         context.update({
             'realtime_posts': realtime_page_obj, 
@@ -104,7 +100,7 @@ def community_view(request):
             'disclosures': disclosure_page_obj_final, 
             'disclosure_page_obj': disclosure_page_obj_final, 
         })
-        print(f"--- [VIEWS.PY DEBUG] community_news.html 렌더링 준비 완료. Context 'disclosures' 항목 수: {len(context['disclosures'].object_list) if context.get('disclosures') and hasattr(context['disclosures'], 'object_list') else 0} ---")
+        # print(f"--- [VIEWS.PY DEBUG] community_news.html 렌더링 준비 완료. Context 'realtime_posts' 항목 수: {len(context['realtime_posts'].object_list)}, Context 'disclosures' 항목 수: {len(context['disclosures'].object_list)} ---") # 디버깅용
         return render(request, 'community_news.html', context)
 
     # 기존 커뮤니티 탭 로직
@@ -174,10 +170,10 @@ def community_view(request):
         'period': period,
         'sort': sort,
     })
-    # print("--- [DEBUG] community.html 렌더링 시도 ---")
+    # print("--- [DEBUG] community.html 렌더링 시도 ---") # 디버깅용
     return render(request, 'community.html', context)
 
-# write_view, community_detail_view 등 나머지 뷰 함수는 이전과 동일하게 유지
+# write_view, community_detail_view 등 나머지 뷰 함수는 이전 버전과 동일하게 유지
 def write_view(request):
     if not request.user.is_authenticated:
         next_url = request.path
@@ -202,18 +198,19 @@ def write_view(request):
         
         post_category = '잡담' 
         if board_type == 'realtime_news':
-            post_category = '실시간뉴스'
+            messages.info(request, "실시간 뉴스는 자동 수집됩니다. 직접 작성 기능은 현재 비활성화되어 있습니다.")
+            return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
         elif board_type == 'disclosure_manual':
             post_category = '수동공시'
 
-        new_post = FreeBoard.objects.create(
-            user=request.user,
-            title=title,
-            content=content,
-            category=post_category 
-        )
-        
-        messages.success(request, '게시물이 성공적으로 등록되었습니다.')
+        if board_type != 'realtime_news': 
+            new_post = FreeBoard.objects.create(
+                user=request.user,
+                title=title,
+                content=content,
+                category=post_category 
+            )
+            messages.success(request, '게시물이 성공적으로 등록되었습니다.')
         
         if board_type == 'realtime_news':
             return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
