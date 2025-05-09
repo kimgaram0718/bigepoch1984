@@ -14,6 +14,7 @@ from .utils import calculate_manual_features # predict_info/utils.py 가정
 import re
 import traceback
 import holidays # 공휴일 처리
+import yfinance as yf
 
 # --- 모델 및 스케일러 경로 설정 ---
 APP_DIR = os.path.dirname(os.path.abspath(__file__)) # predict_info 앱 폴더
@@ -95,13 +96,45 @@ def get_future_trading_dates(start_date, num_days, country='KR'):
         future_dates.append(current_date.date())
     return future_dates
 
+def get_market_realtime_info(symbol, name):
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        current = info.get('regularMarketPrice')
+        prev = info.get('regularMarketPreviousClose')
+        percent = None
+        if current is not None and prev:
+            try:
+                percent = round((current - prev) / prev * 100, 2)
+            except Exception:
+                percent = None
+        return {
+            'name': name,
+            'current_price': current,
+            'previous_close': prev,
+            'percent': percent,
+        }
+    except Exception as e:
+        print(f"[ERROR] get_market_realtime_info: {name} {symbol} {e}")
+        return {
+            'name': name,
+            'current_price': None,
+            'previous_close': None,
+            'percent': None,
+        }
+
 def predict_info_view(request):
     query = request.GET.get('query', '휴젤')
     print(f"[DEBUG predict_info_view] Received query parameter: '{query}'")
+    kospi_info = get_market_realtime_info('^KS11', '코스피')
+    kosdaq_info = get_market_realtime_info('^KQ11', '코스닥')
     context = {
         'stock_name_for_display': query, 'ticker': None, 'error_message': None,
         'initial_predictions': None, 'prediction_error': None,
-        'prediction_indices': [{'name': '코스피 예측 지수'}, {'name': '코스닥 예측 지수'}],
+        'prediction_indices': [
+            {'name': f"코스피 예측 지수", 'current_price': kospi_info['current_price'], 'previous_close': kospi_info['previous_close']},
+            {'name': f"코스닥 예측 지수", 'current_price': kosdaq_info['current_price'], 'previous_close': kosdaq_info['previous_close']},
+        ],
         'prediction_tickers': [{'name': '삼성전자', 'price': '80,000원', 'change': '+1.5%'}, {'name': 'SK하이닉스', 'price': '180,000원', 'change': '-0.8%'}],
         'recommended_stocks': [{'rank': 1, 'name': '추천종목A'}, {'rank': 2, 'name': '추천종목B'}, {'rank': 3, 'name': '추천종목C'}],
         'top_contents': [{'rank': 1, 'title': '오늘의 시장 분석과 내일의 전망', 'link': '#'}, {'rank': 2, 'title': 'AI가 선택한 유망 기술주 TOP 5', 'link': '#'}, {'rank': 3, 'title': '하반기 경제 시나리오별 투자 전략', 'link': '#'}],
