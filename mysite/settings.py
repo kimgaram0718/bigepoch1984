@@ -187,7 +187,9 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 닫을 시 세션 만료
 AUTH_USER_MODEL = 'account.User'
 FILE_UPLOAD_MAX_MEMORY_SIZE = 26214400  # 25MB
 #add2
-
+# 네이버
+NAVER_NEWS_API_CLIENT_ID = "OCRZok3QLNl9VF2e0Uo_" # 제공해주신 ID
+NAVER_NEWS_API_CLIENT_SECRET = "djBL9xrZIM"    # 제공해주신 Secret
 # Django APScheduler 설정 (선택 사항, 기본값 사용 가능)
 APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  # Django Admin에 표시될 날짜/시간 형식
 APSCHEDULER_RUN_NOW_TIMEOUT = 25  # 작업 즉시 실행 시 타임아웃 (초)
