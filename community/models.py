@@ -33,6 +33,8 @@ class FreeBoard(models.Model):
     # API 공시의 경우 원본 DART 접수번호를 저장하여 중복 방지 (선택 사항이지만 권장)
     dart_rcept_no = models.CharField(max_length=14, blank=True, null=True, unique=True, help_text="DART API 공시의 경우 원본 접수번호")
 
+    class Meta:
+        db_table = 'free_board'
 
     def __str__(self):
         return self.title
