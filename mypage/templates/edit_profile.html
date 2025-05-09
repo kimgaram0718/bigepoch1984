@@ -22,14 +22,6 @@
           <i class="bi bi-arrow-left" style="font-size: 14px;"></i> 뒤로
         </a>
       </div>
-      
-      <div class="text-center mb-4">
-        <div id="preview" class="rounded-circle bg-secondary mx-auto" style="width: 100px; height: 100px; background-size: cover; background-position: center; background-image: url('{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'profile_images/default.jpg' %}{% endif %}');"></div>
-        <label for="profile_image" class="btn btn-outline-primary mt-2">프로필 사진 변경</label>
-        <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;" onchange="previewImage(event)">
-        <div id="imageError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">이미지 형식이 올바르지 않습니다.</div>
-        <div id="uploadDebug" style="font-size: 12px; margin-top: 5px; color: blue; display: none;">File selected: <span id="fileName"></span></div>
-      </div>
 
       {% if messages %}
         <div class="mb-3">
@@ -43,6 +35,14 @@
 
       <form method="POST" action="{% url 'mypage:edit_profile' %}" id="editProfileForm" enctype="multipart/form-data">
         {% csrf_token %}
+        <div class="text-center mb-4">
+          <div id="preview" class="rounded-circle bg-secondary mx-auto" style="width: 100px; height: 100px; background-size: cover; background-position: center; background-image: url('{% if user.profile_image %}{{ user.profile_image.url }}?t={{ now|date:'U' }}{% else %}{% static 'img/person.jpg' %}{% endif %}');"></div>
+          <label for="profile_image" class="btn btn-outline-primary mt-2">프로필 사진 변경</label>
+          <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;">
+          <div id="imageError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">이미지 형식이 올바르지 않습니다.</div>
+          <div id="uploadDebug" style="font-size: 12px; margin-top: 5px; color: blue; display: none;">File selected: <span id="fileName"></span></div>
+        </div>
+
         <div class="mb-3">
           <label for="username" class="form-label">아이디</label>
           <input type="text" class="form-control" id="username" name="username" value="{{ user.login_id }}" readonly>
@@ -54,14 +54,17 @@
         <div class="mb-3">
           <label for="nickname" class="form-label">닉네임</label>
           <input type="text" class="form-control" id="nickname" name="nickname" value="{{ user.nickname }}" placeholder="닉네임" required minlength="2">
+          <div id="nicknameError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">닉네임은 최소 2자 이상이어야 합니다.</div>
         </div>
         <div class="mb-3">
           <label for="password" class="form-label">비밀번호</label>
           <input type="password" class="form-control" id="password" name="password" placeholder="비밀번호 (8자 이상)">
+          <div id="pwdLengthError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">비밀번호는 최소 8자 이상이어야 합니다.</div>
         </div>
         <div class="mb-3">
           <label for="password_confirm" class="form-label">비밀번호 확인</label>
           <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="비밀번호 확인">
+          <div id="pwdError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">비밀번호가 일치하지 않습니다.</div>
         </div>
 
         <div class="d-grid">
@@ -85,11 +88,19 @@
     const preview = document.getElementById('preview');
     const uploadDebug = document.getElementById('uploadDebug');
     const fileNameSpan = document.getElementById('fileName');
+    const nicknameError = document.getElementById('nicknameError');
+    const pwdLengthError = document.getElementById('pwdLengthError');
+    const pwdError = document.getElementById('pwdError');
+    let hasFile = false;
 
     function checkForm() {
       const nickname = nicknameInput.value;
       const pwd = pwdInput.value;
       const pwdConfirm = pwdConfirmInput.value;
+
+      nicknameError.style.display = nickname.length < 2 ? 'block' : 'none';
+      pwdLengthError.style.display = pwd && pwd.length < 8 ? 'block' : 'none';
+      pwdError.style.display = (pwd && pwdConfirm && pwd !== pwdConfirm) ? 'block' : 'none';
 
       const isPasswordValid = !pwd || (pwd.length >= 8 && pwd === pwdConfirm);
       updateBtn.disabled = !(nickname.length >= 2 && isPasswordValid);
@@ -98,25 +109,29 @@
     function previewImage(event) {
       const file = event.target.files[0];
       if (file) {
+        console.log("Selected file:", file); // 디버깅 로그 추가
         if (!file.type.startsWith('image/')) {
           imageError.style.display = 'block';
           profileImageInput.value = '';
-          preview.style.backgroundImage = "url('{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'profile_images/default.jpg' %}{% endif %}')";
+          preview.style.backgroundImage = "url('{% if user.profile_image %}{{ user.profile_image.url }}?t={{ now|date:'U' }}{% else %}{% static 'img/person.jpg' %}{% endif %}')";
           uploadDebug.style.display = 'none';
+          hasFile = false;
           return;
         }
         const reader = new FileReader();
         reader.onload = function(e) {
           preview.style.backgroundImage = `url(${e.target.result})`;
           imageError.style.display = 'none';
+          uploadDebug.style.display = 'block';
+          fileNameSpan.textContent = file.name;
+          hasFile = true;
         };
         reader.readAsDataURL(file);
-        fileNameSpan.textContent = file.name;
-        uploadDebug.style.display = 'block';
       } else {
-        preview.style.backgroundImage = "url('{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'profile_images/default.jpg' %}{% endif %}')";
+        preview.style.backgroundImage = "url('{% if user.profile_image %}{{ user.profile_image.url }}?t={{ now|date:'U' }}{% else %}{% static 'img/person.jpg' %}{% endif %}')";
         imageError.style.display = 'none';
         uploadDebug.style.display = 'none';
+        hasFile = false;
       }
       checkForm();
     }
@@ -131,6 +146,17 @@
       profileImageInput.click();
     });
 
+    // 폼 제출 시 디버깅
+    document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+      const formData = new FormData(this);
+      console.log("Form data:", Array.from(formData.entries())); // 폼 데이터 디버깅
+      if (!hasFile && !nicknameInput.value && !pwdInput.value) {
+        console.log("No changes detected");
+      }
+    });
+
     // 초기 폼 상태 체크
     checkForm();
   </script>
+</body>
+</html>
