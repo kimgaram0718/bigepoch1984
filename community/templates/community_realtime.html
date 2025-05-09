@@ -1,98 +1,106 @@
 {% load static %}
+{% load humanize %} {# 숫자를 읽기 쉽게 표시하기 위해 (예: 10000 -> 10,000) #}
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>실시간 뉴스</title>
-  <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <link rel="stylesheet" href="{% static 'css/community.css' %}">
-</head>
-<body>
-  <div id="app">
-    <!-- 최상단 헤더 -->
-    {% include 'main_header.html' %}
-
-    <!-- 커뮤니티 탭 헤더 -->
-    {% include 'community_header.html' %}
-
-    <div style="height: 55px;"></div> 
-
-    <!-- 공지 캐러셀 -->
-    {% include 'community_carousel.html' %}
-
-    <!-- 탭 메뉴 (홈/실시간/인기/거래소공시) -->
-    <div class="bg-white d-flex justify-content-around border-bottom py-2 mt-3">
-      <a href="{% url 'community:community' %}?tab=news" class="text-secondary">홈</a>
-      <span class="text-primary fw-bold">실시간</span>
-      <a href="{% url 'community:community' %}?tab=news&subtab=popular" class="text-secondary">인기</a>
-      <a href="{% url 'community:community' %}?tab=news&subtab=disclosure" class="text-secondary">거래소 공시</a>
-    </div>
-
-    <!-- 실시간 뉴스 리스트 -->
-    <div class="container mt-3">
-      <div class="d-flex align-items-center gap-2 mb-2">
-        <button class="btn btn-sm btn-dark rounded-pill">전체</button>
-        <button class="btn btn-sm btn-light rounded-pill">중요뉴스</button>
-      </div>
-
-      <!-- 뉴스 아이템 -->
-      <div class="border-bottom py-2">
-        <div class="d-flex align-items-start gap-2">
-          <div style="min-width: 45px;">
-            <small class="text-muted">15:31</small>
+{# realtime_posts는 이제 Page 객체이므로, object_list로 실제 게시물 목록에 접근 #}
+{% if realtime_posts and realtime_posts.object_list %}
+  <ul class="list-group list-group-flush">
+    {% for post in realtime_posts.object_list %} {# realtime_page_obj.object_list 또는 realtime_posts.object_list #}
+      <li class="list-group-item community-item py-3">
+        {# post.get_absolute_url이 FreeBoard 모델에 정의되어 있다고 가정 #}
+        <a href="{{ post.get_absolute_url|default:'#' }}" class="text-decoration-none">
+          <div class="d-flex w-100 justify-content-between">
+            <h6 class="mb-1 community-title">{{ post.title }}</h6>
+            <small class="text-muted">{{ post.reg_dt|naturaltime }}</small> {# FreeBoard 모델의 reg_dt 필드 사용 가정 #}
           </div>
-          <div class="flex-grow-1">
-            <div class="d-flex gap-2 mb-1">
-              <small class="text-danger">ICE -0.15%</small>
-              <small class="text-success">MOR +0.91%</small>
+          <p class="mb-1 community-content">{{ post.content|truncatewords_html:25 }}</p> {# truncatewords_html 사용 가능 #}
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              <i class="bi bi-person"></i> 
+              {# 사용자 이름 표시 수정: nickname -> get_username (메소드) -> email 순으로 시도 #}
+              {% if post.user.nickname %}
+                {{ post.user.nickname }}
+              {% elif post.user.get_username %}
+                {{ post.user.get_username }}
+              {% elif post.user.email %}
+                {{ post.user.email }}
+              {% else %}
+                사용자
+              {% endif %}
+              <i class="bi bi-eye ms-2"></i> {{ post.view_count|default_if_none:0|intcomma }}
+              <i class="bi bi-hand-thumbs-up ms-2"></i> {{ post.likes_count|default_if_none:0|intcomma }}
+              <i class="bi bi-chat-dots ms-2"></i> {{ post.comments_count|default_if_none:0|intcomma }}
+            </small>
+            {% if post.tags.all %}
+            <div>
+              {% for tag in post.tags.all %}
+                <span class="badge bg-secondary rounded-pill">{{ tag.name }}</span>
+              {% endfor %}
             </div>
-            <div class="fw-semibold mb-1">영국 총리 스타머, 캐나다 선거 승리에 대해 "국제 문제에 대한 당신..."</div>
-            <small class="text-muted">FinancialJuice · 더 읽어보세요</small>
+            {% endif %}
           </div>
-        </div>
-      </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
 
-      <div class="border-bottom py-2">
-        <div class="d-flex align-items-start gap-2">
-          <div style="min-width: 45px;">
-            <small class="text-muted">15:30</small>
-          </div>
-          <div class="flex-grow-1">
-            <div class="d-flex gap-2 mb-1">
-              <small class="text-danger">USDC 0.00%</small>
-              <small class="text-success">JOE +1.38%</small>
-            </div>
-            <div class="fw-semibold mb-1">마스터카드, 스테이블코인 결제 시장 지배할까</div>
-            <small class="text-muted">코인케이프 · 4월 29일 보도</small>
-          </div>
-        </div>
-      </div>
-    </div>
+  {# 페이지네이션 (realtime_page_obj 사용) #}
+  {% if realtime_page_obj and realtime_page_obj.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if realtime_page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?tab=news&subtab=realtime&page={{ realtime_page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">&laquo;</span>
+          </li>
+        {% endif %}
 
-    <!-- 하단 네비게이션 -->
-    {% include 'main_footer.html' %}
+        {% for num in realtime_page_obj.paginator.page_range %}
+          {% if realtime_page_obj.number == num %}
+            <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+          {% elif num > realtime_page_obj.number|add:'-3' and num < realtime_page_obj.number|add:'3' %} {# 현재 페이지 주변 2개씩만 표시 #}
+            <li class="page-item"><a class="page-link" href="?tab=news&subtab=realtime&page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+          {% elif num == realtime_page_obj.number|add:'-3' or num == realtime_page_obj.number|add:'3' %} {# 생략 표시 ... #}
+             {% if num == 1 or num == realtime_page_obj.paginator.num_pages %} {# 첫 페이지나 마지막 페이지는 항상 표시되도록 수정 가능 #}
+                <li class="page-item"><a class="page-link" href="?tab=news&subtab=realtime&page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+             {% elif not forloop.first and not forloop.last %} {# ... 중복 방지 #}
+                {% with prev_num=realtime_page_obj.paginator.page_range|slice:":forloop.counter0"|last %}
+                    {% if prev_num < num|add:"-1" and realtime_page_obj.paginator.page_range|slice:"forloop.counter:"|first > num|add:"1" %}
+                         <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endwith %}
+             {% endif %}
+          {% endif %}
+        {% endfor %}
 
-    <!-- 스크롤 최상단 이동 버튼 -->
-    <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="
-      position: fixed;
-      bottom: 90px;
-      right: 15px;
-      display: none;
-      z-index: 1000;
-      width: 45px;
-      height: 45px;
-      font-size: 24px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    ">
-      <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
-    </button>
+        {% if realtime_page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?tab=news&subtab=realtime&page={{ realtime_page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">&raquo;</span>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+{% else %}
+  <div class="text-center p-5">
+    <i class="bi bi-exclamation-circle-fill fs-1 text-muted mb-3"></i>
+    <p class="text-muted">아직 실시간 게시글이 없습니다.</p>
   </div>
+{% endif %}
 
-  <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/news_realtime.js' %}"></script>
-</body>
-</html>
+<div class="text-end mt-3">
+    <a href="{% url 'community:write' %}?board_type=realtime_news" class="btn btn-primary rounded-pill px-3">
+        <i class="bi bi-pencil-fill me-1"></i> 실시간 뉴스 작성
+    </a>
+</div>

@@ -2,89 +2,188 @@ import requests
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone as django_timezone
+import zipfile
+import io
+from bs4 import BeautifulSoup
+import re
+import logging
+import time
 
-# ↓ User 모델 가져오기
-from django.contrib.auth import get_user_model
-User = get_user_model()
+from community.models import DartDisclosure 
+# from community.models import FreeBoard # FreeBoard에 직접 저장하지 않음
 
-from community.models import Disclosure, FreeBoard
+logger = logging.getLogger(__name__)
+
+LIST_URL = "https://opendart.fss.or.kr/api/list.json"
+DOCUMENT_URL = "https://opendart.fss.or.kr/api/document.xml"
 
 class Command(BaseCommand):
-    help = "DART 공시 데이터를 가져와 Disclosure 및 FreeBoard에 등록합니다."
+    help = "최근 지정된 일수 DART 공시 데이터를 가져와 DartDisclosure에 저장하고, 해당 기간 이전 데이터는 삭제합니다."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--days',
+            type=int,
+            default=1, # 기본값을 1일로 변경
+            help='가져올 최근 공시 기간(일 수)'
+        )
+
+    def _fetch_document_content_util(self, rcept_no, api_key):
+        if not api_key:
+            logger.error("API 키가 없어 본문 내용을 가져올 수 없습니다.")
+            return None
+        params = {'crtfc_key': api_key, 'rcept_no': rcept_no}
+        try:
+            response = requests.get(DOCUMENT_URL, params=params, timeout=60) 
+            response.raise_for_status()
+            with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+                xml_filename = None
+                for name in zf.namelist():
+                    if name.lower().endswith(('.xml', '.xhtml', '.html')):
+                        xml_filename = name
+                        break
+                if xml_filename:
+                    with zf.open(xml_filename) as xml_file:
+                        content_bytes = xml_file.read()
+                        try:
+                            try: content_str = content_bytes.decode('utf-8')
+                            except UnicodeDecodeError: content_str = content_bytes.decode('euc-kr', errors='replace')
+                            soup = BeautifulSoup(content_str, 'lxml') 
+                            for element in soup(["script", "style", "comment", "header", "footer", "nav", "aside"]):
+                                element.decompose()
+                            text_content = soup.get_text(separator='\n', strip=True)
+                            text_content = re.sub(r'\n\s*\n+', '\n', text_content)
+                            text_content = re.sub(r'[ \t]+', ' ', text_content)
+                            return text_content.strip()
+                        except Exception as e:
+                            logger.error(f"본문 내용 디코딩/파싱 오류 (rcept_no: {rcept_no}): {e}")
+                            return None
+                else:
+                    logger.warning(f"ZIP 파일 내 XML/XHTML 파일 없음 (rcept_no: {rcept_no})")
+                    return None
+        except requests.exceptions.Timeout:
+             logger.error(f"DART 공시 문서 API 요청 시간 초과 (rcept_no: {rcept_no})")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"DART 공시 문서 API 요청 실패 (rcept_no: {rcept_no}): {e}")
+        except zipfile.BadZipFile:
+            logger.error(f"잘못된 ZIP 파일 형식 (rcept_no: {rcept_no})")
+        except Exception as e: 
+             logger.error(f"본문 처리 중 예상치 못한 오류 발생 (rcept_no: {rcept_no}): {e}")
+        return None
+
+    def _delete_old_disclosures(self, days_to_keep=1): # 기본값 1일로 변경
+        cutoff_date = django_timezone.now().date() - timedelta(days=days_to_keep)
+        old_disclosures = DartDisclosure.objects.filter(rcept_dt__lt=cutoff_date)
+        count_deleted, _ = old_disclosures.delete()
+        if count_deleted > 0:
+            self.stdout.write(self.style.SUCCESS(f"총 {count_deleted}개의 오래된 공시(접수일 < {cutoff_date})를 삭제했습니다."))
+        else:
+            self.stdout.write(f"삭제할 오래된 공시(접수일 < {cutoff_date})가 없습니다.")
+        return count_deleted
 
     def handle(self, *args, **options):
-        admin_user = User.objects.filter(is_superuser=True).first()
-        if not admin_user:
-            self.stderr.write("슈퍼유저가 없습니다. FreeBoard 글쓰기에 실패합니다.")
+        days_to_fetch = options['days']
+        self.stdout.write(f"[{django_timezone.now().strftime('%Y-%m-%d %H:%M:%S')}] DART 공시 업데이트 시작 (최근 {days_to_fetch}일)...")
+
+        self._delete_old_disclosures(days_to_keep=days_to_fetch)
+
+        api_key = getattr(settings, 'DART_API_KEY', None)
+        if not api_key:
+            self.stderr.write(self.style.ERROR("settings.py에 DART_API_KEY가 설정되지 않았습니다. 작업을 중단합니다."))
             return
-        
-        api_url = "https://opendart.fss.or.kr/api/list.json"
 
-        # 90일 전부터 오늘까지
-        end_date   = datetime.now()
-        start_date = end_date - timedelta(days=90)
-
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_to_fetch)
         params = {
-            'crtfc_key': settings.DART_API_KEY,
-            'corp_code': '005930',                  # ← 여기에 조회할 회사 고유코드 (예: 삼성전자)
-            'bgn_de':    start_date.strftime("%Y%m%d"),
-            'end_de':    end_date.strftime("%Y%m%d"),
-            'page_count': 100,
+            'crtfc_key': api_key,
+            'bgn_de': start_date.strftime("%Y%m%d"),
+            'end_de': end_date.strftime("%Y%m%d"),
+            'page_count': 100, 'page_no': 1,
         }
+        self.stdout.write(f"{start_date.strftime('%Y-%m-%d')}부터 {end_date.strftime('%Y-%m-%d')}까지의 공시를 가져옵니다...")
+        
+        saved_count = 0
+        total_fetched_pages = 0
+        processed_rcept_nos = set(DartDisclosure.objects.values_list('rcept_no', flat=True))
+        self.stdout.write(f"DB에 이미 저장된 공시 수: {len(processed_rcept_nos)}건")
 
-        response = requests.get(api_url, params=params)
-        data     = response.json()
+        try:
+            while True:
+                if total_fetched_pages > 0:
+                    self.stdout.write(f"{params['page_no']-1} 페이지 처리 완료, 다음 페이지 요청 전 0.5초 대기...")
+                    time.sleep(0.5) 
+                try:
+                    self.stdout.write(f"{params['page_no']} 페이지 공시 목록 요청 중...")
+                    response = requests.get(LIST_URL, params=params, timeout=20) 
+                    response.raise_for_status()
+                    data = response.json()
+                except requests.exceptions.Timeout:
+                     self.stderr.write(self.style.ERROR(f"DART 공시 목록 API 요청 시간 초과 (page {params['page_no']})"))
+                     break
+                except requests.exceptions.RequestException as e:
+                    self.stderr.write(self.style.ERROR(f"DART 공시 목록 API 요청 실패 (page {params['page_no']}): {e}"))
+                    break 
+                except ValueError:
+                    self.stderr.write(self.style.ERROR(f"DART 공시 목록 API 응답 JSON 디코딩 실패 (page {params['page_no']})"))
+                    break
 
-        if data.get('status') != '000':  
-            # DART API 응답 status '000'은 성공을 의미:contentReference[oaicite:4]{index=4} 
-            self.stderr.write(f"API 호출 실패: {data.get('message')}")
-            return
+                if data.get('status') != '000':
+                    if data.get('status') == '013':
+                         self.stdout.write(f"페이지 {params['page_no']}에 더 이상 공시가 없습니다 (status: 013).")
+                         break
+                    self.stderr.write(self.style.ERROR(f"DART API 오류 (page {params['page_no']}): {data.get('status')} - {data.get('message')}"))
+                    break
 
-        disclosures = data.get('list', [])  # 공시 목록 데이터 리스트:contentReference[oaicite:5]{index=5}
+                disclosures_list = data.get('list', [])
+                if not disclosures_list:
+                    self.stdout.write(f"페이지 {params['page_no']}에 더 이상 공시가 없습니다 (빈 리스트).")
+                    break
+                
+                total_fetched_pages +=1
+                newly_saved_in_page = 0
 
-        # 3. 가져온 공시 데이터를 모델과 게시판에 저장
-        for item in disclosures:
-            # 공시 종류, 제목, 날짜 등 추출
-            report_name = item.get('report_nm')       # 예: "사업보고서 (2022년도)" 등:contentReference[oaicite:6]{index=6}
-            rcept_date = item.get('rcept_dt')         # 접수일자 (YYYYMMDD 문자열):contentReference[oaicite:7]{index=7}
-            corp_name = item.get('corp_name')         # 회사명
-            # 공시 종류 추출: 보고서명에서 괄호 전에 나오는 공시 유형 부분을 사용
-            # 예: "사업보고서", "주요사항보고서" 등을 추출
-            if report_name is None:
-                continue
-            if '(' in report_name:
-                disclosure_type = report_name.split('(')[0].strip()
-            else:
-                disclosure_type = report_name  # 괄호가 없으면 전체를 유형으로 간주
+                for item_idx, item in enumerate(disclosures_list):
+                    rcept_no = item.get('rcept_no')
+                    if not rcept_no:
+                        logger.warning("접수번호(rcept_no)가 없는 항목이 있어 건너<0xEB><0x8D>니다.")
+                        continue
+                    if rcept_no in processed_rcept_nos:
+                        continue
+                    
+                    self.stdout.write(f"  {params['page_no']}-{item_idx+1}: 새 공시 발견 ({rcept_no}), 본문 가져오기 시도...")
+                    try:
+                        rcept_dt_obj = datetime.strptime(item.get("rcept_dt"), "%Y%m%d").date()
+                        time.sleep(0.2) 
+                        document_content = self._fetch_document_content_util(rcept_no, api_key)
+                        if document_content is None: document_content = "" 
 
-            # 날짜 문자열 -> 날짜 객체 변환 (예: "20230508" -> date(2023,05,08))
-            try:
-                date_obj = None
-                if rcept_date:
-                    date_obj = datetime.datetime.strptime(rcept_date, "%Y%m%d").date()
-            except Exception as e:
-                date_obj = None
+                        DartDisclosure.objects.create(
+                            corp_code=item.get("corp_code"), corp_name=item.get("corp_name"),
+                            stock_code=item.get("stock_code") if item.get("stock_code") else None,
+                            corp_cls=item.get("corp_cls"), report_nm=item.get("report_nm"),
+                            rcept_no=rcept_no, flr_nm=item.get("flr_nm"), rcept_dt=rcept_dt_obj,
+                            rm=item.get("rm") if item.get("rm") else None,
+                            report_link=f"http://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}",
+                            doc_url=f"http://dart.fss.or.kr/report/viewer.do?rcpNo={rcept_no}&dcmNo=TEMP&eleId=TEMP&offset=TEMP&length=TEMP&dtd=TEMP",
+                            document_content=document_content
+                        )
+                        saved_count += 1
+                        newly_saved_in_page += 1
+                        processed_rcept_nos.add(rcept_no)
+                        self.stdout.write(f"    -> 저장 완료: {rcept_no} - {item.get('report_nm')}")
+                    except Exception as e:
+                        logger.error(f"공시 정보 저장 중 오류 발생 (rcept_no: {rcept_no}, report_nm: {item.get('report_nm')}): {e}")
+                        continue
+                
+                self.stdout.write(f"{len(disclosures_list)}건 공시 처리 완료 (페이지 {params['page_no']}). 이번 페이지 신규 저장: {newly_saved_in_page}건, 누적 신규 저장: {saved_count}건")
 
-            # 공시 본문 내용 구성
-            # 실제 공시의 상세 본문은 DART 사이트의 문서를 파싱하거나 별도 API로 받아야 합니다.
-            # 본 예제에서는 DART 공시뷰어 URL을 포함하여 본문을 구성합니다.
-            content_text = f"{corp_name} 공시 \"{report_name}\"의 상세 내용은 DART 사이트를 참고하세요.\n"
-            content_text += f"공시 원문 보기: https://dart.fss.or.kr/dsaf001/main.do?rcpNo={item.get('rcept_no')}"
-
-            # Disclosure 저장
-            disclosure_obj = Disclosure.objects.create(
-                disclosure_type=disclosure_type,
-                date=date_obj,
-                title=report_name,
-                content=content_text
-            )
-
-            # 커뮤니티 게시판에도 글 작성 (user 필수)
-            FreeBoard.objects.create(
-                user    = admin_user,      # ← 여기에 user 인스턴스를 넣습니다
-                title   = report_name,
-                content = content_text
-                # 필요하다면 다른 필드도 지정 (예: category, tags 등)
-            )
-
-        self.stdout.write(self.style.SUCCESS(f"{len(disclosures)}건의 공시를 저장하고 게시판에 등록했습니다."))
+                if params['page_no'] >= data.get('total_page', 1):
+                    self.stdout.write("마지막 페이지까지 처리했습니다.")
+                    break
+                params['page_no'] += 1
+        except KeyboardInterrupt:
+             self.stdout.write(self.style.WARNING("\n사용자에 의해 작업이 중단되었습니다."))
+        finally:
+            self.stdout.write(self.style.SUCCESS(f"총 {total_fetched_pages} 페이지 처리, {saved_count}건의 새로운 공시를 저장했습니다."))
+            self.stdout.write(f"[{django_timezone.now().strftime('%Y-%m-%d %H:%M:%S')}] DART 공시 업데이트 완료.")
