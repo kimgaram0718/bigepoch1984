@@ -1,15 +1,14 @@
-# community/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
-from .models import FreeBoard, FreeBoardComment, FreeBoardLike, DartDisclosure, NewsArticle # NewsArticle 임포트
+from .models import FreeBoard, FreeBoardComment, FreeBoardLike, DartDisclosure, NewsArticle
 from django.utils import timezone as django_timezone
 from django.contrib import messages
 from django.db import transaction
 import logging
 from datetime import datetime, timedelta
 from django.db.models import Q
-import re 
+import re
 
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
@@ -227,6 +226,27 @@ def community_detail_view(request, post_id):
     post = get_object_or_404(FreeBoard.objects.select_related('user'), id=post_id, is_deleted=False)
     comments = FreeBoardComment.objects.filter(free_board=post, is_deleted=False).select_related('user').order_by('reg_dt')
     
+    # 조회수 증가 로직
+    if request.user.is_authenticated:
+        # 인증된 사용자의 경우 세션 체크
+        viewed_posts_key = f'viewed_post_{post_id}'
+        if not request.session.get(viewed_posts_key, False):
+            with transaction.atomic():
+                post.view_count += 1
+                post.save(update_fields=['view_count'])
+                request.session[viewed_posts_key] = True
+                request.session.set_expiry(86400)  # 24시간 동안 유효
+    else:
+        # 비인증 사용자의 경우 IP 기반 체크 (간단한 예시, 실제로는 더 정교한 로직 필요)
+        ip_address = request.META.get('REMOTE_ADDR')
+        viewed_ips_key = f'viewed_ip_{post_id}_{ip_address}'
+        if not request.session.get(viewed_ips_key, False):
+            with transaction.atomic():
+                post.view_count += 1
+                post.save(update_fields=['view_count'])
+                request.session[viewed_ips_key] = True
+                request.session.set_expiry(86400)  # 24시간 동안 유효
+
     time_diff = django_timezone.now() - post.reg_dt
     if time_diff.days > 0: time_ago = f"{time_diff.days}일 전"
     elif time_diff.seconds // 3600 > 0: time_ago = f"{time_diff.seconds // 3600}시간 전"
@@ -253,7 +273,7 @@ def community_detail_view(request, post_id):
         'reg_dt': post.reg_dt,
         'likes_count': post.likes_count,
         'comments_count': post.comments_count,
-        'view_count': getattr(post, 'view_count', 0),
+        'view_count': post.view_count,  # 조회수 추가
         'is_liked': is_liked,
         'is_author': request.user == post.user,
         'category': getattr(post, 'category', '잡담'),

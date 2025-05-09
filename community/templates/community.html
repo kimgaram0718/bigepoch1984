@@ -162,6 +162,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
                 <a href="{% url 'community:detail' post.id %}#comments" class="d-flex align-items-center text-muted text-decoration-none">
                   <i class="bi bi-chat"></i> <span class="ms-1">{{ post.comments_count }}</span>
                 </a>
+                <span class="text-muted small">조회: {{ post.view_count }}</span>  <!-- 조회수 추가 -->
                 <button onclick="openSharePopup()" class="ms-auto btn p-0 border-0 bg-transparent">
                   <i class="bi bi-box-arrow-up-right"></i>
                 </button>

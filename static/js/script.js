@@ -132,11 +132,11 @@ function openLoginPanel() {
                                 <div class="login-menu-grid">
                                     <div class="menu-item" onclick="location.href='{% url 'alert:alert' %}'">
                                         <i class="bi bi-bell"></i>
-                                        <span>알림</span>
+                                        <span style="font-size: 12px;">알림</span>
                                     </div>
                                     <div class="menu-item profile-icon" onclick="location.href='{% url 'mypage:mypage' %}'">
                                         <i class="bi bi-person-circle" style="color: #9376e0;"></i>
-                                        <span>프로필</span>
+                                        <span style="font-size: 12px;">프로필</span>
                                     </div>
                                 </div>
                                 <div class="mt-4 px-3">
