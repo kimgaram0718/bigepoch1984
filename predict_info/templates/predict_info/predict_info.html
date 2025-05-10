@@ -19,7 +19,37 @@
         .error-message { color: red; font-weight: bold; }
         .loading-indicator { text-align: center; padding: 10px; }
         .prediction-table th { background-color: #007bff; color: white; }
-        .data-placeholder { color: #6c757d; font-style: italic; }
+        .data-placeholder { color: #6c757d; font-style: italic; text-align: center; }
+        .market-index-box {
+            background-color: #f8f9fa; /* 연한 회색 배경 */
+            border: 1px solid #dee2e6; /* 연한 회색 테두리 */
+            border-radius: .25rem; /* 약간 둥근 모서리 */
+            padding: 1rem; /* 내부 여백 */
+            margin-bottom: 1rem; /* 아래쪽 마진 */
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); /* 은은한 그림자 효과 */
+        }
+        .market-index-box .market-name {
+            font-size: 1.25rem; /* 시장 이름 글꼴 크기 */
+            font-weight: bold; /* 굵게 */
+            color: #007bff; /* 파란색 계열 */
+            margin-bottom: .5rem;
+        }
+        .market-index-box .index-details span {
+            display: block; /* 각 항목을 새 줄에 표시 */
+            margin-bottom: .25rem; /* 항목 간 간격 */
+        }
+        .market-index-box .index-details .price {
+            font-weight: bold;
+        }
+        .market-index-box .index-details .change-positive {
+            color: #dc3545; /* 상승 시 빨간색 */
+        }
+        .market-index-box .index-details .change-negative {
+            color: #007bff; /* 하락 시 파란색 */
+        }
+        .market-index-box .index-details .change-neutral {
+            color: #6c757d; /* 보합 시 회색 */
+        }
     </style>
 </head>
 <body
@@ -41,7 +71,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
             </form>
 
             <div id="predictionDisplayArea">
-                {% if error_message %}
+                {% if error_message and not prediction_error %} {# DB 데이터 관련 에러 메시지만 여기에 표시 #}
                     <div class="alert alert-danger">{{ error_message }}</div>
                 {% endif %}
 
@@ -59,15 +89,15 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
                             <thead><tr><th>날짜</th><th>예측 종가</th></tr></thead>
                             <tbody>
                                 {% for pred in initial_predictions %}
-                                <tr><td>{{ pred.date }}</td><td>{{ pred.price|floatformat:2 }} 원</td></tr>
+                                <tr><td>{{ pred.date }}</td><td>{{ pred.price|intcomma }} 원</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
-                    {% elif prediction_error %}
-                        <p class="error-message">초기 예측 오류: {{ prediction_error }}</p>
-                    {% elif not ticker and not error_message %}
+                    {% elif prediction_error %} {# 예측 관련 에러 메시지 #}
+                        <p class="error-message">{{ prediction_error }}</p>
+                    {% elif not ticker and not error_message and not prediction_error %}
                         <p class="data-placeholder">위에서 종목을 검색하면 초기 예측 결과를 볼 수 있습니다.</p>
-                    {% elif not initial_predictions and not prediction_error and not error_message and ticker %}
+                    {% elif not initial_predictions and not prediction_error and ticker %}
                          <p class="data-placeholder">초기 예측 정보가 없습니다.</p>
                     {% endif %}
                 </div>
@@ -81,70 +111,88 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
         <div class="container my-3">
             <div class="row text-center">
                 {% if prediction_indices %}
-                    {% for index in prediction_indices %}
-                    <div class="col-6">
-                        <div class="bg-light rounded-3 p-3 mb-3" style="font-size:1.2rem; border:2px solid #b6c6e3; box-shadow:0 2px 8px rgba(80,120,200,0.08);">
-                            <div class="fw-bold mb-2" style="font-size:1.3rem; color:#1a237e;">{{ index.name }}</div>
-                            <div>
-                                <span class="me-2">실시간 시가:</span>
-                                <span class="fw-bold text-success">
-                                    {% if index.current_price %}
-                                        {{ index.current_price|floatformat:0|intcomma }}원
-                                        {% if index.percent is not None %}
-                                            (
-                                            {% if index.percent > 0 %}
-                                                <span style="color:#d32f2f; font-weight:bold;">+{{ index.percent|floatformat:2 }}%</span>
-                                            {% elif index.percent < 0 %}
-                                                <span style="color:#1976d2; font-weight:bold;">{{ index.percent|floatformat:2 }}%</span>
-                                            {% else %}
-                                                <span style="color:#888; font-weight:bold;">0.00%</span>
-                                            {% endif %}
-                                            )
-                                        {% endif %}
-                                    {% else %}-{% endif %}
+                    {% for index_item in prediction_indices %}
+                    <div class="col-md-6 mb-3">
+                        <div class="market-index-box">
+                            <div class="market-name">{{ index_item.name }} ({{ index_item.date_display }})</div>
+                            <div class="index-details">
+                                <span class="price">
+                                    전일 종가: 
+                                    {% if index_item.close_price is not None %}
+                                        {{ index_item.close_price|floatformat:2|intcomma }} P
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </span>
+                                {% if index_item.change_percent is not None and index_item.change_value is not None %}
+                                    <span>
+                                        전일 대비:
+                                        {% if index_item.change_percent > 0 %}
+                                            <span class="change-positive">▲ {{ index_item.change_value|floatformat:2|intcomma }} (+{{ index_item.change_percent|floatformat:2 }}{{'%'}})</span>
+                                        {% elif index_item.change_percent < 0 %}
+                                            <span class="change-negative">▼ {{ index_item.change_value|floatformat:2|intcomma }} ({{ index_item.change_percent|floatformat:2 }}{{'%'}})</span>
+                                        {% else %}
+                                            <span class="change-neutral">{{ index_item.change_value|floatformat:2|intcomma }} (0.00{{'%'}})</span>
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
                             </div>
-                            <div>
-                                <span class="me-2">전일 종가:</span>
-                                <span class="fw-bold text-primary">{% if index.previous_close %}{{ index.previous_close|floatformat:0|intcomma }}원{% else %}-{% endif %}</span>
-                            </div>
                         </div>
-                        {% if index.name == '코스피 예측 지수' %}
-                        <div class="mb-3">
-                            <h6 class="fw-bold">코스피 급등 TOP 5</h6>
-                            {% if top5_kospi_gainers %}
-                            <table class="table table-sm table-bordered text-center">
-                                <thead><tr><th>종목명</th><th>등락률(%)</th><th>종가</th></tr></thead>
-                                <tbody>
-                                {% for stock in top5_kospi_gainers %}
-                                    <tr><td>{{ stock.name }}</td><td style="color:#d32f2f;">+{{ stock.change|floatformat:2 }}%</td><td>{{ stock.close|intcomma }}원</td></tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                            {% else %}<div class="data-placeholder">데이터 없음</div>{% endif %}
-                        </div>
-                        {% elif index.name == '코스닥 예측 지수' %}
-                        <div class="mb-3">
-                            <h6 class="fw-bold">코스닥 급등 TOP 5</h6>
-                            {% if top5_kosdaq_gainers %}
-                            <table class="table table-sm table-bordered text-center">
-                                <thead><tr><th>종목명</th><th>등락률(%)</th><th>종가</th></tr></thead>
-                                <tbody>
-                                {% for stock in top5_kosdaq_gainers %}
-                                    <tr><td>{{ stock.name }}</td><td style="color:#d32f2f;">+{{ stock.change|floatformat:2 }}%</td><td>{{ stock.close|intcomma }}원</td></tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                            {% else %}<div class="data-placeholder">데이터 없음</div>{% endif %}
-                        </div>
-                        {% endif %}
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="col-12"><p class="data-placeholder">예측 지수 요약 정보가 없습니다.</p></div>
+                    <div class="col-12"><p class="data-placeholder">시장 지수 요약 정보가 없습니다.</p></div>
                 {% endif %}
             </div>
         </div>
+
+        <div class="container my-3">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h6 class="fw-bold">코스피 급등 TOP 5</h6>
+                    <table class="table table-sm table-bordered text-center">
+                        <thead><tr><th>종목명</th><th>등락률(%)</th><th>종가</th></tr></thead>
+                        <tbody>
+                        {% if top5_kospi_gainers %}
+                            {% for stock in top5_kospi_gainers %}
+                            <tr>
+                                <td>{{ stock.name }} ({{ stock.code }})</td>
+                                <td style="color:{% if stock.change > 0 %}#dc3545{% elif stock.change < 0 %}#0d6efd{% else %}#6c757d{% endif %};">
+                                    {% if stock.change > 0 %}+{% endif %}{{ stock.change|floatformat:2 }}{{'%'}}
+                                </td>
+                                <td>{{ stock.close|intcomma }}원</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="3" class="data-placeholder">데이터 없음</td></tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h6 class="fw-bold">코스닥 급등 TOP 5</h6>
+                    <table class="table table-sm table-bordered text-center">
+                        <thead><tr><th>종목명</th><th>등락률(%)</th><th>종가</th></tr></thead>
+                        <tbody>
+                        {% if top5_kosdaq_gainers %}
+                            {% for stock in top5_kosdaq_gainers %}
+                            <tr>
+                                <td>{{ stock.name }} ({{ stock.code }})</td>
+                                 <td style="color:{% if stock.change > 0 %}#dc3545{% elif stock.change < 0 %}#0d6efd{% else %}#6c757d{% endif %};">
+                                    {% if stock.change > 0 %}+{% endif %}{{ stock.change|floatformat:2 }}{{'%'}}
+                                </td>
+                                <td>{{ stock.close|intcomma }}원</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="3" class="data-placeholder">데이터 없음</td></tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
 
         <div class="container my-3">
             <h6 class="fw-bold">종목별 예측 지수 티커</h6>
@@ -224,16 +272,16 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
     <script src="{% static 'js/script.js' %}"></script>
     <script>
         const ajaxPredictButton = document.getElementById('ajaxPredictButton');
-        const stockQueryInput = document.getElementById('stockQueryInput'); // GET 요청 폼의 입력창
+        const stockQueryInput = document.getElementById('stockQueryInput'); 
 
         if (ajaxPredictButton) {
             ajaxPredictButton.addEventListener('click', function(event) {
                 event.preventDefault();
 
-                const stockCodeToPredict = stockQueryInput.value; // 현재 입력된 값 사용
-                const resultDiv = document.getElementById('initialPredictionData'); // AJAX 결과도 이 영역에 표시
+                const stockCodeToPredict = stockQueryInput.value; 
+                const resultDiv = document.getElementById('initialPredictionData'); 
                 const loadingDiv = document.getElementById('ajaxLoadingIndicator');
-                const csrfTokenInput = document.querySelector('#stockPredictionForm [name=csrfmiddlewaretoken]'); // 폼 ID 확인
+                const csrfTokenInput = document.querySelector('#stockPredictionForm [name=csrfmiddlewaretoken]');
                 if (!csrfTokenInput) {
                     console.error("CSRF 토큰을 찾을 수 없습니다.");
                     resultDiv.innerHTML = `<p class="error-message">오류: CSRF 토큰이 없습니다.</p>`;
@@ -249,7 +297,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
                 resultDiv.innerHTML = '';
                 loadingDiv.style.display = 'block';
 
-                fetch("{% url 'predict_info:predict_stock_price_ajax' %}", { // URL 네임스페이스 수정
+                fetch("{% url 'predict_info:predict_stock_price_ajax' %}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -274,7 +322,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
                         }
                         let tableHtml = '<table class="table table-sm table-striped table-hover prediction-table"><thead><tr><th>날짜</th><th>예측 종가</th></tr></thead><tbody>';
                         data.predictions.forEach(pred => {
-                            tableHtml += `<tr><td>${pred.date}</td><td>${pred.price.toLocaleString()} 원</td></tr>`;
+                            tableHtml += `<tr><td>${pred.date}</td><td>${Number(pred.price).toLocaleString()} 원</td></tr>`;
                         });
                         tableHtml += '</tbody></table>';
                         resultDiv.innerHTML = tableHtml;
