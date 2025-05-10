@@ -123,7 +123,7 @@ body {
 }
 
 .carousel-inner img {
-  height: 180px;
+  height: 300px; /* HTML에서 설정한 값과 일치 */
   object-fit: cover;
   width: 100%;
   border-radius: 12px;

@@ -1,27 +1,57 @@
 document.addEventListener('DOMContentLoaded', () => {
-    initializeHeaderFeatures();
-    fetchFooter();
-    if (typeof toggleMainTab === 'function' && document.getElementById('btn-main-popular')) {
-        toggleMainTab('popular');
-    }
-    initializeScrollToTopButton();
-    initializeBanners();
-    initializeRealtimeSearch();
-    if (typeof renderOriginalsList === 'function' && document.getElementById('originals-list')) {
-        renderOriginalsList();
-    }
-    initializeHeadlines();
-    if (typeof renderCoinInfoList === 'function' && document.getElementById('coin-info-list')) {
-        renderCoinInfoList();
-    }
-    if (typeof renderNoticeList === 'function' && document.getElementById('notice-list')) {
-        renderNoticeList();
-    }
-    initializeExchangeList();
-    if (typeof renderCoinList === 'function' && document.getElementById('coin-list')) {
-        renderCoinList();
-    }
-    initializeWriteButton();
+    setTimeout(() => {
+        initializeHeaderFeatures();
+        fetchFooter();
+        if (typeof toggleMainTab === 'function' && document.getElementById('btn-main-popular')) {
+            toggleMainTab('popular');
+        }
+        initializeScrollToTopButton();
+        initializeBanners();
+        initializeRealtimeSearch();
+        if (typeof renderOriginalsList === 'function' && document.getElementById('originals-list')) {
+            renderOriginalsList();
+        }
+        initializeHeadlines();
+        if (typeof renderCoinInfoList === 'function' && document.getElementById('coin-info-list')) {
+            renderCoinInfoList();
+        }
+        if (typeof renderNoticeList === 'function' && document.getElementById('notice-list')) {
+            renderNoticeList();
+        }
+        initializeExchangeList();
+        if (typeof renderCoinList === 'function' && document.getElementById('coin-list')) {
+            renderCoinList();
+        }
+        initializeWriteButton();
+        fetchNaverNews();
+        setInterval(fetchNaverNews, 5 * 60 * 1000);
+
+        // coinSearch 관련 이벤트 리스너 통합
+        const coinSearchInput = document.getElementById('coinSearch');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+
+        if (coinSearchInput) {
+            coinSearchInput.addEventListener('input', (e) => {
+                const keyword = e.target.value.trim().toLowerCase();
+                filteredCoins = coinData.filter(coin => coin.name.toLowerCase().includes(keyword));
+                currentPage = 1;
+                renderCoinList();
+            });
+        }
+        if (prevPageBtn) {
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) { currentPage--; renderCoinList(); }
+            });
+        }
+        if (nextPageBtn) {
+            nextPageBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
+                if (currentPage < totalPages) { currentPage++; renderCoinList(); }
+            });
+        }
+        if (document.getElementById('coin-list')) renderCoinList();
+    }, 0);
 });
 
 function initializeHeaderFeatures() {
@@ -155,7 +185,6 @@ function openLoginPanel() {
         document.body.insertAdjacentHTML('beforeend', panelHtml);
         panel = document.getElementById('login-panel');
 
-        // 닫기 버튼 이벤트 리스너 추가
         const closePanelIcon = document.getElementById('closePanelIcon');
         if (closePanelIcon) {
             closePanelIcon.addEventListener('click', (event) => {
@@ -168,7 +197,7 @@ function openLoginPanel() {
     if (panel) {
         if (panel.classList.contains('d-none')) {
             panel.classList.remove('d-none');
-            setTimeout(() => panel.style.transform = 'translateX(0)', 0); // 슬라이드 인
+            setTimeout(() => panel.style.transform = 'translateX(0)', 0);
         }
         document.body.classList.add('no-scroll');
         setTimeout(() => {
@@ -189,13 +218,9 @@ function closeLoginPanel() {
     const panel = document.getElementById('login-panel');
     if (panel) {
         panel.style.transform = 'translateX(100%)';
-        setTimeout(() => panel.classList.add('d-none'), 300); // 애니메이션 시간과 동기화
+        setTimeout(() => panel.classList.add('d-none'), 300);
         document.body.classList.remove('no-scroll');
     }
-}
-
-function setupLoginPanelContent() {
-    // 이 함수는 더 이상 별도로 호출되지 않으며, openLoginPanel 내에서 처리됩니다.
 }
 
 function fetchFooter() {
@@ -240,9 +265,9 @@ function initializeScrollToTopButton() {
 }
 
 const banners = [
-    { link: "https://example.com/banner1", img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80", alt: "배너1" },
-    { link: "https://example.com/banner2", img: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80", alt: "배너2" },
-    { link: "https://example.com/banner3", img: "https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80", alt: "배너3" }
+    { link: "https://example.com/banner1", img: "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "금융 차트 배너" },
+    { link: "https://example.com/banner2", img: "https://images.pexels.com/photos/6771894/pexels-photo-6771894.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "디지털 코인 배너" },
+    { link: "https://example.com/banner3", img: "https://images.pexels.com/photos/6694543/pexels-photo-6694543.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "투자 분석 배너" }
 ];
 
 function initializeBanners() {
@@ -250,14 +275,22 @@ function initializeBanners() {
     const bannerCountDiv = document.getElementById('carousel-count');
     const carouselElement = document.getElementById('mainBannerCarousel');
 
-    if (!carouselInner || !carouselElement || !bannerCountDiv) return;
+    console.log('Initializing banners...');
+    console.log({ carouselInner, carouselElement, bannerCountDiv });
 
+    if (!carouselInner || !carouselElement || !bannerCountDiv) {
+        console.error('Required elements not found:', { carouselInner, carouselElement, bannerCountDiv });
+        return;
+    }
+
+    // 기존 carousel-item 제거 후 새로 추가
+    carouselInner.innerHTML = '';
     banners.forEach((banner, index) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = `carousel-item ${index === 0 ? 'active' : ''}`;
         itemDiv.innerHTML = `
             <a href="${banner.link}" target="_blank">
-                <img src="${banner.img}" class="d-block w-100" alt="${banner.alt}" style="max-height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                <img src="${banner.img}" class="d-block w-100" alt="${banner.alt}" style="max-height: 300px; object-fit: cover; border-radius: 0.5rem;">
             </a>
         `;
         carouselInner.appendChild(itemDiv);
@@ -265,10 +298,18 @@ function initializeBanners() {
 
     if (banners.length > 0) {
         bannerCountDiv.textContent = `1 / ${banners.length}`;
-        const carousel = new bootstrap.Carousel(carouselElement);
+        const carousel = new bootstrap.Carousel(carouselElement, {
+            interval: 3000,
+            wrap: true
+        });
+        console.log('Carousel initialized:', carousel);
         carouselElement.addEventListener('slide.bs.carousel', (e) => {
-            const current = e.to + 1;
+            console.log('Slide event triggered, to:', e.to);
             const total = banners.length;
+            let current = e.to + 1;
+            if (current > total) {
+                current = 1;
+            }
             bannerCountDiv.textContent = `${current} / ${total}`;
         });
     } else {
@@ -390,6 +431,7 @@ function renderExchangeList() {
         container.appendChild(a);
     });
 }
+
 let exchangeScrollInterval;
 function initializeExchangeList() {
     const exchangeListEl = document.querySelector('.exchange-list');
@@ -414,7 +456,10 @@ function initializeExchangeList() {
 }
 
 const coinData = [ /* ... 기존 데이터 ... */ ];
-let currentPage = 1; const itemsPerPage = 10; let filteredCoins = [...coinData];
+let currentPage = 1;
+const itemsPerPage = 10;
+let filteredCoins = [...coinData];
+
 function renderCoinList() {
     const list = document.getElementById('coin-list');
     if (!list) return;
@@ -443,33 +488,8 @@ function renderCoinList() {
     });
     updatePagination();
 }
-function updatePagination() { /* ... 기존 함수 ... */ }
-document.addEventListener('DOMContentLoaded', () => {
-    const coinSearchInput = document.getElementById('coinSearch');
-    const prevPageBtn = document.getElementById('prevPage');
-    const nextPageBtn = document.getElementById('nextPage');
 
-    if (coinSearchInput) {
-        coinSearchInput.addEventListener('input', (e) => {
-            const keyword = e.target.value.trim().toLowerCase();
-            filteredCoins = coinData.filter(coin => coin.name.toLowerCase().includes(keyword));
-            currentPage = 1;
-            renderCoinList();
-        });
-    }
-    if (prevPageBtn) {
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 1) { currentPage--; renderCoinList(); }
-        });
-    }
-    if (nextPageBtn) {
-        nextPageBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
-            if (currentPage < totalPages) { currentPage++; renderCoinList(); }
-        });
-    }
-    if (document.getElementById('coin-list')) renderCoinList();
-});
+function updatePagination() { /* ... 기존 함수 ... */ }
 
 const recentPosts = [ /* ... 기존 데이터 ... */ ];
 
@@ -506,7 +526,7 @@ async function fetchNaverNews() {
         }
         
         const newsList = document.getElementById('headline-list');
-        newsList.innerHTML = ''; // 기존 내용 초기화
+        newsList.innerHTML = '';
         
         data.news.forEach(news => {
             const newsItem = document.createElement('li');
@@ -531,8 +551,3 @@ async function fetchNaverNews() {
         console.error('Error:', error);
     }
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    fetchNaverNews();
-    setInterval(fetchNaverNews, 5 * 60 * 1000);
-});
