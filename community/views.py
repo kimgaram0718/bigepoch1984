@@ -25,10 +25,8 @@ def extract_api_disclosure_info(content_str):
     return company_name, report_link
 
 def community_view(request):
-    # print(f"\n--- [VIEWS.PY DEBUG] community_view 함수 호출됨 ---") # 디버깅용
     tab = request.GET.get('tab', 'community')
     subtab = request.GET.get('subtab', '') 
-    # print(f"--- [VIEWS.PY DEBUG] 요청 파라미터: tab='{tab}', subtab='{subtab}' ---") # 디버깅용
 
     context = {
         'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
@@ -37,32 +35,22 @@ def community_view(request):
     }
 
     if tab == 'news':
-        # print(f"--- [VIEWS.PY DEBUG] 뉴스 탭 처리 시작 (URL subtab: '{subtab}') ---") # 디버깅용
-        
-        # URL의 'page' 파라미터는 현재 활성화된 subtab에만 적용됩니다.
-        # 다른 subtab은 기본적으로 1페이지를 로드합니다.
         page_param_from_url = request.GET.get('page', '1')
         try:
             current_page_for_active_tab = int(page_param_from_url)
         except ValueError:
             current_page_for_active_tab = 1
 
-        url_active_subtab = subtab if subtab else 'realtime' # URL 기준으로 활성화된 서브탭
+        url_active_subtab = subtab if subtab else 'realtime'
 
-        # 1. 실시간 뉴스 데이터 항상 준비
-        # print("--- [VIEWS.PY DEBUG] '실시간 뉴스' 데이터 준비 중 ---") # 디버깅용
         news_article_list = NewsArticle.objects.all().order_by('-pub_date')
         paginator_realtime = Paginator(news_article_list, 10)
-        # '실시간 뉴스' 탭이 URL에서 활성화된 경우 해당 페이지 번호 사용, 아니면 1페이지
         page_num_for_realtime = current_page_for_active_tab if url_active_subtab == 'realtime' else 1
         try:
             realtime_page_obj = paginator_realtime.page(page_num_for_realtime)
         except (EmptyPage, PageNotAnInteger):
             realtime_page_obj = paginator_realtime.page(1)
-        # print(f"--- [VIEWS.PY DEBUG] '실시간 뉴스' Page 객체: {realtime_page_obj}, 항목 수: {len(realtime_page_obj.object_list) if realtime_page_obj else 0} (요청 페이지: {page_num_for_realtime}) ---") # 디버깅용
 
-        # 2. 거래소 공시 데이터 항상 준비
-        # print("--- [VIEWS.PY DEBUG] '거래소 공시' 데이터 준비 중 ---") # 디버깅용
         disclosure_posts_qs = FreeBoard.objects.filter(
             Q(category='API공시') | Q(category='수동공시'),
             is_deleted=False
@@ -84,14 +72,11 @@ def community_view(request):
             processed_disclosure_list.append(item_data)
 
         paginator_disclosure = Paginator(processed_disclosure_list, 10) 
-        # '거래소 공시' 탭이 URL에서 활성화된 경우 해당 페이지 번호 사용, 아니면 1페이지
         page_num_for_disclosure = current_page_for_active_tab if url_active_subtab == 'disclosure' else 1
         try:
             disclosure_page_obj_final = paginator_disclosure.page(page_num_for_disclosure) 
         except (EmptyPage, PageNotAnInteger):
             disclosure_page_obj_final = paginator_disclosure.page(1)
-        
-        # print(f"--- [VIEWS.PY DEBUG] '거래소 공시' Page 객체: {disclosure_page_obj_final}, 항목 수: {len(disclosure_page_obj_final.object_list) if disclosure_page_obj_final else 0} (요청 페이지: {page_num_for_disclosure}) ---") # 디버깅용
         
         context.update({
             'realtime_posts': realtime_page_obj, 
@@ -99,10 +84,8 @@ def community_view(request):
             'disclosures': disclosure_page_obj_final, 
             'disclosure_page_obj': disclosure_page_obj_final, 
         })
-        # print(f"--- [VIEWS.PY DEBUG] community_news.html 렌더링 준비 완료. Context 'realtime_posts' 항목 수: {len(context['realtime_posts'].object_list)}, Context 'disclosures' 항목 수: {len(context['disclosures'].object_list)} ---") # 디버깅용
         return render(request, 'community_news.html', context)
 
-    # 기존 커뮤니티 탭 로직
     period = request.GET.get('period', '한달')
     sort = request.GET.get('sort', '최신순')
     all_posts_queryset = FreeBoard.objects.filter(is_deleted=False, category='잡담').select_related('user')
@@ -152,7 +135,7 @@ def community_view(request):
     if sort == '최신순':
         processed_post_list.sort(key=lambda x: x['reg_dt'], reverse=True)
     elif sort == '인기순':
-        processed_post_list.sort(key=lambda x: (-x['view_count'], -x['reg_dt'].timestamp()))  # 조회수 내림차순, 동일 시 reg_dt 내림차순
+        processed_post_list.sort(key=lambda x: (-x['view_count'], -x['reg_dt'].timestamp()))  
 
     paginator_community = Paginator(processed_post_list, 10)
     page_number_community = request.GET.get('page', 1)
@@ -168,10 +151,8 @@ def community_view(request):
         'period': period,
         'sort': sort,
     })
-    # print("--- [DEBUG] community.html 렌더링 시도 ---") # 디버깅용
     return render(request, 'community.html', context)
 
-# write_view, community_detail_view 등 나머지 뷰 함수는 이전 버전과 동일하게 유지
 def write_view(request):
     if not request.user.is_authenticated:
         next_url = request.path
@@ -184,7 +165,11 @@ def write_view(request):
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
-        
+        captcha_value = request.POST.get('captcha_value', '').strip()
+        captcha_answer = request.POST.get('captcha_answer', '').strip()
+
+        logger.info(f"write_view: title={title}, content={content}, captcha_value={captcha_value}, captcha_answer={captcha_answer}")
+
         if not title or not content:
             messages.error(request, '제목과 내용을 모두 입력해주세요.')
             return render(request, 'community_write.html', {
@@ -193,7 +178,29 @@ def write_view(request):
                 'content': content,
                 'board_type': board_type,
             })
-        
+
+        # 캡차 값이 4자리 숫자인지 확인
+        if not captcha_value.isdigit() or len(captcha_value) != 4:
+            logger.warning(f"Invalid captcha_value: {captcha_value}")
+            messages.error(request, '잘못 입력했습니다.')
+            return render(request, 'community_write.html', {
+                'error_message': '잘못 입력했습니다.',
+                'title': title,
+                'content': content,
+                'board_type': board_type,
+            })
+
+        # 캡차 답변 검증
+        if captcha_answer != captcha_value:
+            logger.warning(f"Captcha mismatch: answer={captcha_answer}, value={captcha_value}")
+            messages.error(request, '잘못 입력했습니다.')
+            return render(request, 'community_write.html', {
+                'error_message': '잘못 입력했습니다.',
+                'title': title,
+                'content': content,
+                'board_type': board_type,
+            })
+
         post_category = '잡담' 
         if board_type == 'realtime_news':
             messages.info(request, "실시간 뉴스는 자동 수집됩니다. 직접 작성 기능은 현재 비활성화되어 있습니다.")
@@ -209,6 +216,7 @@ def write_view(request):
                 category=post_category 
             )
             messages.success(request, '게시물이 성공적으로 등록되었습니다.')
+            logger.info(f"Post created successfully: id={new_post.id}, title={new_post.title}")
         
         if board_type == 'realtime_news':
             return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
@@ -225,18 +233,15 @@ def community_detail_view(request, post_id):
     post = get_object_or_404(FreeBoard.objects.select_related('user'), id=post_id, is_deleted=False)
     comments = FreeBoardComment.objects.filter(free_board=post, is_deleted=False).select_related('user').order_by('reg_dt')
     
-    # 조회수 증가 로직
     if request.user.is_authenticated:
-        # 인증된 사용자의 경우 세션 체크
         viewed_posts_key = f'viewed_post_{post_id}'
         if not request.session.get(viewed_posts_key, False):
             with transaction.atomic():
                 post.view_count += 1
                 post.save(update_fields=['view_count'])
                 request.session[viewed_posts_key] = True
-                request.session.set_expiry(86400)  # 24시간 동안 유효
+                request.session.set_expiry(86400)
     else:
-        # 비인증 사용자의 경우 IP 기반 체크 (간단한 예시, 실제로는 더 정교한 로직 필요)
         ip_address = request.META.get('REMOTE_ADDR')
         viewed_ips_key = f'viewed_ip_{post_id}_{ip_address}'
         if not request.session.get(viewed_ips_key, False):
@@ -244,7 +249,7 @@ def community_detail_view(request, post_id):
                 post.view_count += 1
                 post.save(update_fields=['view_count'])
                 request.session[viewed_ips_key] = True
-                request.session.set_expiry(86400)  # 24시간 동안 유효
+                request.session.set_expiry(86400)
 
     time_diff = django_timezone.now() - post.reg_dt
     if time_diff.days > 0: time_ago = f"{time_diff.days}일 전"
@@ -272,7 +277,7 @@ def community_detail_view(request, post_id):
         'reg_dt': post.reg_dt,
         'likes_count': post.likes_count,
         'comments_count': post.comments_count,
-        'view_count': post.view_count,  # 조회수 추가
+        'view_count': post.view_count,
         'is_liked': is_liked,
         'is_author': request.user == post.user,
         'category': getattr(post, 'category', '잡담'),
@@ -284,7 +289,6 @@ def community_detail_view(request, post_id):
         'comments': comments,
     })
 
-# like_post, comment_create, edit_view, delete_view, comment_edit, comment_delete 함수는 이전과 동일하게 유지
 def like_post(request, post_id):
     logger.info(f"like_post called for post_id={post_id}, user={request.user}")
     if not request.user.is_authenticated:
@@ -315,7 +319,6 @@ def like_post(request, post_id):
     messages.error(request, '잘못된 요청입니다.')
     return redirect('community:detail', post_id=post_id)
 
-
 def comment_create(request, post_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(f"{reverse('account:login')}?next={reverse('community:detail', args=[post_id])}")
@@ -339,7 +342,6 @@ def comment_create(request, post_id):
     
     return redirect('community:detail', post_id=post_id)
 
-
 def edit_view(request, post_id):
     post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False) 
     if request.user != post.user:
@@ -351,6 +353,11 @@ def edit_view(request, post_id):
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
+        captcha_value = request.POST.get('captcha_value', '').strip()
+        captcha_answer = request.POST.get('captcha_answer', '').strip()
+
+        logger.info(f"edit_view: title={title}, content={content}, captcha_value={captcha_value}, captcha_answer={captcha_answer}")
+
         if not title or not content:
             messages.error(request, '제목과 내용을 모두 입력해주세요.')
             return render(request, 'community_write.html', { 
@@ -361,10 +368,37 @@ def edit_view(request, post_id):
                 'is_edit': True,
                 'board_type': board_type,
             })
+
+        # 캡차 값이 4자리 숫자인지 확인
+        if not captcha_value.isdigit() or len(captcha_value) != 4:
+            logger.warning(f"Invalid captcha_value: {captcha_value}")
+            messages.error(request, '잘못 입력했습니다.')
+            return render(request, 'community_write.html', {
+                'error_message': '잘못 입력했습니다.',
+                'title': title,
+                'content': content,
+                'post_id': post_id,
+                'is_edit': True,
+                'board_type': board_type,
+            })
+
+        if captcha_answer != captcha_value:
+            logger.warning(f"Captcha mismatch: answer={captcha_answer}, value={captcha_value}")
+            messages.error(request, '잘못 입력했습니다.')
+            return render(request, 'community_write.html', {
+                'error_message': '잘못 입력했습니다.',
+                'title': title,
+                'content': content,
+                'post_id': post_id,
+                'is_edit': True,
+                'board_type': board_type,
+            })
+
         post.title = title
         post.content = content
         post.save()
         messages.success(request, '게시물이 성공적으로 수정되었습니다.')
+        logger.info(f"Post edited successfully: id={post.id}, title={post.title}")
         return redirect('community:detail', post_id=post_id)
     
     return render(request, 'community_write.html', {
@@ -395,7 +429,6 @@ def delete_view(request, post_id):
     
     return render(request, 'community_delete.html', {'post': post})
 
-
 @login_required
 def comment_edit(request, pk): 
     comment = get_object_or_404(FreeBoardComment, pk=pk, is_deleted=False)
@@ -414,7 +447,6 @@ def comment_edit(request, pk):
         return redirect('community:detail', post_id=comment.free_board.id)
     
     return redirect('community:detail', post_id=comment.free_board.id)
-
 
 @login_required
 def comment_delete(request, pk): 
