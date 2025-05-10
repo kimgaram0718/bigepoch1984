@@ -20,10 +20,14 @@
     body { background-color: #f8f9fa; }
     .form-control::placeholder { color: #adb5bd; }
     .btn-rounded { border-radius: 16px; }
+    #captcha-container { display: flex; gap: 10px; align-items: center; }
+    #captcha-input { width: 100px; }
+    #captcha-refresh-btn { width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; }
+    #captcha-btn { font-family: monospace; }
   </style>
 </head>
 <body
-data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
   data-login-url="{% url 'account:login' %}"
   data-logout-url="{% url 'account:logout' %}"
   data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
@@ -48,7 +52,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
         </div>
       {% endif %}
 
-      <form method="POST" action="{% if is_edit %}{% url 'community:edit' post_id %}{% else %}{% url 'community:write' %}{% endif %}">
+      <form method="POST" action="{% if is_edit %}{% url 'community:edit' post_id %}{% else %}{% url 'community:write' %}{% endif %}" id="postForm">
         {% csrf_token %}
         <div class="mb-3">
           <input type="text" class="form-control" id="title" name="title" placeholder="제목" value="{{ title|default_if_none:'' }}" required>
@@ -60,14 +64,16 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
           <textarea class="form-control" id="content" name="content" rows="8" placeholder="텍스트 입력" required>{{ content|default_if_none:'' }}</textarea>
         </div>
 
-        <div class="d-flex gap-2 mb-3">
-          <button type="button" class="btn btn-outline-dark w-50" disabled>메크로방지</button>
-          <input type="text" class="form-control w-50" placeholder="메크로 방지 입력" disabled>
+        <div class="d-flex gap-2 mb-3" id="captcha-container">
+          <button type="button" class="btn btn-outline-dark w-50" id="captcha-btn">메크로방지</button>
+          <input type="text" class="form-control w-50" id="captcha-input" name="captcha_answer" placeholder="숫자를 입력하세요" required pattern="[0-9]{4}">
+          <button type="button" class="btn btn-outline-secondary" id="captcha-refresh-btn"><i class="bi bi-arrow-clockwise"></i></button>
+          <input type="hidden" id="captcha-value" name="captcha_value">
         </div>
 
         <div class="d-flex gap-3">
           <a href="{% if is_edit %}{% url 'community:detail' post_id %}{% else %}{% url 'community:community' %}{% endif %}" class="btn btn-secondary flex-fill btn-rounded">취소</a>
-          <button type="submit" class="btn btn-primary flex-fill btn-rounded">{% if is_edit %}수정{% else %}등록{% endif %}</button>
+          <button type="submit" class="btn btn-primary flex-fill btn-rounded" id="submit-btn">{% if is_edit %}수정{% else %}등록{% endif %}</button>
         </div>
       </form>
     </div>
@@ -81,5 +87,43 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
   <!-- Custom JS -->
   <script src="{% static 'js/community.js' %}"></script>
   <script src="{% static 'js/script.js' %}"></script>
+  <script>
+    // 매크로 방지 기능: 4자리 숫자 생성
+    function generateCaptcha() {
+      const captchaNumber = Math.floor(1000 + Math.random() * 9000); // 1000~9999 사이의 4자리 숫자
+      document.getElementById('captcha-value').value = captchaNumber;
+      document.getElementById('captcha-btn').textContent = `메크로방지 (${captchaNumber})`;
+      document.getElementById('captcha-input').value = ''; // 입력값 초기화
+      document.getElementById('submit-btn').disabled = true; // 버튼 비활성화
+    }
+
+    // 초기 캡차 생성
+    document.addEventListener('DOMContentLoaded', () => {
+      generateCaptcha();
+
+      // 새 캡차 생성 버튼
+      document.getElementById('captcha-refresh-btn').addEventListener('click', generateCaptcha);
+
+      // 캡차 입력 검증
+      document.getElementById('captcha-input').addEventListener('input', () => {
+        const userAnswer = document.getElementById('captcha-input').value;
+        const correctAnswer = document.getElementById('captcha-value').value;
+        const submitBtn = document.getElementById('submit-btn');
+        // 문자열로 비교
+        submitBtn.disabled = userAnswer !== correctAnswer.toString();
+      });
+
+      // 폼 제출 시 추가 검증 (필요 시)
+      document.getElementById('postForm').addEventListener('submit', (e) => {
+        const userAnswer = document.getElementById('captcha-input').value;
+        const correctAnswer = document.getElementById('captcha-value').value;
+        if (userAnswer !== correctAnswer.toString()) {
+          e.preventDefault();
+          alert('매크로 방지 답변이 올바르지 않습니다. 다시 시도해 주세요.');
+          generateCaptcha();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
