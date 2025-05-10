@@ -182,9 +182,9 @@ def write_view(request):
         # 캡차 값이 4자리 숫자인지 확인
         if not captcha_value.isdigit() or len(captcha_value) != 4:
             logger.warning(f"Invalid captcha_value: {captcha_value}")
-            messages.error(request, '잘못된 캡차 값입니다. 다시 시도해 주세요.')
+            messages.error(request, '잘못 입력했습니다.')
             return render(request, 'community_write.html', {
-                'error_message': '잘못된 캡차 값입니다.',
+                'error_message': '잘못 입력했습니다.',
                 'title': title,
                 'content': content,
                 'board_type': board_type,
@@ -193,9 +193,9 @@ def write_view(request):
         # 캡차 답변 검증
         if captcha_answer != captcha_value:
             logger.warning(f"Captcha mismatch: answer={captcha_answer}, value={captcha_value}")
-            messages.error(request, '매크로 방지 답변이 올바르지 않습니다. 다시 시도해 주세요.')
+            messages.error(request, '잘못 입력했습니다.')
             return render(request, 'community_write.html', {
-                'error_message': '매크로 방지 답변이 올바르지 않습니다.',
+                'error_message': '잘못 입력했습니다.',
                 'title': title,
                 'content': content,
                 'board_type': board_type,
@@ -372,9 +372,9 @@ def edit_view(request, post_id):
         # 캡차 값이 4자리 숫자인지 확인
         if not captcha_value.isdigit() or len(captcha_value) != 4:
             logger.warning(f"Invalid captcha_value: {captcha_value}")
-            messages.error(request, '잘못된 캡차 값입니다. 다시 시도해 주세요.')
+            messages.error(request, '잘못 입력했습니다.')
             return render(request, 'community_write.html', {
-                'error_message': '잘못된 캡차 값입니다.',
+                'error_message': '잘못 입력했습니다.',
                 'title': title,
                 'content': content,
                 'post_id': post_id,
@@ -384,9 +384,9 @@ def edit_view(request, post_id):
 
         if captcha_answer != captcha_value:
             logger.warning(f"Captcha mismatch: answer={captcha_answer}, value={captcha_value}")
-            messages.error(request, '매크로 방지 답변이 올바르지 않습니다. 다시 시도해 주세요.')
+            messages.error(request, '잘못 입력했습니다.')
             return render(request, 'community_write.html', {
-                'error_message': '매크로 방지 답변이 올바르지 않습니다.',
+                'error_message': '잘못 입력했습니다.',
                 'title': title,
                 'content': content,
                 'post_id': post_id,
