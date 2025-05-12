@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "mypage",
     'django.contrib.humanize',
     'django_apscheduler',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
