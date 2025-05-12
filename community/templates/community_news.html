@@ -48,11 +48,12 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
   <div id="app">
     {% include 'main_header.html' %}
 
-    {% include 'community_header.html' %}
+
+    <!-- {% include 'community_header.html' %} -->
 
     <div style="height: 55px;"></div> 
 
-    {% include 'community_carousel.html' %}
+    {% include 'community_carousel.html' with disclosures=disclosures %}
 
     <div class="bg-white d-flex justify-content-around border-bottom py-2 mt-3" id="news-tab-menu">
       <a href="?tab=news&subtab=realtime" class="nav-tab-item" data-subtab="realtime">

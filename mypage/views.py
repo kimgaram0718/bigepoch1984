@@ -7,6 +7,13 @@ import logging
 from django.core.files.storage import default_storage
 from django.contrib.auth import login
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+@login_required
+def mypage(request):
+    return render(request, 'mypage/mypage.html')
+
 
 # 로거 설정
 logger = logging.getLogger(__name__)
