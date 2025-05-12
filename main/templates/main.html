@@ -94,6 +94,20 @@
   {% include 'main_header.html' %}
 
   <div id="app">
+
+    <!-- Investing Insight 영역 -->
+    <div class="bg-white px-3 py-3 my-3 rounded-3">
+      <h5 class="fw-bold mb-2">Investing Insight</h5>
+      <p class="text-muted small mb-3">심도있는 코인 분석과 전략적 투자 인사이트</p>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'community:community' %}" class="fw-bold mb-0 text-dark text-decoration-none" style="font-size: 18px;">커뮤니티 테이블 링크 넣어야 됨</a>
+        <a href="{% url 'community:community' %}" class="fw-bold text-dark text-decoration-none" style="font-size: 20px;">></a>
+      </div>
+
+    <!-- 분리선 -->
+    <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
+
+
     <!-- 김치 프리미엄 / 공포탐욕지수 -->
     <div class="d-flex justify-content-around align-items-center py-2 bg-white">
       <div class="text-center">
@@ -105,6 +119,9 @@
         <div style="font-size: 14px; font-weight: bold; color: #f9ab00;">47(중립)</div>
       </div>
     </div>
+
+    <!-- 분리선 -->
+    <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
 
     <!-- 메인 배너 -->
     <div class="bg-white pb-2 px-3">
@@ -131,7 +148,7 @@
     <!-- NOW Headlines 섹션 -->
     <div class="bg-white px-3 py-3 my-3 rounded-3">
       <h5 class="fw-bold mb-1">NOW Headlines</h5>
-      <p class="text-muted small mb-3">크립토 시장 주요 컨텐츠 몰아보기</p>
+      <p class="text-muted small mb-3">주식 시장 주요 컨텐츠 몰아보기</p>
       <ul id="headline-list" class="list-unstyled">
         <!-- JS로 채움 -->
       </ul>
@@ -140,21 +157,6 @@
     <!-- 퍼블리셔 HTML의 "NOW Headlines" 이후 콘텐츠 삽입 -->
     <!-- 분리선 -->
     <hr class="my-1" style="border-color: #dee2e6; border-top: 1px solid #adb5bd;" />
-
-    <!-- 인기/큐레이션 섹션 -->
-    <div class="bg-white px-3 py-3 mt-2 rounded-3">
-      <div class="d-flex align-items-center mb-2">
-        <span id="btn-main-popular" class="fw-bold me-2 cursor-pointer text-dark">인기</span>
-        <span id="btn-main-curation" class="fw-bold text-muted cursor-pointer">큐레이션</span>
-        <i class="bi bi-info-circle text-secondary ms-1" style="font-size: 14px;"></i>
-      </div>
-
-      <!-- 인기 필터 버튼 -->
-      <div id="filter-tabs-1to3" class="btn-filter-group mb-3">
-        <button id="btn-1d" class="bg-white" onclick="renderFilteredList('1d')">1D</button>
-        <button id="btn-7d" class="bg-light text-muted" onclick="renderFilteredList('7d')">7D</button>
-        <button id="btn-1m" class="bg-light text-muted" onclick="renderFilteredList('1m')">1M</button>
-      </div>
 
       <!-- 큐레이션 필터 버튼 -->
       <div id="filter-tabs-4to6" class="btn-filter-group d-none mb-3">
@@ -171,41 +173,6 @@
 
     <!-- 분리선 -->
     <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
-
-    <!-- Investing Insight 영역 -->
-    <div class="bg-white px-3 py-3 my-3 rounded-3">
-      <h5 class="fw-bold mb-2">Investing Insight</h5>
-      <p class="text-muted small mb-3">심도있는 코인 분석과 전략적 투자 인사이트</p>
-
-      <!-- 코인정보 리스트 -->
-      <div class="border-top pt-3">
-        <h6 class="fw-bold" style="font-weight: 800; font-size: 16px; margin-bottom: 16px;">코인정보</h6>
-        <ul id="coin-info-list" class="list-unstyled mb-0">
-          <!-- JavaScript로 채워짐 -->
-        </ul>
-      </div>
-    </div>
-
-    <!-- 공지/이벤트 영역 -->
-    <div class="bg-white px-3 py-3 mx-3 rounded-4 border mt-2 mb-3" style="border: 1px solid #dee2e6;">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{% url 'community:community' %}" class="fw-bold mb-0 text-dark text-decoration-none" style="font-size: 18px;">공지/이벤트</a>
-        <a href="{% url 'community:community' %}" class="fw-bold text-dark text-decoration-none" style="font-size: 20px;">></a>
-      </div>
-
-      <ul id="notice-list" class="list-unstyled mb-0">
-        <!-- JS로 리스트 채워짐 -->
-      </ul>
-    </div>
-
-    <!-- 거래소 바로가기 섹션 -->
-    <div class="exchange-wrapper px-3">
-      <h5 class="fw-bold mb-3">거래소 바로가기</h5>
-      
-      <div id="exchange-list" class="exchange-list">
-        <!-- 여기는 JS로 채워넣음 -->
-      </div>
-    </div>
 
     <!-- 코인 시세 조회 영역 -->
     <div class="bg-white px-3 py-3 my-3 rounded-4 border" style="margin: 0 12px; border: 1px solid #dee2e6;">
@@ -242,35 +209,10 @@
       </div>
     </div>
 
-    <!-- FAQ, 제휴문의, 광고문의 영역 -->
-    <div class="inquiry-wrapper px-3">
-      <a href="" class="inquiry-item">
-        <div class="inquiry-icon">
-          <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="FAQ 아이콘">
-        </div>
-        <div class="inquiry-text">FAQ</div>
-      </a>
-      
-      <div class="inquiry-divider"></div>
-      
-      <a href="" class="inquiry-item">
-        <div class="inquiry-icon">
-          <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" alt="제휴문의 아이콘">
-        </div>
-        <div class="inquiry-text">제휴 문의</div>
-      </a>
-      
-      <div class="inquiry-divider"></div>
-      
-      <a href="" class="inquiry-item">
-        <div class="inquiry-icon">
-          <img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" alt="광고문의 아이콘">
-        </div>
-        <div class="inquiry-text">광고 문의</div>
-      </a>
-    </div>
-
+    
     <!-- Investing 환율 박스 -->
+  <div class="bg-white px-3 py-3 my-3 rounded-4 border" style="margin: 0 12px; border: 1px solid #dee2e6;">
+    <h5 class="fw-bold mb-3">오늘자 환율 시세 조회</h5> 
     <div class="investing-box px-3">
       <div class="investing-header">
         <!-- <a href="https://kr.investing.com/?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Logo" target="_blank">
@@ -280,9 +222,6 @@
           <!-- <a href="https://apps.apple.com/us/app/investing-com-stock-market/id909998122?mt=8" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="App Store" class="app-icon">
           </a> -->
-          <a href="https://play.google.com/store/apps/details?id=com.fusionmedia.investing&hl=ko-KR&utm_source=WMT&utm_medium=referrer&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=cobak.co&utm_content=Android%20App" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="app-icon">
-          </a>
         </div>
       </div>
 
@@ -317,6 +256,42 @@
         </li>
       </ul>
     </div>
+  </div>
+
+<!-- FAQ, 제휴문의, 광고문의 영역 -->
+<div class="inquiry-wrapper px-3">
+  <a href="" class="inquiry-item">
+    <div class="inquiry-icon">
+      <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="FAQ 아이콘">
+    </div>
+    <div class="inquiry-text">FAQ</div>
+  </a>
+  
+  <div class="inquiry-divider"></div>
+  
+  <a href="" class="inquiry-item">
+    <div class="inquiry-icon">
+      <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" alt="제휴문의 아이콘">
+    </div>
+    <div class="inquiry-text">제휴 문의</div>
+  </a>
+  
+  <div class="inquiry-divider"></div>
+  
+  <a href="" class="inquiry-item">
+    <div class="inquiry-icon">
+      <img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" alt="광고문의 아이콘">
+    </div>
+    <div class="inquiry-text">광고 문의</div>
+  </a>
+</div>
+<!-- 구글 로그 이미지 -->
+<div class ="google-logo">
+  <a href="https://play.google.com/store/apps/details?id=com.fusionmedia.investing&hl=ko-KR&utm_source=WMT&utm_medium=referrer&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=cobak.co&utm_content=Android%20App" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="app-icon">
+  </a>
+</div>
+
 
     <!-- 챗봇 버튼 -->
     <a href="{% url 'chatbot:chatbot' %}" id="chatbotBtn">
