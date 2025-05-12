@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -207,3 +208,10 @@ SCHEDULER_CONFIG = {
     },
     'apscheduler.timezone': TIME_ZONE, # Django 설정의 TIME_ZONE 사용
 }
+
+
+KOSDAQ_TRAINING_DATA_DIR = os.path.join(BASE_DIR, 'data', 'kosdaq_data')
+KOSPI_TRAINING_DATA_DIR = os.path.join(BASE_DIR, 'data', 'kospi_data')
+
+# 모델 및 스케일러 저장 폴더 (views.py와 공유 가능, 여기서는 startup_tasks.py 내에서 BASE_DIR 기준으로 직접 구성)
+# ML_MODELS_DIR = os.path.join(BASE_DIR, 'predict_Info', 'ml_models'

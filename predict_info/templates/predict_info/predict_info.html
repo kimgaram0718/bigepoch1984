@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/invest.css' %}">
     <link rel="stylesheet" href="{% static 'css/community.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .prediction-section { margin-top: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; }
         .prediction-section h3, .prediction-section h6 { margin-bottom: 15px; font-weight: bold; }
@@ -50,6 +51,15 @@
         .market-index-box .index-details .change-neutral {
             color: #6c757d; /* 보합 시 회색 */
         }
+        #predictionChartContainer {
+            width: 100%;
+            max-width: 700px; /* 최대 너비 설정 */
+            margin: 20px auto; /* 가운데 정렬 */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
     </style>
 </head>
 <body
@@ -62,51 +72,43 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
 
     <div id="app" style="padding-top: 60px;">
         <div class="container my-3 prediction-section">
-            <h3>종목별 7 영업일 종가 예측</h3>
-            <form id="stockPredictionForm" class="mb-3 d-flex flex-wrap gap-2">
-                {% csrf_token %}
-                <input type="text" id="stockQueryInput" name="stock_query" value="{{ stock_name_for_display|default:'휴젤' }}" placeholder="종목명 또는 코드 입력 (예: 휴젤 또는 145020)" class="form-control" style="flex-grow: 1; min-width: 200px;">
-                <button type="submit" formaction="{% url 'predict_info:predict_info_page' %}" formmethod="get" class="btn btn-info">선택 종목 정보 및 초기 예측 보기</button>
-                <button type="button" id="ajaxPredictButton" class="btn btn-success">실시간 7일 예측</button>
+            <h3>종목별 5 영업일 종가 예측</h3>
+            <form id="stockPredictionForm" class="mb-3"> {% csrf_token %}
+                <div class="input-group mb-3">
+                    <input type="text" id="stockQueryInput" name="stock_query" value="{{ stock_name_for_display|default:'휴젤' }}" placeholder="종목명 또는 코드 입력 (예: 휴젤 또는 145020)" class="form-control">
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <button type="button" id="technicalPredictButton" class="btn btn-primary predict-ajax-btn" data-analysis-type="technical">기술적 분석 5일 예측</button>
+                    <button type="button" id="comprehensivePredictButton" class="btn btn-success predict-ajax-btn" data-analysis-type="comprehensive">종합 분석 5일 예측</button>
+                </div>
             </form>
 
             <div id="predictionDisplayArea">
-                {% if error_message and not prediction_error %} {# DB 데이터 관련 에러 메시지만 여기에 표시 #}
+                {% if error_message and not prediction_error %}
                     <div class="alert alert-danger">{{ error_message }}</div>
                 {% endif %}
 
                 <h4>
-                    {% if ticker %}
-                        {{ stock_name_for_display }} ({{ ticker }})
-                    {% else %}
-                        "{{ stock_name_for_display|default:'종목을 검색해주세요' }}"
-                    {% endif %}
-                     - 초기 7 영업일 예측 결과
+                    <span id="predictedStockName">{{ stock_name_for_display|default:'종목을 검색하고 예측 버튼을 클릭하세요' }}</span>
+                    (<span id="predictedStockCode">{{ ticker|default:'' }}</span>)
+                    - <span id="predictionTypeDisplay"></span> 5 영업일 예측 결과
                 </h4>
-                <div id="initialPredictionData">
-                    {% if initial_predictions %}
-                        <table class="table table-sm table-striped table-hover prediction-table">
-                            <thead><tr><th>날짜</th><th>예측 종가</th></tr></thead>
-                            <tbody>
-                                {% for pred in initial_predictions %}
-                                <tr><td>{{ pred.date }}</td><td>{{ pred.price|intcomma }} 원</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% elif prediction_error %} {# 예측 관련 에러 메시지 #}
+                <div id="predictionResultData">
+                    {% if initial_predictions %} {# 초기 페이지 로드 시 예측은 제거, AJAX로만 처리 #}
+                        {% elif prediction_error %}
                         <p class="error-message">{{ prediction_error }}</p>
-                    {% elif not ticker and not error_message and not prediction_error %}
-                        <p class="data-placeholder">위에서 종목을 검색하면 초기 예측 결과를 볼 수 있습니다.</p>
-                    {% elif not initial_predictions and not prediction_error and ticker %}
-                         <p class="data-placeholder">초기 예측 정보가 없습니다.</p>
+                    {% else %}
+                        <p class="data-placeholder">위에서 종목을 검색하고 분석 유형 버튼을 클릭하면 예측 결과를 볼 수 있습니다.</p>
                     {% endif %}
                 </div>
             </div>
             <div id="ajaxLoadingIndicator" class="loading-indicator" style="display: none;">
                 <p>예측 중입니다...</p>
             </div>
+            <div id="predictionChartContainer" style="display: none;">
+                <canvas id="predictionChart"></canvas>
+            </div>
         </div>
-
 
         <div class="container my-3">
             <div class="row text-center">
@@ -192,8 +194,6 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
                 </div>
             </div>
         </div>
-
-
         <div class="container my-3">
             <h6 class="fw-bold">종목별 예측 지수 티커</h6>
             {% if prediction_tickers %}
@@ -205,13 +205,6 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
             {% else %}
                 <p class="data-placeholder">종목별 예측 지수 티커 정보가 없습니다.</p>
             {% endif %}
-        </div>
-
-        <div class="container my-3">
-            <h6 class="fw-bold">예측 그래프</h6>
-            <div id="predictionChartArea" class="bg-light rounded-3 p-3" style="min-height: 300px;">
-                <p class="data-placeholder text-center py-5">[예측 결과를 여기에 그래프로 표시할 수 있습니다]</p>
-            </div>
         </div>
 
         <div class="container my-3">
@@ -271,72 +264,156 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/script.js' %}"></script>
     <script>
-        const ajaxPredictButton = document.getElementById('ajaxPredictButton');
-        const stockQueryInput = document.getElementById('stockQueryInput'); 
+        document.addEventListener('DOMContentLoaded', function() {
+            const predictButtons = document.querySelectorAll('.predict-ajax-btn');
+            const stockQueryInput = document.getElementById('stockQueryInput');
+            const resultDiv = document.getElementById('predictionResultData');
+            const loadingDiv = document.getElementById('ajaxLoadingIndicator');
+            const csrfTokenInput = document.querySelector('#stockPredictionForm [name=csrfmiddlewaretoken]');
+            const predictedStockNameSpan = document.getElementById('predictedStockName');
+            const predictedStockCodeSpan = document.getElementById('predictedStockCode');
+            const predictionTypeDisplaySpan = document.getElementById('predictionTypeDisplay');
+            
+            const chartContainer = document.getElementById('predictionChartContainer');
+            const chartCanvas = document.getElementById('predictionChart');
+            let predictionChartInstance = null; // 차트 인스턴스 저장 변수
 
-        if (ajaxPredictButton) {
-            ajaxPredictButton.addEventListener('click', function(event) {
-                event.preventDefault();
+            predictButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
 
-                const stockCodeToPredict = stockQueryInput.value; 
-                const resultDiv = document.getElementById('initialPredictionData'); 
-                const loadingDiv = document.getElementById('ajaxLoadingIndicator');
-                const csrfTokenInput = document.querySelector('#stockPredictionForm [name=csrfmiddlewaretoken]');
-                if (!csrfTokenInput) {
-                    console.error("CSRF 토큰을 찾을 수 없습니다.");
-                    resultDiv.innerHTML = `<p class="error-message">오류: CSRF 토큰이 없습니다.</p>`;
-                    return;
-                }
-                const csrfToken = csrfTokenInput.value;
+                    const stockCodeToPredict = stockQueryInput.value.trim();
+                    const analysisType = this.dataset.analysisType; // 'technical' or 'comprehensive'
+                    const analysisTypeText = this.textContent.includes('기술적') ? '기술적 분석' : '종합 분석';
 
-                if (!stockCodeToPredict) {
-                    resultDiv.innerHTML = `<p class="error-message">종목명 또는 코드를 입력해주세요.</p>`;
-                    return;
-                }
 
-                resultDiv.innerHTML = '';
-                loadingDiv.style.display = 'block';
-
-                fetch("{% url 'predict_info:predict_stock_price_ajax' %}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: new URLSearchParams({'stock_code': stockCodeToPredict})
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(errData => { throw new Error(errData.error || `서버 오류: ${response.status}`); });
+                    if (!csrfTokenInput) {
+                        console.error("CSRF 토큰을 찾을 수 없습니다.");
+                        resultDiv.innerHTML = `<p class="error-message">오류: CSRF 토큰이 없습니다.</p>`;
+                        return;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    loadingDiv.style.display = 'none';
-                    if (data.error) {
-                        resultDiv.innerHTML = `<p class="error-message">오류: ${data.error}</p>`;
-                    } else if (data.predictions && data.predictions.length > 0) {
-                        const titleElement = document.querySelector('#predictionDisplayArea h4');
-                        if(titleElement) {
-                            titleElement.textContent = `${data.stock_name || data.stock_code} - 실시간 7 영업일 예측`;
+                    const csrfToken = csrfTokenInput.value;
+
+                    if (!stockCodeToPredict) {
+                        resultDiv.innerHTML = `<p class="error-message">종목명 또는 코드를 입력해주세요.</p>`;
+                        return;
+                    }
+
+                    resultDiv.innerHTML = ''; // 이전 결과 초기화
+                    if (predictionChartInstance) { // 이전 차트 제거
+                        predictionChartInstance.destroy();
+                        predictionChartInstance = null;
+                    }
+                    chartContainer.style.display = 'none'; // 차트 컨테이너 숨기기
+                    loadingDiv.style.display = 'block'; // 로딩 인디케이터 표시
+                    
+                    // 예측 중인 종목명과 분석 유형 업데이트 (로딩 중에도)
+                    predictedStockNameSpan.textContent = "로딩 중...";
+                    predictedStockCodeSpan.textContent = "";
+                    predictionTypeDisplaySpan.textContent = analysisTypeText;
+
+
+                    fetch("{% url 'predict_info:predict_stock_price_ajax' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: new URLSearchParams({
+                            'stock_input': stockCodeToPredict, // views.py에서 'stock_input'으로 받도록 수정
+                            'analysis_type': analysisType
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errData => { throw new Error(errData.error || `서버 오류: ${response.status}`); });
                         }
-                        let tableHtml = '<table class="table table-sm table-striped table-hover prediction-table"><thead><tr><th>날짜</th><th>예측 종가</th></tr></thead><tbody>';
-                        data.predictions.forEach(pred => {
-                            tableHtml += `<tr><td>${pred.date}</td><td>${Number(pred.price).toLocaleString()} 원</td></tr>`;
-                        });
-                        tableHtml += '</tbody></table>';
-                        resultDiv.innerHTML = tableHtml;
-                    } else {
-                        resultDiv.innerHTML = '<p>예측 결과를 받지 못했습니다.</p>';
-                    }
-                })
-                .catch(error => {
-                    loadingDiv.style.display = 'none';
-                    console.error('Error:', error);
-                    resultDiv.innerHTML = `<p class="error-message">예측 중 오류 발생: ${error.message}</p>`;
+                        return response.json();
+                    })
+                    .then(data => {
+                        loadingDiv.style.display = 'none';
+                        if (data.error) {
+                            resultDiv.innerHTML = `<p class="error-message">오류: ${data.error}</p>`;
+                            predictedStockNameSpan.textContent = stockCodeToPredict; // 오류 시 입력값으로 다시 표시
+                            predictedStockCodeSpan.textContent = "";
+                        } else if (data.predictions && data.predictions.length > 0) {
+                            predictedStockNameSpan.textContent = data.stock_name || stockCodeToPredict;
+                            predictedStockCodeSpan.textContent = data.stock_code || "";
+                            predictionTypeDisplaySpan.textContent = analysisTypeText;
+
+                            let tableHtml = '<table class="table table-sm table-striped table-hover prediction-table"><thead><tr><th>예측일</th><th>예측 종가</th></tr></thead><tbody>';
+                            const labels = [];
+                            const prices = [];
+                            data.predictions.forEach(pred => {
+                                tableHtml += `<tr><td>${pred.date}</td><td>${Number(pred.price).toLocaleString()} 원</td></tr>`;
+                                labels.push(pred.date); // 날짜 (YYYY-MM-DD 형식)
+                                prices.push(pred.price); // 가격
+                            });
+                            tableHtml += '</tbody></table>';
+                            resultDiv.innerHTML = tableHtml;
+
+                            // 그래프 그리기
+                            chartContainer.style.display = 'block';
+                            const ctx = chartCanvas.getContext('2d');
+                            predictionChartInstance = new Chart(ctx, {
+                                type: 'line', // 라인 차트
+                                data: {
+                                    labels: labels, // X축 레이블 (날짜)
+                                    datasets: [{
+                                        label: `${data.stock_name || stockCodeToPredict} 5영업일 예측 종가`,
+                                        data: prices, // Y축 데이터 (예측 가격)
+                                        borderColor: 'rgb(75, 192, 192)',
+                                        tension: 0.1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false, // 컨테이너 크기에 맞춤
+                                    scales: {
+                                        y: {
+                                            beginAtZero: false, // Y축 0부터 시작 안 함
+                                            ticks: {
+                                                callback: function(value, index, values) {
+                                                    return value.toLocaleString() + ' 원';
+                                                }
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    let label = context.dataset.label || '';
+                                                    if (label) {
+                                                        label += ': ';
+                                                    }
+                                                    if (context.parsed.y !== null) {
+                                                        label += context.parsed.y.toLocaleString() + ' 원';
+                                                    }
+                                                    return label;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+
+                        } else {
+                            resultDiv.innerHTML = '<p>예측 결과를 받지 못했습니다.</p>';
+                            predictedStockNameSpan.textContent = stockCodeToPredict;
+                            predictedStockCodeSpan.textContent = "";
+                        }
+                    })
+                    .catch(error => {
+                        loadingDiv.style.display = 'none';
+                        console.error('Error:', error);
+                        resultDiv.innerHTML = `<p class="error-message">예측 중 오류 발생: ${error.message}</p>`;
+                        predictedStockNameSpan.textContent = stockCodeToPredict;
+                        predictedStockCodeSpan.textContent = "";
+                    });
                 });
             });
-        }
+        });
     </script>
 </body>
 </html>
