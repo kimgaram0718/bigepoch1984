@@ -193,6 +193,7 @@ NAVER_NEWS_API_CLIENT_SECRET = "djBL9xrZIM"    # 제공해주신 Secret
 # Django APScheduler 설정 (선택 사항, 기본값 사용 가능)
 APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  # Django Admin에 표시될 날짜/시간 형식
 APSCHEDULER_RUN_NOW_TIMEOUT = 25  # 작업 즉시 실행 시 타임아웃 (초)
+LOGIN_URL = '/account/login/'
 
 # jobs.py에서 사용할 스케줄러 설정 (선택 사항)
 SCHEDULER_CONFIG = {

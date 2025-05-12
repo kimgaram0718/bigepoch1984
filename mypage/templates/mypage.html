@@ -6,83 +6,92 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>마이페이지</title>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Bootstrap CSS -->
+
+  <!-- CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons (아이콘용) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <link rel="stylesheet" href="{% static 'css/myPage.css' %}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 </head>
-<body
-  data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
-  data-login-url="{% url 'account:login' %}"
-  data-logout-url="{% url 'account:logout' %}"
-  data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
->
-  
 
-  <!-- 헤더 삽입 -->
-  {% include 'main_header.html' %}
-
-  <!-- 본문 감싸는 div 추가 -->
+<!-- ✅ 로그인 여부를 JS에서 확인할 수 있도록 -->
+<body data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}">
   <div id="app">
-    <!-- 회원 정보 영역 -->
-    <div class="bg-white p-3 d-flex justify-content-between align-items-center border-bottom">
-      <div class="d-flex align-items-center gap-3">
-        <img src="{% if user.profile_image %}{{ user.profile_image.url }}?t={{ now|date:'U' }}{% else %}{% static 'img/person.jpg' %}{% endif %}" alt="프로필 이미지" id="profileIcon" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;" title="프로필">
+
+    <!-- ✅ header.html 포함 -->
+    {% include 'main_header.html' %}
+
+    <div class="dropdown mx-3" id="mypageDropdown" style="margin-top: 75px;">
+      <button class="btn btn-light w-100 d-flex align-items-center justify-content-between" type="button" id="dropdownMenuBtn">
         <div>
-          <div class="fw-bold">{{ user.nickname }}</div>
-          <small class="text-muted">
-            {% if user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
-            | {{ user.greeting_message|default:"인사 메시지를 입력하세요" }}
-          </small>
+          <i class="bi bi-house-door-fill me-2"></i> 
+          <span id="currentMenuLabel">마이페이지</span>
         </div>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+
+      <ul class="dropdown-menu w-100 mt-2" style="display: none; background-color: #f1f1f1;">
+        <li><a class="dropdown-item" href="#" data-label="마이페이지"><i class="bi bi-house-door-fill me-2"></i> 마이페이지</a></li>
+        <li><a class="dropdown-item" href="#" data-label="프로필"><i class="bi bi-person-fill me-2"></i> 프로필</a></li>
+        <li><a class="dropdown-item" href="#" data-label="내 스페이스"><i class="bi bi-chat-dots-fill me-2"></i> 내 스페이스</a></li>
+        <li><a class="dropdown-item" href="#" data-label="계정 및 보안"><i class="bi bi-lock-fill me-2"></i> 계정 및 보안</a></li>
+      </ul>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div id="content-mypage" class="content-block">
+      <div class="profile-summary d-flex align-items-center justify-content-between px-3 py-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-person-circle fs-2 me-3 profile-icon" style="color: #9376e0;"></i>
+          <div>
+            <div id="nickname" class="fw-semibold">닉네임</div>
+            <div class="text-muted" style="font-size: 14px;">본인을 설명해주세요</div>
+          </div>
+        </div>
+        <button class="btn profile-view-btn">프로필 보기</button>
       </div>
-      <a href="{% url 'mypage:edit_profile' %}" class="btn btn-outline-secondary btn-sm">회원정보 수정</a>
     </div>
 
-    <!-- 예측 항목 시세 -->
-    <div class="container my-3">
-      <h6 class="fw-bold mb-2">예측 항목 시세</h6>
-      <ul class="list-group">
-        {% for item in prediction_items %}
-          <li class="list-group-item">{{ item.name }} {{ item.price }} ({{ item.change }})</li>
-        {% endfor %}
-      </ul>
+    <!-- 서브 콘텐츠들 -->
+    <div id="content-profile" class="content-block" style="display: none;">
+      <div class="px-3 py-3">
+        <h5>프로필 설정 영역입니다.</h5>
+      </div>
     </div>
 
-    <!-- 관심 항목 -->
-    <div class="container my-3">
-      <h6 class="fw-bold mb-2">관심 항목</h6>
-      <ul class="list-group">
-        {% for item in watchlist %}
-          <li class="list-group-item">{{ item.name }}</li>
-        {% endfor %}
-      </ul>
+    <div id="content-space" class="content-block" style="display: none;">
+      <div class="px-3 py-3">
+        <h5>내 스페이스 내용입니다.</h5>
+      </div>
     </div>
 
-    <!-- 내가 쓴 글 -->
-    <div class="container my-3">
-      <h6 class="fw-bold mb-2">내가 쓴 글</h6>
-      <ul class="list-group">
-        {% for post in user_posts %}
-          <li class="list-group-item">{{ post.title }}</li>
-        {% empty %}
-          <li class="list-group-item">작성한 게시물이 없습니다.</li>
-        {% endfor %}
-      </ul>
+    <div id="content-security" class="content-block" style="display: none;">
+      <div class="px-3 py-3">
+        <h5>계정 및 보안 설정입니다.</h5>
+      </div>
     </div>
+
+    <!-- 스크롤 최상단 버튼 -->
+    <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="
+      position: fixed;
+      bottom: 90px;
+      right: 15px;
+      display: none;
+      z-index: 1000;
+      width: 45px;
+      height: 45px;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    ">
+      <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
+    </button>
+
+    <!-- ✅ footer.html 포함 -->
+  {% include 'main_footer.html' %}
   </div>
 
-  <!-- 푸터 삽입 -->
-  {% include 'main_footer.html' %}
-
-  <!-- Bootstrap JS -->
+  <!-- JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <!-- Custom JS -->
-  <script src="{% static 'js/script.js' %}"></script>
+  <script src="{% static 'js/myPage.js' %}"></script>
 </body>
 </html>

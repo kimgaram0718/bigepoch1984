@@ -6,25 +6,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def logout_view(request):
-    username = request.user.login_id if request.user.is_authenticated else "Anonymous"
-    logger.info(f"User {username} logged out")
-    logout(request)
-    return render(request, 'login.html')
-
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
             logger.info(f"User {username} logged in successfully")
-            return redirect('main:main')
+            return render(request, 'account/login_success.html', {'user': user})
         else:
-            logger.warning(f"Failed login attempt for {username}: Incorrect username or password")
-            return render(request, 'login.html', {'error': '잘못된 아이디 또는 비밀번호입니다.'})
-    return render(request, 'login.html')
+            logger.warning(f"Failed login attempt for {username}")
+            return render(request, 'account/login.html', {'error': '잘못된 아이디 또는 비밀번호입니다.'})
+    return render(request, 'account/login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('account:login')
 
 def signup_view(request):
     if request.method == 'POST':
