@@ -493,12 +493,17 @@ function updatePagination() { /* ... 기존 함수 ... */ }
 
 const recentPosts = [ /* ... 기존 데이터 ... */ ];
 
+//add1_250512_14_32
 function initializeWriteButton() {
     const bodyData = document.body.dataset;
     const isLoggedIn = bodyData.isAuthenticated === 'true';
     const writeUrl = bodyData.writeUrl || 'write.html';
+    const currentPath = window.location.pathname.split('/').pop() || 'main'; // 현재 페이지 경로 확인
 
-    if (!isLoggedIn) return;
+    // main.html 또는 루트(/) 경로에서만 writeBtn 생성을 건너뜀
+    if (!isLoggedIn || currentPath === 'main' || currentPath === '') {
+        return;
+    }
 
     const writeBtn = document.createElement('button');
     writeBtn.id = 'goToWriteBtn';
@@ -514,6 +519,7 @@ function initializeWriteButton() {
         window.location.href = writeUrl;
     });
 }
+//add2
 
 async function fetchNaverNews() {
     try {
