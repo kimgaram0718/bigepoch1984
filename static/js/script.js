@@ -457,7 +457,7 @@ function initializeExchangeList() {
 
 const coinData = [ /* ... 기존 데이터 ... */ ];
 let currentPage = 1;
-const itemsPerPage = 10;
+const itemsPerPage = 5;
 let filteredCoins = [...coinData];
 
 function renderCoinList() {
