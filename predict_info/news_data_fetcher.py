@@ -20,12 +20,14 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 START_DATE = datetime(2020, 1, 1)
 END_DATE = datetime.today() - timedelta(days=1)
 
+# 완료된 종목 체크
 def get_completed_stocks(file_path):
     if not os.path.exists(file_path):
         return set()
     df = pd.read_csv(file_path)
     return set(df['종목명'].unique())
 
+# 날짜 추출
 def extract_date(text):
     match = re.search(r"\d{4}\.\d{2}\.\d{2}", text)
     if match:
@@ -35,7 +37,8 @@ def extract_date(text):
             return None
     return None
 
-def crawl_chosun_news(keyword):
+#크롬 드라이버 설정
+def get_driver():
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
@@ -44,30 +47,65 @@ def crawl_chosun_news(keyword):
     options.add_argument("user-agent=Mozilla/5.0")
     options.add_argument("--disable-gpu")
     options.add_argument("--blink-settings=imagesEnabled=false")
-
+    
+  
+    
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
+    return webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=options)
+    
+# 서브도메인 구분 및 파싱
 
-    page = 1
-    print_count = 0
-    empty_count_in_page = 0
-    results = []
-    seen_links = set()
+def parse_chosun(driver):
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    paragraphs = soup.select("p.article-body__content-text")
+    return " ".join(p.get_text(strip=True) for p in paragraphs)
+
+def parse_biz(driver):
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    paragraphs = soup.select("p.article-body__content.article-body__content-text")
+    return " ".join(p.get_text(strip=True) for p in paragraphs)
+
+def parse_it(driver):
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    body = soup.select_one("div.article-body")
+    return " ".join(p.get_text(strip=True) for p in body.find_all("p")) if body else ""
+
+def parse_tv(driver):
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    box = soup.select_one("div.text-box")
+    return " ".join(p.get_text(strip=True) for p in box.find_all("p")) if box else ""
+
+def get_parser_by_url(url):
+    if "biz.chosun.com" in url:
+        return parse_biz, "비즈조선"
+    elif "it.chosun.com" in url:
+        return parse_it, "IT조선"
+    elif "tvchosun.com" in url:
+        return parse_tv, "TV조선"
+    else:
+        return parse_chosun, "조선일보"
+
+
+# 기사 크롤링
+
+def crawl_chosun_news(keyword):
+    driver = get_driver()
+    page, print_count, empty_count = 1, 0, 0
+    results, seen_links = [], set()
 
     while True:
         query_url = f"https://www.chosun.com/nsearch/?query={keyword}&pageno={page}"
         driver.get(query_url)
         time.sleep(2)
-
         soup = BeautifulSoup(driver.page_source, "html.parser")
         cards = soup.select("div.story-card")
         if not cards:
             break
 
         total_cards = len(cards)
-        excluded = 0
-        added = 0
-        valid_in_page = False
+        added, excluded = 0, 0
+        valid = False
 
         for card in cards:
             title_tag = card.select_one("a.text__link.story-card__headline")
@@ -82,7 +120,7 @@ def crawl_chosun_news(keyword):
             link = title_tag["href"]
             if link.startswith("/"):
                 link = "https://www.chosun.com" + link
-            if link in seen_links or "chosun.com" not in link:
+            if link in seen_links or not any(d in link for d in ["chosun.com"]):
                 excluded += 1
                 continue
             seen_links.add(link)
@@ -90,43 +128,36 @@ def crawl_chosun_news(keyword):
             summary = summary_tag.get_text(strip=True) if summary_tag else ""
             breadcrumb_text = breadcrumb_tag.get_text(" ", strip=True) if breadcrumb_tag else ""
             date = extract_date(breadcrumb_text)
+            if not date or date < START_DATE or date > END_DATE:
+                continue
+            valid = True
 
-            if date:
-                if date > END_DATE:
-                    continue
-                if date < START_DATE:
-                    continue
-                valid_in_page = True
-
-            content = ""
             try:
                 driver.get(link)
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "article-body__content"))
-                )
-                soup_detail = BeautifulSoup(driver.page_source, "html.parser")
-                paragraphs = soup_detail.select("p.article-body__content-text")
-                content = " ".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
-            except Exception as e:
-                tqdm.write(f"[!] 본문 로딩 실패 for {link}: {e}")
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+                parser, press = get_parser_by_url(link)
+                content = parser(driver)
+            except:
+                continue
 
             results.append({
                 "종목명": keyword,
+                "날짜": date.strftime("%Y-%m-%d"),
                 "제목": title,
                 "요약": summary,
                 "본문": content,
-                "날짜": date.strftime("%Y-%m-%d") if date else "",
                 "URL": link,
-                "언론사": "조선일보"
+                "언론사": press
             })
             added += 1
 
-        print_count += added
+
         tqdm.write(
             f"[🔍 {keyword}] Page {page} | 기사 수: {total_cards}, 제외: {excluded}, 수집: {added}, 누적: {print_count}"
         )
+        print_count += added
 
-        if not valid_in_page:
+        if not valid:
             empty_count_in_page += 1
         else:
             empty_count_in_page = 0
@@ -140,6 +171,8 @@ def crawl_chosun_news(keyword):
     driver.quit()
     return results, print_count
 
+
+# 실행부
 if __name__ == "__main__":
     start_time = perf_counter()
 
@@ -155,6 +188,7 @@ if __name__ == "__main__":
     print(f"→ 이어받기 적용: KOSPI {len(kospi_list)}개, KOSDAQ {len(kosdaq_list)}개")
 
     combined_list = [("KOSPI", stock) for stock in kospi_list] + [("KOSDAQ", stock) for stock in kosdaq_list]
+    
     all_kospi, all_kosdaq = [], []
     total_kospi, total_kosdaq = 0, 0
 
