@@ -85,11 +85,11 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
           {% else %}
             <div class="reaction-icon"><i class="bi bi-emoji-smile"></i><br>{{ post.likes_count }}</div>
           {% endif %}
-          <span class="view-count">조회: {{ post.view_count }}</span> <!-- 조회수 추가 -->
+          <span class="view-count">조회: {{ post.view_count }}</span>
         </div>
       </div>
 
-      <div class="post-card comment-box">
+      <div class="post-card comment-box" id="comments">
         {% if request.user.is_authenticated %}
           <form method="POST" action="{% url 'community:comment_create' post.id %}">
             {% csrf_token %}
@@ -111,7 +111,7 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
                 {% if comment.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
               </span><br>
               <span>{{ comment.content }}</span><br>
-              <small class="text-muted">{{ comment.created_at|timesince }} 전</small>
+              <small class="text-muted">{{ comment.reg_dt|timesince }} 전</small>
             </div>
             {% if request.user.is_authenticated and request.user == comment.user %}
               <div class="d-flex gap-2">

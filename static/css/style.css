@@ -289,7 +289,7 @@ body.no-scroll {
 
 .login-menu-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   padding: 15px;
 }
@@ -383,4 +383,73 @@ body.no-scroll {
 
 .news-item:hover h6 {
     color: #007bff;
+}
+
+/* Investing 환율 박스 추가 스타일 */
+.investing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.investing-logo {
+  max-height: 100px;
+  width: auto;
+}
+
+.investing-apps {
+  display: flex;
+  gap: 8px;
+}
+
+.app-icon {
+  height: 30px;
+  width: auto;
+}
+
+.investing-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.investing-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.investing-list li:last-child {
+  border-bottom: none;
+}
+
+.currency-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+}
+
+.currency-name {
+  flex: 1;
+}
+
+.currency-value {
+  flex: 1;
+  text-align: center;
+}
+
+.currency-change {
+  flex: 1;
+  text-align: right;
+}
+
+.text-red {
+  color: #d93025;
+}
+
+.text-blue {
+  color: #1a73e8;
 }
