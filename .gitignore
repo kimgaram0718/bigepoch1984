@@ -8,7 +8,7 @@ __pycache__/
 *.log
 debug.log
 *.sqlite3
-media/
+
 staticfiles/
 
 # Virtual environment

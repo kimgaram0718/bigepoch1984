@@ -1,13 +1,10 @@
+# main/views.py
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import requests
 import json
 from django.views.decorators.http import require_http_methods
 
-# Create your views here.
-#250430_main 외 새 브랜치 생성 후 
-# 그 브랜치에서 작업하기 테스트 중입니다
-#17시37분에 django01 이란 브랜치생성 후 진입했어요
 def main(request):
     return render(request, 'main.html')
 
@@ -26,8 +23,8 @@ def get_naver_news(request):
     }
     params = {
         "query": query,
-        "display": 10,  # 10개의 뉴스만 가져옴
-        "sort": "date"  # 최신순 정렬
+        "display": 5,  # 5개로 변경
+        "sort": "date"  # 최신순 정렬 (상=>하)
     }
     
     try:

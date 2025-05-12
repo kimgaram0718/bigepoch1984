@@ -17,7 +17,13 @@
                 <span id="unread-count" style="position: absolute; top: -5px; right: -5px; background: #ff4d4f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;"></span>
             </div>
             <a href="{% url 'mypage:mypage' %}">
-                <img src="{% if request.user.profile_image %}{{ request.user.profile_image.url }}?t={{ now|date:'U' }}{% else %}{% static 'img/person.jpg' %}{% endif %}" alt="프로필 이미지" id="profileIcon" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" title="프로필">
+                <div class="profile-preview" id="profileIcon">
+                    {% if request.user.profile_image %}
+                        <img src="{{ request.user.profile_image.url }}?t={{ now|date:'U' }}" alt="프로필 이미지" class="rounded-circle">
+                    {% else %}
+                        <i class="bi bi-person-fill profile-icon"></i>
+                    {% endif %}
+                </div>
             </a>
         {% else %}
             <a href="{% url 'account:login' %}" style="text-decoration: none;">
@@ -43,6 +49,33 @@
         </div>
     </div>
 </nav>
+
+<style>
+    /* 프로필 미리보기 스타일 */
+    .profile-preview {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+    .profile-icon {
+        font-size: 16px; /* 아이콘 크기 (24px에 맞게 조정) */
+        color: #9376e0; /* mypage.html과 동일한 색상 */
+    }
+    .profile-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+</style>
 
 <script>
     // CSRF 토큰 설정

@@ -13,6 +13,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentLabel = document.getElementById('currentMenuLabel');
   const profileViewBtn = document.querySelector('.profile-view-btn');
   const nicknameEl = document.getElementById('nickname');
+  const openGreetingInputBtn = document.getElementById('openGreetingInputBtn');
+  const greetingInputContainer = document.getElementById('greetingInputContainer');
+  const cancelGreetingInputBtn = document.getElementById('cancelGreetingInputBtn');
+  const confirmGreetingBtn = document.getElementById('confirmGreetingBtn');
+  const scrollTopBtn = document.getElementById('scrollTopBtn');
 
   const contentMap = {
     '마이페이지': 'content-mypage',
@@ -20,6 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     '내 스페이스': 'content-space',
     '계정 및 보안': 'content-security'
   };
+
+  // 디버깅 로그
+  console.log('Elements:', {
+    greetingInputContainer,
+    openGreetingInputBtn,
+    cancelGreetingInputBtn,
+    confirmGreetingBtn
+  });
 
   // 드롭다운 토글
   dropdownBtn?.addEventListener('click', () => {
@@ -32,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 메뉴 클릭 시 콘텐츠 전환
   dropdownMenu?.querySelectorAll('.dropdown-item').forEach(item => {
     item.addEventListener('click', (e) => {
-      e.preventDefault();  // ✅ 이게 있어야 href="#" 이동 방지됨
+      e.preventDefault();
       const label = item.getAttribute('data-label');
       currentLabel.textContent = label;
       dropdownMenu.style.display = 'none';
@@ -80,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 스크롤 버튼 동작
-  const scrollTopBtn = document.getElementById('scrollTopBtn');
   window.addEventListener('scroll', () => {
     if (window.scrollY > 200) {
       scrollTopBtn.style.display = 'flex';
@@ -91,5 +103,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
   scrollTopBtn?.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // 인사 메시지 입력창 열기
+  openGreetingInputBtn?.addEventListener('click', () => {
+    if (greetingInputContainer) {
+      console.log('Opening greeting input');
+      greetingInputContainer.classList.add('show');
+    } else {
+      console.error('Greeting input container not found');
+    }
+  });
+
+  // 인사 메시지 입력창 닫기 (취소 버튼)
+  cancelGreetingInputBtn?.addEventListener('click', () => {
+    if (greetingInputContainer) {
+      greetingInputContainer.classList.remove('show');
+    }
+  });
+
+  // 인사 메시지 저장 (확인 버튼)
+  confirmGreetingBtn?.addEventListener('click', async () => {
+    const greetingInput = document.getElementById('greetingInput')?.value || '';
+    const url = openGreetingInputBtn?.dataset.url || '{% url "mypage:update_greeting_message" %}';
+    const token = openGreetingInputBtn?.dataset.csrf || '{{ csrf_token }}';
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': token,
+        },
+        body: new URLSearchParams({
+          'greeting_message': greetingInput,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert(data.message);
+        if (greetingInputContainer) {
+          greetingInputContainer.classList.remove('show');
+          location.reload(); // 페이지 새로고침으로 메시지 반영
+        }
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('서버와의 통신 중 오류가 발생했습니다.');
+    }
   });
 });
