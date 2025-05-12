@@ -47,6 +47,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=50, unique=True)
     email = models.EmailField(unique=True)
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True, default='profile_images/default.jpg')
+    greeting_message = models.CharField(max_length=100, blank=True, default="")  # 인사 메시지 필드 추가
     created_at = models.DateTimeField(auto_now_add=True)  # 생성 시간
     is_active = models.BooleanField(default=True)  # 계정 활성화 여부
     is_staff = models.BooleanField(default=False)  # 관리자 페이지 접근 권한

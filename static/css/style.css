@@ -1,3 +1,27 @@
+/* add1_250512_18_27 */
+/* 섹션 간 간격 반응형 조정 */
+@media (max-width: 576px) {
+  .section-spacing {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  .footer-spacing {
+    margin-top: 24px;
+    margin-bottom: 60px; /* bottom-nav 고려 */
+  }
+}
+
+/* Google Play 버튼 스타일링 */
+.google-logo {
+  text-align: center; /* 중앙 정렬 */
+}
+
+.google-logo .app-icon {
+  width: 150px; /* 적절한 크기 설정 */
+  height: auto;
+}
+/* add2 */
+
 /* add1 */
 .list-group-item a:hover {
   text-decoration: underline;

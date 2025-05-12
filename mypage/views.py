@@ -9,11 +9,11 @@ from django.contrib.auth import login
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import JsonResponse
 
 @login_required
 def mypage(request):
     return render(request, 'mypage/mypage.html')
-
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -23,9 +23,29 @@ def mypage_view(request):
         logger.warning("Unauthorized access to mypage_view - redirecting to login")
         return HttpResponseRedirect('/account/login/?next=/mypage/')
     user = request.user
-    user_posts = FreeBoard.objects.filter(user=user, is_deleted=False).values('title')[:5]
+    # FreeBoard에서 최대 5개 게시글 가져오기 (title, reg_dt 포함)
+    user_posts_qs = FreeBoard.objects.filter(user=user, is_deleted=False).select_related('user').order_by('-reg_dt')[:5]
+
+    # 시간 경과 계산 및 데이터 처리
+    user_posts = []
+    for post in user_posts_qs:
+        time_diff = timezone.now() - post.reg_dt
+        if time_diff.days > 0:
+            time_ago = f"{time_diff.days}일 전"
+        elif time_diff.seconds // 3600 > 0:
+            time_ago = f"{time_diff.seconds // 3600}시간 전"
+        elif time_diff.seconds // 60 > 0:
+            time_ago = f"{time_diff.seconds // 60}분 전"
+        else:
+            time_ago = "방금 전"
+        user_posts.append({
+            'title': post.title,
+            'time_ago': time_ago,
+            'url': post.get_absolute_url(),
+        })
+
     context = {
-        'user': user,  # 딕셔너리 대신 user 객체 자체를 전달
+        'user': user,
         'prediction_items': [
             {'name': '삼성전자', 'price': '82,000원', 'change': '+1.20%'},
             {'name': '비트코인', 'price': '125,000,000원', 'change': '+0.80%'},
@@ -38,6 +58,32 @@ def mypage_view(request):
         'now': timezone.now(),
     }
     return render(request, 'mypage.html', context)
+
+@login_required
+def update_greeting_message(request):
+    """
+    사용자의 인사 메시지를 저장하거나 업데이트하는 뷰입니다.
+    """
+    if request.method == 'POST':
+        greeting_message = request.POST.get('greeting_message', '').strip()
+        logger.debug(f"Received greeting message: {greeting_message}")
+
+        # 유효성 검사
+        if len(greeting_message) > 100:
+            logger.warning(f"Greeting message too long: {len(greeting_message)} characters")
+            return JsonResponse({'success': False, 'message': '인사 메시지는 최대 100자까지 가능합니다.'}, status=400)
+
+        try:
+            user = request.user
+            user.greeting_message = greeting_message
+            user.save(update_fields=['greeting_message'])
+            logger.info(f"Greeting message updated for user {user.login_id}: {greeting_message}")
+            return JsonResponse({'success': True, 'message': '인사 메시지가 성공적으로 저장되었습니다.'})
+        except Exception as e:
+            logger.error(f"Failed to update greeting message for user {request.user.login_id}: {str(e)}")
+            return JsonResponse({'success': False, 'message': '저장 중 오류가 발생했습니다.'}, status=500)
+
+    return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'}, status=400)
 
 def edit_profile_view(request):
     if not request.user.is_authenticated:

@@ -83,6 +83,15 @@
     #chatbotBtn:hover {
       background-color: #0056b3; /* 호버 시 조금 더 어두운 파랑 */
     }
+    /* 섹션 간 마진 조정 */
+    .section-spacing {
+      margin-top: 24px; /* 섹션 간 기본 간격 */
+      margin-bottom: 24px;
+    }
+    .footer-spacing {
+      margin-top: 32px; /* 푸터 위 간격 */
+      margin-bottom: 60px; /* 푸터 아래 여백 (바닥 네비게이션 고려) */
+    }
   </style>
 </head>
 <body
@@ -94,7 +103,6 @@
   {% include 'main_header.html' %}
 
   <div id="app">
-
     <!-- Investing Insight 영역 -->
     <div class="bg-white px-3 py-3 my-3 rounded-3">
       <h5 class="fw-bold mb-2">Investing Insight</h5>
@@ -103,10 +111,10 @@
         <a href="{% url 'community:community' %}" class="fw-bold mb-0 text-dark text-decoration-none" style="font-size: 18px;">커뮤니티 테이블 링크 넣어야 됨</a>
         <a href="{% url 'community:community' %}" class="fw-bold text-dark text-decoration-none" style="font-size: 20px;">></a>
       </div>
+    </div>
 
     <!-- 분리선 -->
     <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
-
 
     <!-- 김치 프리미엄 / 공포탐욕지수 -->
     <div class="d-flex justify-content-around align-items-center py-2 bg-white">
@@ -158,140 +166,98 @@
     <!-- 분리선 -->
     <hr class="my-1" style="border-color: #dee2e6; border-top: 1px solid #adb5bd;" />
 
-      <!-- 큐레이션 필터 버튼 -->
-      <div id="filter-tabs-4to6" class="btn-filter-group d-none mb-3">
-        <button id="btn-heart" class="bg-white" onclick="renderFilteredList('heart')">❤️</button>
-        <button id="btn-shock" class="bg-light text-muted" onclick="renderFilteredList('shock')">😳</button>
-        <button id="btn-sad" class="bg-light text-muted" onclick="renderFilteredList('sad')">😢</button>
-      </div>
-
-      <!-- 리스트 출력 -->
-      <ul id="filtered-list" class="list-unstyled">
-        <!-- JS로 채움 -->
-      </ul>
+    <!-- 큐레이션 필터 버튼 -->
+    <div id="filter-tabs-4to6" class="btn-filter-group d-none mb-3">
+      <button id="btn-heart" class="bg-white" onclick="renderFilteredList('heart')">❤️</button>
+      <button id="btn-shock" class="bg-light text-muted" onclick="renderFilteredList('shock')">😳</button>
+      <button id="btn-sad" class="bg-light text-muted" onclick="renderFilteredList('sad')">😢</button>
     </div>
+
+    <!-- 리스트 출력 -->
+    <ul id="filtered-list" class="list-unstyled">
+      <!-- JS로 채움 -->
+    </ul>
 
     <!-- 분리선 -->
     <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
 
-    <!-- 코인 시세 조회 영역 -->
-    <div class="bg-white px-3 py-3 my-3 rounded-4 border" style="margin: 0 12px; border: 1px solid #dee2e6;">
-      <h5 class="fw-bold mb-3">코인 시세 조회</h5>
-
-      <!-- 검색창 -->
-      <div class="input-group mb-3">
-        <span class="input-group-text bg-light border-0">
-          <i class="bi bi-search"></i>
-        </span>
-        <input type="text" id="coinSearch" class="form-control border-0 bg-light" placeholder="무엇을 검색할까요?">
-      </div>
-
-      <!-- 테이블 헤더 -->
-      <div class="d-flex fw-bold text-muted mb-2 px-2" style="font-size: 14px;">
-        <div class="flex-grow-1">이름</div>
-        <div style="width: 100px; text-align: right;">가격(KRW)</div>
-        <div style="width: 80px; text-align: right;">24시간(%)</div>
-      </div>
-
-      <!-- 코인 리스트 -->
-      <ul id="coin-list" class="list-unstyled mb-0">
-        <!-- JS로 채워넣음 -->
-      </ul>
-
-      <!-- 페이지네이션 버튼 -->
-      <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
-        <button id="prevPage" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 36px; height: 36px;">
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <button id="nextPage" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 36px; height: 36px;">
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
-
-    
     <!-- Investing 환율 박스 -->
-  <div class="bg-white px-3 py-3 my-3 rounded-4 border" style="margin: 0 12px; border: 1px solid #dee2e6;">
-    <h5 class="fw-bold mb-3">오늘자 환율 시세 조회</h5> 
-    <div class="investing-box px-3">
-      <div class="investing-header">
-        <!-- <a href="https://kr.investing.com/?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Logo" target="_blank">
-          <img src="{% static 'images/invest2.png' %}" alt="Investing.com" class="investing-logo" style="height: 100px; width: auto;">
-        </a> -->
-        <div class="investing-apps">
-          <!-- <a href="https://apps.apple.com/us/app/investing-com-stock-market/id909998122?mt=8" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="App Store" class="app-icon">
+    <div class="bg-white px-3 py-3 rounded-4 border section-spacing" style="margin: 0 12px; border: 1px solid #dee2e6;">
+      <h5 class="fw-bold mb-3">오늘자 환율 시세 조회</h5>
+      <div class="investing-box px-3">
+        <div class="investing-header">
+          <!-- <a href="https://kr.investing.com/?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Logo" target="_blank">
+            <img src="{% static 'images/invest2.png' %}" alt="Investing.com" class="investing-logo" style="height: 100px; width: auto;">
           </a> -->
+          <div class="investing-apps">
+            <!-- <a href="https://apps.apple.com/us/app/investing-com-stock-market/id909998122?mt=8" target="_blank">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="App Store" class="app-icon">
+            </a> -->
+          </div>
         </div>
+        <ul class="investing-list">
+          <li>
+            <a href="https://kr.investing.com/currencies/cny-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+              <span class="currency-name">CNY/KRW</span>
+              <span class="currency-value">197.20</span>
+              <span class="currency-change text-red">+1.09 (+0.56%)</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://kr.investing.com/currencies/eur-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+              <span class="currency-name">EUR/KRW</span>
+              <span class="currency-value">1,633.42</span>
+              <span class="currency-change text-red">+5.45 (+0.33%)</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://kr.investing.com/currencies/jpy-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+              <span class="currency-name">JPY/KRW</span>
+              <span class="currency-value">10.0011</span>
+              <span class="currency-change text-blue">-0.0201 (-0.20%)</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://kr.investing.com/currencies/usd-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
+              <span class="currency-name">USD/KRW</span>
+              <span class="currency-value">1,437.36</span>
+              <span class="currency-change text-red">+7.94 (+0.56%)</span>
+            </a>
+          </li>
+        </ul>
       </div>
+    </div>
 
-      <ul class="investing-list">
-        <li>
-          <a href="https://kr.investing.com/currencies/cny-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
-            <span class="currency-name">CNY/KRW</span>
-            <span class="currency-value">197.20</span>
-            <span class="currency-change text-red">+1.09 (+0.56%)</span>
-          </a>
-        </li>
-        <li>
-          <a href="https://kr.investing.com/currencies/eur-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
-            <span class="currency-name">EUR/KRW</span>
-            <span class="currency-value">1,633.42</span>
-            <span class="currency-change text-red">+5.45 (+0.33%)</span>
-          </a>
-        </li>
-        <li>
-          <a href="https://kr.investing.com/currencies/jpy-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
-            <span class="currency-name">JPY/KRW</span>
-            <span class="currency-value">10.0011</span>
-            <span class="currency-change text-blue">-0.0201 (-0.20%)</span>
-          </a>
-        </li>
-        <li>
-          <a href="https://kr.investing.com/currencies/usd-krw?utm_source=WMT&utm_medium=referral&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=kr.investing.com&utm_content=Instrument%20Link" target="_blank" class="currency-link">
-            <span class="currency-name">USD/KRW</span>
-            <span class="currency-value">1,437.36</span>
-            <span class="currency-change text-red">+7.94 (+0.56%)</span>
-          </a>
-        </li>
-      </ul>
+    <!-- FAQ, 제휴문의, 광고문의 영역 -->
+    <div class="inquiry-wrapper px-3 section-spacing">
+      <a href="" class="inquiry-item">
+        <div class="inquiry-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="FAQ 아이콘">
+        </div>
+        <div class="inquiry-text">FAQ</div>
+      </a>
+      <div class="inquiry-divider"></div>
+      <a href="" class="inquiry-item">
+        <div class="inquiry-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" alt="제휴문의 아이콘">
+        </div>
+        <div class="inquiry-text">제휴 문의</div>
+      </a>
+      <div class="inquiry-divider"></div>
+      <a href="" class="inquiry-item">
+        <div class="inquiry-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" alt="광고문의 아이콘">
+        </div>
+        <div class="inquiry-text">광고 문의</div>
+      </a>
     </div>
-  </div>
 
-<!-- FAQ, 제휴문의, 광고문의 영역 -->
-<div class="inquiry-wrapper px-3">
-  <a href="" class="inquiry-item">
-    <div class="inquiry-icon">
-      <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="FAQ 아이콘">
+    <!-- 구글 로그 이미지 -->
+    <div class="google-logo section-spacing">
+      <a href="https://play.google.com/store/apps/details?id=com.fusionmedia.investing&hl=ko-KR&utm_source=WMT&utm_medium=referrer&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=cobak.co&utm_content=Android%20App" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="app-icon">
+      </a>
     </div>
-    <div class="inquiry-text">FAQ</div>
-  </a>
-  
-  <div class="inquiry-divider"></div>
-  
-  <a href="" class="inquiry-item">
-    <div class="inquiry-icon">
-      <img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" alt="제휴문의 아이콘">
-    </div>
-    <div class="inquiry-text">제휴 문의</div>
-  </a>
-  
-  <div class="inquiry-divider"></div>
-  
-  <a href="" class="inquiry-item">
-    <div class="inquiry-icon">
-      <img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" alt="광고문의 아이콘">
-    </div>
-    <div class="inquiry-text">광고 문의</div>
-  </a>
-</div>
-<!-- 구글 로그 이미지 -->
-<div class ="google-logo">
-  <a href="https://play.google.com/store/apps/details?id=com.fusionmedia.investing&hl=ko-KR&utm_source=WMT&utm_medium=referrer&utm_campaign=LIVE_CURRENCY_X_RATES&utm_term=cobak.co&utm_content=Android%20App" target="_blank">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="app-icon">
-  </a>
-</div>
-
 
     <!-- 챗봇 버튼 -->
     <a href="{% url 'chatbot:chatbot' %}" id="chatbotBtn">
@@ -315,7 +281,9 @@
   </div>
 
   <!-- 푸터 추가 -->
-  {% include 'main_footer.html' %}
+  <div class="footer-spacing">
+    {% include 'main_footer.html' %}
+  </div>
 
   <!-- Bootstrap JS (CDN 추가로 의존성 보장) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
