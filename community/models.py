@@ -5,6 +5,28 @@ from django.conf import settings
 from django.utils import timezone
 from django.urls import reverse
 
+#add1_250512_15_25
+class Notification(models.Model):
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_notifications')
+    comment = models.ForeignKey('FreeBoardComment', on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=255)  # 예: "유저2님이 댓글을 작성했습니다."
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']  # 최신순 정렬
+        verbose_name = "알림"
+        verbose_name_plural = "알림 목록"
+
+    def __str__(self):
+        return self.message
+
+    def get_absolute_url(self):
+        # 댓글의 게시글 상세 페이지로 이동 (댓글 섹션으로 포커스)
+        return f"{reverse('community:detail', args=[self.comment.free_board.id])}#comments"
+#add2
+
 class FreeBoard(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='free_boards')
     title = models.CharField(max_length=200)

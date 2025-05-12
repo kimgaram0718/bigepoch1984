@@ -11,8 +11,9 @@ urlpatterns = [
     path('<int:post_id>/like/', views.like_post, name='like_post'),
     path('<int:post_id>/edit/', views.edit_view, name='edit'),
     path('<int:post_id>/delete/', views.delete_view, name='delete'),
-    #add1
+    # add1
     path('comment/edit/<int:pk>/', views.comment_edit, name='comment_edit'),
     path('comment/delete/<int:pk>/', views.comment_delete, name='comment_delete'),
-    #add2
+    # add2
+    path('notifications/', views.notifications_view, name='notifications'),  # 알림 뷰 추가
 ]

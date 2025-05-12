@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
-from .models import FreeBoard, FreeBoardComment, FreeBoardLike, DartDisclosure, NewsArticle
+from .models import FreeBoard, FreeBoardComment, FreeBoardLike, DartDisclosure, NewsArticle, Notification
 from django.utils import timezone as django_timezone
 from django.contrib import messages
 from django.db import transaction
@@ -12,9 +12,46 @@ import re
 
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, Page # Page 임포트 추가
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, Page
 
 logger = logging.getLogger(__name__)
+
+#add1
+def notifications_view(request):
+    """
+    로그인된 사용자의 알림 데이터를 JSON 형식으로 반환합니다.
+    최신 3개만 반환하며, 읽음 여부도 포함.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '로그인 필요'}, status=401)
+
+    notifications = Notification.objects.filter(
+        recipient=request.user
+    ).select_related('sender', 'comment__free_board')[:3]  # 최신 3개만
+
+    notification_data = []
+    for notif in notifications:
+        time_diff = django_timezone.now() - notif.created_at
+        if time_diff.days > 0:
+            time_ago = f"{time_diff.days}일 전"
+        elif time_diff.seconds // 3600 > 0:
+            time_ago = f"{time_diff.seconds // 3600}시간 전"
+        elif time_diff.seconds // 60 > 0:
+            time_ago = f"{time_diff.seconds // 60}분 전"
+        else:
+            time_ago = "방금 전"
+
+        sender_name = notif.sender.nickname if hasattr(notif.sender, 'nickname') and notif.sender.nickname else notif.sender.username
+        notification_data.append({
+            'user': sender_name,
+            'preview': notif.message,  # message 필드에 댓글 내용만 포함
+            'time': time_ago,
+            'link': notif.get_absolute_url(),
+            'is_read': notif.is_read
+        })
+
+    return JsonResponse(notification_data, safe=False)
+#add2
 
 def extract_api_disclosure_info(content_str):
     """
@@ -388,30 +425,40 @@ def like_post(request, post_id):
 def comment_create(request, post_id):
     """
     댓글 작성 처리 뷰입니다.
-    로그인된 사용자만 가능하며, 내용이 비어있으면 오류 메시지를 표시합니다.
+    댓글이 작성되면 게시글 작성자에게 알림을 생성합니다.
     """
     if not request.user.is_authenticated:
-        # 로그인 페이지로 리다이렉트, 성공 시 현재 댓글을 작성하려던 게시글 상세 페이지로 이동
         return HttpResponseRedirect(f"{reverse('account:login')}?next={reverse('community:detail', args=[post_id])}")
 
-    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False) # 삭제되지 않은 게시물에만 댓글 작성 가능
+    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
     if request.method == 'POST':
         content = request.POST.get('content', '').strip()
         if not content:
             messages.error(request, '댓글 내용을 입력해주세요.')
         else:
-            with transaction.atomic(): # 게시물의 댓글 수 업데이트와 함께 처리
-                FreeBoardComment.objects.create(
+            with transaction.atomic():
+                comment = FreeBoardComment.objects.create(
                     free_board=post,
                     user=request.user,
                     content=content,
                 )
                 post.comments_count += 1
                 post.save(update_fields=['comments_count'])
+
+                # 게시글 작성자에게 알림 생성 (본인 댓글이 아닌 경우)
+                if post.user != request.user:
+                    # 댓글 내용만 포함, 30자 초과 시 ... 추가
+                    preview_content = (content[:30] + '...') if len(content) > 30 else content
+                    Notification.objects.create(
+                        recipient=post.user,
+                        sender=request.user,
+                        comment=comment,
+                        message=preview_content
+                    )
+
             messages.success(request, '댓글이 성공적으로 작성되었습니다.')
-        return redirect('community:detail', post_id=post_id) # 댓글 작성 후 상세 페이지로 리다이렉트
+        return redirect('community:detail', post_id=post_id)
     
-    # POST 요청이 아닌 경우 (일반적으로 발생하지 않지만, 방어적으로 처리)
     return redirect('community:detail', post_id=post_id)
 
 def edit_view(request, post_id):
