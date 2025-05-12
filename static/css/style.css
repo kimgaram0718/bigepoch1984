@@ -1,0 +1,68 @@
+/* 기본 스타일 */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* 예측 섹션 스타일 */
+.prediction-section {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 테이블 스타일 */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* 차트 영역 스타일 */
+#predictionChartArea {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 로딩 인디케이터 스타일 */
+.loading-indicator {
+    position: relative;
+    min-height: 100px;
+}
+
+.loading-indicator p {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+}
+
+/* 버튼 스타일 */
+.btn {
+    font-weight: 500;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    .prediction-section {
+        padding: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+} 

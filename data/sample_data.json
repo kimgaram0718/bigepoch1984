@@ -1,0 +1,116 @@
+{
+    "marketIndices": [
+        {
+            "name": "코스피",
+            "date": "2024-03-19",
+            "closePrice": 2750.23,
+            "changeValue": 15.67,
+            "changePercent": 0.57
+        },
+        {
+            "name": "코스닥",
+            "date": "2024-03-19",
+            "closePrice": 850.45,
+            "changeValue": -5.32,
+            "changePercent": -0.62
+        }
+    ],
+    "topGainers": {
+        "kospi": [
+            {
+                "name": "삼성전자",
+                "code": "005930",
+                "change": 2.5,
+                "close": 75000
+            },
+            {
+                "name": "SK하이닉스",
+                "code": "000660",
+                "change": 1.8,
+                "close": 145000
+            },
+            {
+                "name": "LG에너지솔루션",
+                "code": "373220",
+                "change": 1.5,
+                "close": 425000
+            },
+            {
+                "name": "삼성바이오로직스",
+                "code": "207940",
+                "change": 1.2,
+                "close": 825000
+            },
+            {
+                "name": "NAVER",
+                "code": "035420",
+                "change": 1.0,
+                "close": 195000
+            }
+        ],
+        "kosdaq": [
+            {
+                "name": "셀트리온",
+                "code": "068270",
+                "change": 3.2,
+                "close": 185000
+            },
+            {
+                "name": "LG화학",
+                "code": "051910",
+                "change": 2.8,
+                "close": 425000
+            },
+            {
+                "name": "SK이노베이션",
+                "code": "096770",
+                "change": 2.5,
+                "close": 115000
+            },
+            {
+                "name": "현대차",
+                "code": "005380",
+                "change": 2.2,
+                "close": 185000
+            },
+            {
+                "name": "기아",
+                "code": "000270",
+                "change": 2.0,
+                "close": 115000
+            }
+        ]
+    },
+    "predictions": {
+        "005930": [
+            {
+                "date": "2024-03-20",
+                "price": 75200
+            },
+            {
+                "date": "2024-03-21",
+                "price": 75800
+            },
+            {
+                "date": "2024-03-22",
+                "price": 76200
+            },
+            {
+                "date": "2024-03-25",
+                "price": 76800
+            },
+            {
+                "date": "2024-03-26",
+                "price": 77500
+            },
+            {
+                "date": "2024-03-27",
+                "price": 78200
+            },
+            {
+                "date": "2024-03-28",
+                "price": 79000
+            }
+        ]
+    }
+} 
