@@ -16,7 +16,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, Page
 
 logger = logging.getLogger(__name__)
 
-#add1
 def notifications_view(request):
     """
     로그인된 사용자의 알림 데이터를 JSON 형식으로 반환합니다.
@@ -44,14 +43,13 @@ def notifications_view(request):
         sender_name = notif.sender.nickname if hasattr(notif.sender, 'nickname') and notif.sender.nickname else notif.sender.username
         notification_data.append({
             'user': sender_name,
-            'preview': notif.message,  # message 필드에 댓글 내용만 포함
+            'preview': notif.message,
             'time': time_ago,
             'link': notif.get_absolute_url(),
             'is_read': notif.is_read
         })
 
     return JsonResponse(notification_data, safe=False)
-#add2
 
 def extract_api_disclosure_info(content_str):
     """
@@ -69,11 +67,11 @@ def extract_api_disclosure_info(content_str):
 
 def community_view(request):
     """
-    커뮤니티 메인 페이지 및 뉴스 페이지를 처리하는 뷰입니다.
-    탭(community, news)과 서브탭(realtime, disclosure)에 따라 다른 컨텐츠를 보여줍니다.
+    커뮤니티 메인 페이지를 처리하는 뷰입니다.
+    기간(period)과 정렬(sort) 필터를 적용하여 글목록을 표시합니다.
     """
     tab = request.GET.get('tab', 'community')
-    subtab = request.GET.get('subtab', '') 
+    subtab = request.GET.get('subtab', '')
 
     context = {
         'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
@@ -81,11 +79,10 @@ def community_view(request):
         'active_subtab': subtab if subtab else ('realtime' if tab == 'news' else ''),
     }
 
-    # 커뮤니티 페이지 캐러셀을 위한 공시 데이터 준비 (최대 5개)
     disclosure_posts_for_carousel_qs = FreeBoard.objects.filter(
         Q(category='API공시') | Q(category='수동공시'),
         is_deleted=False
-    ).select_related('user').order_by('-reg_dt')[:5] # 최근 5개 항목만 가져옴
+    ).select_related('user').order_by('-reg_dt')[:5]
 
     processed_carousel_disclosure_list = []
     for post in disclosure_posts_for_carousel_qs:
@@ -98,16 +95,15 @@ def community_view(request):
         if post.category == 'API공시':
             company_name, report_link = extract_api_disclosure_info(post.content)
             item_data['display_company_name'] = company_name
-            item_data['link'] = report_link 
+            item_data['link'] = report_link
             item_data['is_api'] = True
         processed_carousel_disclosure_list.append(item_data)
 
-    paginator_for_carousel = Paginator(processed_carousel_disclosure_list, 5) 
+    paginator_for_carousel = Paginator(processed_carousel_disclosure_list, 5)
     try:
         page_for_community_carousel = paginator_for_carousel.page(1)
     except EmptyPage:
         page_for_community_carousel = Page([], 1, paginator_for_carousel)
-
 
     if tab == 'news':
         page_param_from_url = request.GET.get('page', '1')
@@ -130,7 +126,7 @@ def community_view(request):
             Q(category='API공시') | Q(category='수동공시'),
             is_deleted=False
         ).select_related('user').order_by('-reg_dt')
-        
+
         processed_disclosure_list = []
         for post in disclosure_posts_qs:
             item_data = {
@@ -142,44 +138,54 @@ def community_view(request):
             if post.category == 'API공시':
                 company_name, report_link = extract_api_disclosure_info(post.content)
                 item_data['display_company_name'] = company_name
-                item_data['link'] = report_link 
+                item_data['link'] = report_link
                 item_data['is_api'] = True
             processed_disclosure_list.append(item_data)
 
-        paginator_disclosure = Paginator(processed_disclosure_list, 10) 
+        paginator_disclosure = Paginator(processed_disclosure_list, 10)
         page_num_for_disclosure = current_page_for_active_tab if url_active_subtab == 'disclosure' else 1
         try:
-            disclosure_page_obj_final = paginator_disclosure.page(page_num_for_disclosure) 
+            disclosure_page_obj_final = paginator_disclosure.page(page_num_for_disclosure)
         except (EmptyPage, PageNotAnInteger):
             disclosure_page_obj_final = paginator_disclosure.page(1)
-        
+
         context.update({
-            'realtime_posts': realtime_page_obj, 
-            'realtime_page_obj': realtime_page_obj, 
-            'disclosures': disclosure_page_obj_final, 
-            'disclosure_page_obj': disclosure_page_obj_final, 
+            'realtime_posts': realtime_page_obj,
+            'realtime_page_obj': realtime_page_obj,
+            'disclosures': disclosure_page_obj_final,
+            'disclosure_page_obj': disclosure_page_obj_final,
         })
         return render(request, 'community_news.html', context)
 
-    # tab == 'community' 인 경우의 로직
     period = request.GET.get('period', '한달')
     sort = request.GET.get('sort', '최신순')
-    # '잡담' 카테고리의 게시글만 필터링 (기존 로직 유지)
-    all_posts_queryset = FreeBoard.objects.filter(is_deleted=False, category='잡담').select_related('user')
-    
+
+    now = django_timezone.now()
+    all_posts_queryset = FreeBoard.objects.filter(
+        is_deleted=False,
+        category='잡담',
+        reg_dt__gte=now - timedelta(days={'하루': 1, '일주일': 7, '한달': 30, '반년': 180}.get(period, 30))
+    ).select_related('user')
+
     processed_post_list = []
+    if request.user.is_authenticated:
+        liked_post_ids = FreeBoardLike.objects.filter(
+            user=request.user,
+            free_board__in=all_posts_queryset,
+            is_liked=True
+        ).values_list('free_board_id', flat=True)
+        liked_post_ids = set(liked_post_ids)
+    else:
+        liked_post_ids = set()
+
     for post_obj in all_posts_queryset:
-        time_diff = django_timezone.now() - post_obj.reg_dt
+        time_diff = now - post_obj.reg_dt
         days_ago = time_diff.days
-        if days_ago > 0: time_ago = f"{days_ago}일 전"
-        elif time_diff.seconds // 3600 > 0: time_ago = f"{time_diff.seconds // 3600}시간 전"
-        elif time_diff.seconds // 60 > 0: time_ago = f"{time_diff.seconds // 60}분 전"
-        else: time_ago = "방금 전"
-        
-        is_liked = False
-        if request.user.is_authenticated:
-            is_liked = FreeBoardLike.objects.filter(free_board=post_obj, user=request.user).exists()
-            
+        time_ago = "방금 전" if days_ago == 0 and time_diff.seconds < 60 else \
+                   f"{time_diff.seconds // 3600}시간 전" if time_diff.seconds // 3600 > 0 else \
+                   f"{time_diff.seconds // 60}분 전" if time_diff.seconds // 60 > 0 else \
+                   f"{days_ago}일 전"
+
         processed_post_list.append({
             'id': post_obj.id,
             'user': post_obj.user,
@@ -192,28 +198,25 @@ def community_view(request):
             'content': post_obj.content,
             'likes_count': post_obj.likes_count,
             'comments_count': post_obj.comments_count,
-            'view_count': getattr(post_obj, 'view_count', 0),
+            'view_count': post_obj.view_count,
+            'worried_count': post_obj.worried_count,
             'reg_dt': post_obj.reg_dt,
             'important': getattr(post_obj, 'important', 5),
-            'is_liked': is_liked,
-            'get_absolute_url': post_obj.get_absolute_url() if hasattr(post_obj, 'get_absolute_url') else f"/community/{post_obj.id}/",
+            'is_liked': post_obj.id in liked_post_ids,
+            'get_absolute_url': post_obj.get_absolute_url(),
             'tags': post_obj.tags.all() if hasattr(post_obj, 'tags') else [],
         })
 
-    if period == '하루':
-        processed_post_list = [p for p in processed_post_list if p['days_ago'] <= 1]
-    elif period == '일주일':
-        processed_post_list = [p for p in processed_post_list if p['days_ago'] <= 7]
-    elif period == '한달': 
-        processed_post_list = [p for p in processed_post_list if p['days_ago'] <= 30]
-    elif period == '반년':
-        processed_post_list = [p for p in processed_post_list if p['days_ago'] <= 180]
-        
     if sort == '최신순':
         processed_post_list.sort(key=lambda x: x['reg_dt'], reverse=True)
-    elif sort == '인기순':
-        # 조회수 높은 순, 같으면 최신순
-        processed_post_list.sort(key=lambda x: (-x['view_count'], -x['reg_dt'].timestamp()))  
+    elif sort == '조회수순':
+        processed_post_list.sort(key=lambda x: (-x['view_count'], -x['reg_dt'].timestamp()))
+    elif sort == '중요순':
+        processed_post_list.sort(key=lambda x: (-x['likes_count'], -x['reg_dt'].timestamp()))
+    elif sort == '걱정순':
+        processed_post_list.sort(key=lambda x: (-x['worried_count'], -x['reg_dt'].timestamp()))
+    else:
+        processed_post_list.sort(key=lambda x: x['reg_dt'], reverse=True)  # 기본값
 
     paginator_community = Paginator(processed_post_list, 10)
     page_number_community = request.GET.get('page', 1)
@@ -222,9 +225,7 @@ def community_view(request):
     except (EmptyPage, PageNotAnInteger):
         community_page_obj = paginator_community.page(1)
 
-    # 커뮤니티 탭의 컨텍스트에 캐러셀용 공시 데이터를 'disclosures_for_carousel'로 전달
     context['disclosures_for_carousel'] = page_for_community_carousel
-
     context.update({
         'ticker_message': '예측 정보 티커 영역 예시: 비트코인 1억 돌파 예측 중!',
         'posts': community_page_obj,
@@ -240,19 +241,18 @@ def write_view(request):
     로그인된 사용자만 접근 가능하며, 캡차 검증을 포함합니다.
     """
     if not request.user.is_authenticated:
-        # 로그인 페이지로 리다이렉트하면서 'next' 파라미터로 현재 경로 전달
         next_url = request.path
-        if request.GET: # GET 파라미터가 있다면 함께 전달
+        if request.GET:
             next_url += '?' + request.GET.urlencode()
-        return HttpResponseRedirect(f"{reverse('account:login')}?next={next_url}") 
+        return HttpResponseRedirect(f"{reverse('account:login')}?next={next_url}")
 
-    board_type = request.GET.get('board_type', 'freeboard') # 'freeboard', 'realtime_news', 'disclosure_manual'
+    board_type = request.GET.get('board_type', 'freeboard')
 
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
-        captcha_value = request.POST.get('captcha_value', '').strip() # 사용자가 입력한 캡차 이미지의 숫자
-        captcha_answer = request.POST.get('captcha_answer', '').strip() # 사용자가 입력한 캡차 정답
+        captcha_value = request.POST.get('captcha_value', '').strip()
+        captcha_answer = request.POST.get('captcha_answer', '').strip()
 
         logger.info(f"write_view POST: title='{title}', content_len={len(content)}, captcha_value='{captcha_value}', captcha_answer='{captcha_answer}', board_type='{board_type}'")
 
@@ -260,15 +260,14 @@ def write_view(request):
             messages.error(request, '제목과 내용을 모두 입력해주세요.')
             return render(request, 'community_write.html', {
                 'error_message': '제목과 내용을 모두 입력해주세요.',
-                'title': title, # 기존 입력값 유지
-                'content': content, # 기존 입력값 유지
+                'title': title,
+                'content': content,
                 'board_type': board_type,
             })
 
-        # 캡차 값이 4자리 숫자인지 확인 (단순 검증 예시)
         if not captcha_value.isdigit() or len(captcha_value) != 4:
             logger.warning(f"Invalid captcha_value provided: {captcha_value}")
-            messages.error(request, '잘못 입력했습니다.') # 캡차 오류 메시지는 동일하게 유지
+            messages.error(request, '잘못 입력했습니다.')
             return render(request, 'community_write.html', {
                 'error_message': '잘못 입력했습니다.',
                 'title': title,
@@ -276,8 +275,6 @@ def write_view(request):
                 'board_type': board_type,
             })
 
-        # 캡차 답변 검증 (실제로는 세션 등에 저장된 값과 비교해야 함)
-        # 여기서는 captcha_value (이미지에 표시된 값)와 captcha_answer (사용자 입력값)가 같아야 함
         if captcha_answer != captcha_value:
             logger.warning(f"Captcha mismatch: answer='{captcha_answer}', expected_value='{captcha_value}'")
             messages.error(request, '잘못 입력했습니다.')
@@ -288,57 +285,51 @@ def write_view(request):
                 'board_type': board_type,
             })
 
-        post_category = '잡담' # 기본값
+        post_category = '잡담'
         if board_type == 'realtime_news':
-            # 실시간 뉴스는 현재 직접 작성 기능을 비활성화하거나 다른 로직을 적용할 수 있음
             messages.info(request, "실시간 뉴스는 자동 수집됩니다. 직접 작성 기능은 현재 비활성화되어 있습니다.")
             return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
         elif board_type == 'disclosure_manual':
             post_category = '수동공시'
 
-        # 'realtime_news'가 아닐 경우에만 게시물 생성
-        if board_type != 'realtime_news': 
+        if board_type != 'realtime_news':
             new_post = FreeBoard.objects.create(
                 user=request.user,
                 title=title,
                 content=content,
-                category=post_category # board_type에 따라 카테고리 설정
+                category=post_category
             )
             messages.success(request, '게시물이 성공적으로 등록되었습니다.')
             logger.info(f"Post created successfully: id={new_post.id}, title='{new_post.title}', category='{post_category}'")
-        
-        # 게시물 유형에 따라 리다이렉트 경로 결정
-        if board_type == 'realtime_news': # 이 경우는 위에서 이미 처리됨
+
+        if board_type == 'realtime_news':
             return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
         elif board_type == 'disclosure_manual':
             return redirect(f"{reverse('community:community')}?tab=news&subtab=disclosure")
-        else: # 'freeboard' (잡담)
-            return redirect('community:community') # 커뮤니티 메인으로 리다이렉트
+        else:
+            return redirect('community:community')
 
-    # GET 요청 시 글쓰기 폼을 보여줌
     return render(request, 'community_write.html', {
-        'board_type': board_type # 템플릿에서 board_type에 따라 UI 변경 가능
+        'board_type': board_type
     })
 
 def community_detail_view(request, post_id):
     """
     게시글 상세 페이지 뷰입니다.
-    조회수 증가 로직 (세션 기반 중복 방지) 및 댓글 목록을 포함합니다.
+    AJAX 요청에 맞게 데이터 반환.
     """
     post = get_object_or_404(FreeBoard.objects.select_related('user'), id=post_id, is_deleted=False)
     comments = FreeBoardComment.objects.filter(free_board=post, is_deleted=False).select_related('user').order_by('reg_dt')
-    
-    # 조회수 증가 로직 (세션 또는 IP 기반)
-    # 로그인 사용자: 세션 키에 post_id 사용
+
     if request.user.is_authenticated:
         viewed_posts_key = f'viewed_post_{post_id}'
         if not request.session.get(viewed_posts_key, False):
-            with transaction.atomic(): # 동시성 문제 방지를 위해 트랜잭션 사용
+            with transaction.atomic():
                 post.view_count += 1
                 post.save(update_fields=['view_count'])
                 request.session[viewed_posts_key] = True
-                request.session.set_expiry(86400) # 세션 만료 시간 (예: 24시간)
-    else: # 비로그인 사용자: 세션 키에 post_id와 IP 주소 조합 사용
+                request.session.set_expiry(86400)
+    else:
         ip_address = request.META.get('REMOTE_ADDR')
         viewed_ips_key = f'viewed_ip_{post_id}_{ip_address}'
         if not request.session.get(viewed_ips_key, False):
@@ -348,17 +339,20 @@ def community_detail_view(request, post_id):
                 request.session[viewed_ips_key] = True
                 request.session.set_expiry(86400)
 
-    # 시간 표시 형식 변경
     time_diff = django_timezone.now() - post.reg_dt
-    if time_diff.days > 0: time_ago = f"{time_diff.days}일 전"
-    elif time_diff.seconds // 3600 > 0: time_ago = f"{time_diff.seconds // 3600}시간 전"
-    elif time_diff.seconds // 60 > 0: time_ago = f"{time_diff.seconds // 60}분 전"
-    else: time_ago = "방금 전"
-    
+    time_ago = "방금 전" if time_diff.days == 0 and time_diff.seconds < 60 else \
+               f"{time_diff.seconds // 3600}시간 전" if time_diff.seconds // 3600 > 0 else \
+               f"{time_diff.seconds // 60}분 전" if time_diff.seconds // 60 > 0 else \
+               f"{time_diff.days}일 전"
+
     is_liked = False
+    is_worried = False
     if request.user.is_authenticated:
-        is_liked = FreeBoardLike.objects.filter(free_board=post, user=request.user).exists()
-        
+        like_obj = FreeBoardLike.objects.filter(free_board=post, user=request.user).first()
+        if like_obj:
+            is_liked = like_obj.is_liked
+            is_worried = like_obj.is_worried
+
     dart_link_for_detail = None
     company_name_for_detail = None
     if post.category == 'API공시':
@@ -370,109 +364,143 @@ def community_detail_view(request, post_id):
         'username': post.user.nickname if hasattr(post.user, 'nickname') and post.user.nickname else post.user.get_username(),
         'auth_id': post.user.auth_id if hasattr(post.user, 'auth_id') else '',
         'title': post.title,
-        'content': post.content, # 원본 내용을 전달 (템플릿에서 linebreaksbr 필터 사용 가능)
+        'content': post.content,
         'time_ago': time_ago,
         'reg_dt': post.reg_dt,
         'likes_count': post.likes_count,
+        'worried_count': post.worried_count,
         'comments_count': post.comments_count,
         'view_count': post.view_count,
         'is_liked': is_liked,
-        'is_author': request.user == post.user, # 현재 사용자가 글쓴이인지 여부
+        'is_worried': is_worried,
+        'is_author': request.user == post.user,
         'category': getattr(post, 'category', '잡담'),
-        'dart_link': dart_link_for_detail, # API공시일 경우 DART 링크
-        'company_name_for_api_disclosure': company_name_for_detail, # API공시일 경우 회사명
+        'dart_link': dart_link_for_detail,
+        'company_name_for_api_disclosure': company_name_for_detail,
     }
-    return render(request, 'community_detail.html', {
-        'post': post_data,
-        'comments': comments,
-    })
+    return render(request, 'community_detail.html', {'post': post_data, 'comments': comments})
 
+@login_required
 def like_post(request, post_id):
     """
-    게시글 좋아요 처리 뷰입니다.
-    로그인된 사용자만 가능하며, 본인 글에는 좋아요를 할 수 없습니다.
+    게시글 좋아요/걱정돼요 처리 AJAX 뷰.
+    좋아요와 걱정돼요는 토글 방식으로 동작: 하나를 누르면 다른 하나는 취소됨.
     """
-    logger.info(f"like_post called for post_id={post_id}, user={request.user}")
     if not request.user.is_authenticated:
-        logger.warning(f"Unauthorized like attempt for post_id={post_id}")
-        messages.error(request, '로그인 후 좋아요를 누를 수 있습니다.')
-        return redirect('community:detail', post_id=post_id) # 상세 페이지로 리다이렉트
+        return JsonResponse({'error': '로그인 필요'}, status=401)
 
-    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False) # 삭제되지 않은 게시물만
-    if post.user == request.user: # 본인 게시글 확인
-        logger.warning(f"Self-like attempt by user={request.user} on post_id={post_id}")
-        messages.error(request, '본인 게시글에는 좋아요를 누를 수 없습니다.')
-        return redirect('community:detail', post_id=post_id)
+    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
+    if post.user == request.user:
+        return JsonResponse({'error': '본인 게시글에는 반응할 수 없습니다.'}, status=400)
 
-    if request.method == 'POST': # POST 요청일 때만 처리
-        with transaction.atomic(): # 데이터 일관성을 위해 트랜잭션 사용
-            like, created = FreeBoardLike.objects.get_or_create(free_board=post, user=request.user)
-            if created:
-                post.likes_count += 1
-                messages.success(request, '좋아요를 눌렀습니다.')
+    action = request.POST.get('action')
+    logger.debug(f"Received action: {action}, POST data: {request.POST}")
+
+    if action not in ['like', 'worry']:
+        logger.error(f"Invalid or missing action: {action}")
+        return JsonResponse({'error': '잘못된 요청: action 값이 필요합니다.'}, status=400)
+
+    response_data = {'status': 'success'}
+
+    with transaction.atomic():
+        like_obj, created = FreeBoardLike.objects.get_or_create(
+            free_board=post,
+            user=request.user,
+            defaults={'is_liked': False, 'is_worried': False}
+        )
+
+        if action == 'like':
+            if like_obj.is_liked:
+                # 이미 좋아요 상태 -> 좋아요 취소
+                like_obj.is_liked = False
+                post.likes_count = max(0, post.likes_count - 1)
             else:
-                like.delete()
-                post.likes_count = max(0, post.likes_count - 1) # 음수 방지
-                messages.success(request, '좋아요를 취소했습니다.')
-            post.save(update_fields=['likes_count'])
-            logger.info(f"Like {'added' if created else 'removed'} for post_id={post_id}, likes_count={post.likes_count}")
-        return redirect('community:detail', post_id=post_id) # 처리 후 상세 페이지로 리다이렉트
-    
-    # POST 요청이 아닌 경우 (예: URL 직접 입력)
-    messages.error(request, '잘못된 요청입니다.')
-    return redirect('community:detail', post_id=post_id)
+                # 좋아요 추가, 걱정돼요 취소
+                like_obj.is_liked = True
+                post.likes_count += 1
+                if like_obj.is_worried:
+                    like_obj.is_worried = False
+                    post.worried_count = max(0, post.worried_count - 1)
+            like_obj.save()
+            post.save(update_fields=['likes_count', 'worried_count'])
+            logger.debug(f"Like action processed: is_liked={like_obj.is_liked}, is_worried={like_obj.is_worried}, likes_count={post.likes_count}, worried_count={post.worried_count}")
+
+        elif action == 'worry':
+            if like_obj.is_worried:
+                # 이미 걱정돼요 상태 -> 걱정돼요 취소
+                like_obj.is_worried = False
+                post.worried_count = max(0, post.worried_count - 1)
+            else:
+                # 걱정돼요 추가, 좋아요 취소
+                like_obj.is_worried = True
+                post.worried_count += 1
+                if like_obj.is_liked:
+                    like_obj.is_liked = False
+                    post.likes_count = max(0, post.likes_count - 1)
+            like_obj.save()
+            post.save(update_fields=['likes_count', 'worried_count'])
+            logger.debug(f"Worry action processed: is_liked={like_obj.is_liked}, is_worried={like_obj.is_worried}, likes_count={post.likes_count}, worried_count={post.worried_count}")
+
+        # 객체가 더 이상 필요 없으면 삭제
+        if not like_obj.is_liked and not like_obj.is_worried:
+            like_obj.delete()
+
+        response_data.update({
+            'likes_count': post.likes_count,
+            'worried_count': post.worried_count,
+            'is_liked': like_obj.is_liked if like_obj else False,
+            'is_worried': like_obj.is_worried if like_obj else False
+        })
+
+    return JsonResponse(response_data)
 
 def comment_create(request, post_id):
     """
-    댓글 작성 처리 뷰입니다.
-    댓글이 작성되면 게시글 작성자에게 알림을 생성합니다.
+    댓글 작성 AJAX 뷰.
     """
     if not request.user.is_authenticated:
-        return HttpResponseRedirect(f"{reverse('account:login')}?next={reverse('community:detail', args=[post_id])}")
+        return JsonResponse({'error': '로그인 필요'}, status=401)
 
     post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
     if request.method == 'POST':
         content = request.POST.get('content', '').strip()
         if not content:
-            messages.error(request, '댓글 내용을 입력해주세요.')
-        else:
-            with transaction.atomic():
-                comment = FreeBoardComment.objects.create(
-                    free_board=post,
-                    user=request.user,
-                    content=content,
+            return JsonResponse({'error': '댓글 내용을 입력해주세요.'}, status=400)
+
+        with transaction.atomic():
+            comment = FreeBoardComment.objects.create(free_board=post, user=request.user, content=content)
+            post.comments_count += 1
+            post.save(update_fields=['comments_count'])
+            if post.user != request.user:
+                Notification.objects.create(
+                    recipient=post.user,
+                    sender=request.user,
+                    comment=comment,
+                    message=content[:30] + '...' if len(content) > 30 else content
                 )
-                post.comments_count += 1
-                post.save(update_fields=['comments_count'])
 
-                # 게시글 작성자에게 알림 생성 (본인 댓글이 아닌 경우)
-                if post.user != request.user:
-                    # 댓글 내용만 포함, 30자 초과 시 ... 추가
-                    preview_content = (content[:30] + '...') if len(content) > 30 else content
-                    Notification.objects.create(
-                        recipient=post.user,
-                        sender=request.user,
-                        comment=comment,
-                        message=preview_content
-                    )
+        comment_data = {
+            'id': comment.id,
+            'user': {'nickname': request.user.nickname or request.user.get_username(), 'auth_id': getattr(request.user, 'auth_id', '')},
+            'content': comment.content,
+            'reg_dt': comment.reg_dt.strftime('%Y-%m-%d %H:%M'),
+            'is_author': True,
+        }
+        return JsonResponse({'status': 'success', 'comment': comment_data, 'comments_count': post.comments_count})
 
-            messages.success(request, '댓글이 성공적으로 작성되었습니다.')
-        return redirect('community:detail', post_id=post_id)
-    
-    return redirect('community:detail', post_id=post_id)
+    return JsonResponse({'error': '잘못된 요청'}, status=400)
 
 def edit_view(request, post_id):
     """
     게시글 수정 뷰입니다.
     게시글 작성자만 수정 가능하며, 캡차 검증을 포함합니다.
     """
-    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False) # 삭제되지 않은 게시물만 수정 가능
+    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
     if request.user != post.user:
         messages.error(request, '수정 권한이 없습니다.')
         return redirect('community:detail', post_id=post_id)
 
-    # 게시물의 기존 카테고리를 board_type으로 사용 (예: '잡담', '수동공시')
-    board_type = getattr(post, 'category', 'freeboard') # category 속성이 없을 경우 기본값 'freeboard'
+    board_type = getattr(post, 'category', 'freeboard')
 
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
@@ -484,13 +512,13 @@ def edit_view(request, post_id):
 
         if not title or not content:
             messages.error(request, '제목과 내용을 모두 입력해주세요.')
-            return render(request, 'community_write.html', { # 글쓰기 폼 재활용
+            return render(request, 'community_write.html', {
                 'error_message': '제목과 내용을 모두 입력해주세요.',
                 'title': title,
                 'content': content,
-                'post_id': post_id, # 수정임을 알리기 위해 post_id 전달
-                'is_edit': True,    # 수정 모드임을 명시
-                'board_type': board_type, # 원래 게시물의 board_type 전달
+                'post_id': post_id,
+                'is_edit': True,
+                'board_type': board_type,
             })
 
         if not captcha_value.isdigit() or len(captcha_value) != 4:
@@ -519,19 +547,17 @@ def edit_view(request, post_id):
 
         post.title = title
         post.content = content
-        # 카테고리는 수정 시 변경하지 않는 것으로 가정. 필요하다면 로직 추가.
         post.save()
         messages.success(request, '게시물이 성공적으로 수정되었습니다.')
         logger.info(f"Post edited successfully: id={post.id}, title='{post.title}'")
         return redirect('community:detail', post_id=post_id)
-    
-    # GET 요청 시, 기존 게시물 내용으로 채워진 글쓰기 폼을 보여줌
+
     return render(request, 'community_write.html', {
         'title': post.title,
         'content': post.content,
         'post_id': post_id,
-        'is_edit': True, # 수정 모드임을 명시
-        'board_type': board_type, # 원래 게시물의 board_type 전달
+        'is_edit': True,
+        'board_type': board_type,
     })
 
 def delete_view(request, post_id):
@@ -539,30 +565,27 @@ def delete_view(request, post_id):
     게시글 삭제 뷰입니다. (논리적 삭제: is_deleted=True)
     게시글 작성자만 삭제 가능합니다.
     """
-    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False) # 아직 삭제되지 않은 게시물 대상
+    post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
     if request.user != post.user:
         messages.error(request, '삭제 권한이 없습니다.')
         return redirect('community:detail', post_id=post.id)
 
-    if request.method == 'POST': # POST 요청으로만 삭제 처리 (CSRF 보호)
+    if request.method == 'POST':
         post.is_deleted = True
         post.save(update_fields=['is_deleted'])
         messages.success(request, '게시물이 성공적으로 삭제되었습니다.')
-        
-        # 삭제 후 리다이렉트: 원래 게시물의 카테고리에 따라 분기
+
         original_category = getattr(post, 'category', 'freeboard')
-        if original_category == '실시간뉴스': # 이 카테고리는 현재 사용되지 않을 수 있음
+        if original_category == '실시간뉴스':
             return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
-        elif original_category == '수동공시' or original_category == 'API공시':
+        elif original_category in ['수동공시', 'API공시']:
             return redirect(f"{reverse('community:community')}?tab=news&subtab=disclosure")
-        # 기본적으로 커뮤니티 메인으로 리다이렉트
-        return redirect('community:community') 
-    
-    # GET 요청 시 삭제 확인 페이지를 보여줌 (community_delete.html 템플릿 필요)
+        return redirect('community:community')
+
     return render(request, 'community_delete.html', {'post': post})
 
-@login_required # 로그인 필수 데코레이터
-def comment_edit(request, pk): # 댓글의 pk를 받음
+@login_required
+def comment_edit(request, pk):
     """
     댓글 수정 뷰입니다.
     댓글 작성자만 수정 가능합니다.
@@ -571,9 +594,9 @@ def comment_edit(request, pk): # 댓글의 pk를 받음
     if request.user != comment.user:
         messages.error(request, "본인이 작성한 댓글만 수정할 수 있습니다.")
         return redirect('community:detail', post_id=comment.free_board.id)
-    
+
     if request.method == "POST":
-        content = request.POST.get('content', '').strip() # 수정할 내용
+        content = request.POST.get('content', '').strip()
         if content:
             comment.content = content
             comment.save(update_fields=['content'])
@@ -581,29 +604,28 @@ def comment_edit(request, pk): # 댓글의 pk를 받음
         else:
             messages.error(request, "댓글 내용을 입력해 주세요.")
         return redirect('community:detail', post_id=comment.free_board.id)
-    
-    # POST 요청이 아니면 (예: URL 직접 접근) 상세 페이지로 리다이렉트
-    # 또는 별도의 수정 폼을 제공할 수도 있음 (현재는 리다이렉트)
+
     return redirect('community:detail', post_id=comment.free_board.id)
 
-@login_required # 로그인 필수 데코레이터
-def comment_delete(request, pk): # 댓글의 pk를 받음
+def comment_delete(request, pk):
     """
-    댓글 삭제 뷰입니다. (논리적 삭제: is_deleted=True)
-    댓글 작성자만 삭제 가능합니다.
+    댓글 삭제 AJAX 뷰.
     """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '로그인 필요'}, status=401)
+
     comment = get_object_or_404(FreeBoardComment, pk=pk, is_deleted=False)
     if request.user != comment.user:
-        messages.error(request, "본인이 작성한 댓글만 삭제할 수 있습니다.")
-        return redirect('community:detail', post_id=comment.free_board.id)
-    
-    if request.method == "POST": # POST 요청으로만 삭제 처리
-        with transaction.atomic(): # 댓글 수 업데이트와 함께 처리
+        return JsonResponse({'error': '삭제 권한 없음'}, status=403)
+
+    if request.method == 'POST':
+        with transaction.atomic():
             comment.is_deleted = True
             comment.save(update_fields=['is_deleted'])
-            # 게시물의 댓글 수 감소
-            comment.free_board.comments_count = max(0, comment.free_board.comments_count - 1)
-            comment.free_board.save(update_fields=['comments_count'])
-        messages.success(request, "댓글이 삭제되었습니다.")
-    
-    return redirect('community:detail', post_id=comment.free_board.id)
+            post = comment.free_board
+            post.comments_count = max(0, post.comments_count - 1)
+            post.save(update_fields=['comments_count'])
+
+        return JsonResponse({'status': 'success', 'comment_id': pk, 'comments_count': post.comments_count})
+
+    return JsonResponse({'error': '잘못된 요청'}, status=400)

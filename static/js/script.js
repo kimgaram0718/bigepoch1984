@@ -1,3 +1,19 @@
+//add1_250513_12_59
+// 푸터 항목 활성화
+document.addEventListener('DOMContentLoaded', () => {
+    const footerItems = document.querySelectorAll('.footer-item');
+    const currentPath = window.location.pathname;
+  
+    footerItems.forEach(item => {
+      const href = item.getAttribute('href');
+      if (currentPath === href) {
+        footerItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      }
+    });
+  });
+//add2
+
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         initializeHeaderFeatures();
@@ -128,7 +144,9 @@ function setupAndToggleProfilePopup() {
 }
 
 function performLogout() {
-    window.location.href = document.body.dataset.logoutUrl;
+    //add1_250512_21_14
+    window.location.href = ''; // 로그아웃 후 main.html로 이동
+    //add2
 }
 
 function togglePopup(id) {
