@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BigEpoch1984 모바일 홈</title>
+  <title>아트로포스</title>
   <!-- Bootstrap CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -76,8 +76,8 @@
       text-decoration: none;
       color: #ffffff;
       font-family: 'Noto Sans KR', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 400;
       line-height: 1;
     }
     #chatbotBtn:hover {
@@ -105,29 +105,24 @@
   <div id="app">
     <!-- Investing Insight 영역 -->
     <div class="bg-white px-3 py-3 my-3 rounded-3">
-      <h5 class="fw-bold mb-2">Investing Insight</h5>
-      <p class="text-muted small mb-3">심도있는 코인 분석과 전략적 투자 인사이트</p>
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{% url 'community:community' %}" class="fw-bold mb-0 text-dark text-decoration-none" style="font-size: 18px;">커뮤니티 테이블 링크 넣어야 됨</a>
-        <a href="{% url 'community:community' %}" class="fw-bold text-dark text-decoration-none" style="font-size: 20px;">></a>
+      <h5 class="fw-bold mb-2">BigEpoch Insight</h5>
+      <p class="text-muted small mb-1">전략적 분석과 함께 딥러닝의 완벽한 투자 인사이트</p>
+      <div class="d-flex justify-content-between align-items-center">
       </div>
     </div>
-
-    <!-- 분리선 -->
-    <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
-
+    
     <!-- 김치 프리미엄 / 공포탐욕지수 -->
-    <div class="d-flex justify-content-around align-items-center py-2 bg-white">
+    <div class="d-flex justify-content-around align-items-center py-2 bg-white mb-3">
       <div class="text-center">
-        <div class="text-muted" style="font-size: 12px;">김치프리미엄(₩)</div>
-        <div style="font-size: 14px; font-weight: bold; color: #d93025;">1,387,461+(1.10%)</div>
+        <div class="text-muted" style="font-size: 12px;">아트로포스 예측지수</div>
+        <div style="font-size: 16px; font-weight: bold; color: #d93025;">1,387,461</div>
       </div>
       <div class="text-center">
-        <div class="text-muted" style="font-size: 12px;">공포탐욕지수</div>
-        <div style="font-size: 14px; font-weight: bold; color: #f9ab00;">47(중립)</div>
+        <div class="text-muted" style="font-size: 12px;">현 시세/주간 예측 지수</div>
+        <div style="font-size: 16px; font-weight: bold; color: #f9ab00;">+20.3% (상승)</div>
       </div>
     </div>
-
+    
     <!-- 분리선 -->
     <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
 
@@ -144,10 +139,12 @@
 
     <!-- 나머지 콘텐츠 (기존 구조 유지) -->
     <div class="bg-white px-3 py-2 my-3 rounded-3">
-      <h5 class="mb-2" style="font-weight: 700;">BigEpoch1984 Originals</h5>
-      <p class="text-muted" style="font-size: 12px;">BigEpoch1984 오리지널 컨텐츠</p>
+      <h5 class="mb-2" style="font-weight: 700;">BigEpoch Originals</h5>
+      <p class="text-muted" style="font-size: 12px;">빅에포크의 오리지널 컨텐츠</p>
       <div id="originals-list" class="d-flex overflow-auto gap-3 py-2">
-        <!-- 여기 JS로 카드 채움 -->
+        <!-- 여기 JS로 카드 채움 -->        
+        <div class="originals-scroll-container">
+        </div>
       </div>
     </div>
 
@@ -155,7 +152,7 @@
 
     <!-- NOW Headlines 섹션 -->
     <div class="bg-white px-3 py-3 my-3 rounded-3">
-      <h5 class="fw-bold mb-1">NOW Headlines</h5>
+      <h5 class="fw-bold mb-1">BigEpoch Headlines</h5>
       <p class="text-muted small mb-3">주식 시장 주요 컨텐츠 몰아보기</p>
       <ul id="headline-list" class="list-unstyled">
         <!-- JS로 채움 -->
@@ -182,7 +179,7 @@
     <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
 
     <!-- Investing 환율 박스 -->
-    <div class="bg-white px-3 py-3 rounded-4 border section-spacing" style="margin: 0 12px; border: 1px solid #dee2e6;">
+    <div class="bg-white px-3 py-3 rounded-4 border section-spacing" style="border-radius: 12px; margin: 0 12px; border: 1px solid #dee2e6;">
       <h5 class="fw-bold mb-3">오늘자 환율 시세 조회</h5>
       <div class="investing-box px-3">
         <div class="investing-header">
