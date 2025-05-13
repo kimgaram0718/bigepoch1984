@@ -1,3 +1,55 @@
+/* add1_250513_14_42 */
+.like-btn.liked i, .worry-btn.worried i {
+  color: #ff4d4f;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.like-btn.liked i:hover, .worry-btn.worried i:hover {
+  transform: scale(1.2);
+}
+
+.worry-btn i {
+  color: #ff9800;
+}
+
+.worry-btn.worried i {
+  color: #ff5722;
+}
+.view-count {
+  margin-left: 15px;
+  font-size: 14px;
+  color: #6c757d;
+}
+.profile-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profile-icon {
+  font-size: 20px;
+  color: #9376e0;
+}
+
+.profile-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.reaction-bar button {
+  margin-right: 10px;
+}
+/* add2 */
+
 #header-spacer {
   height: 50px;
 }
@@ -50,10 +102,13 @@
   cursor: pointer;
 }
 
+/* 250513_14_44_수정됨 */
 .filter-option.active {
   color: #0066ff;
   font-weight: bold;
   text-decoration: underline;
+  background-color: #e6f0ff;
+  border-radius: 8px;
 }
 
 .filter-option:hover {

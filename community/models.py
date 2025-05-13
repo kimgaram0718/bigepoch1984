@@ -1,11 +1,9 @@
-# community/models.py
-
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.urls import reverse
 
-#add1_250512_15_25
+# 알림 모델
 class Notification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_notifications')
@@ -25,7 +23,6 @@ class Notification(models.Model):
     def get_absolute_url(self):
         # 댓글의 게시글 상세 페이지로 이동 (댓글 섹션으로 포커스)
         return f"{reverse('community:detail', args=[self.comment.free_board.id])}#comments"
-#add2
 
 class FreeBoard(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='free_boards')
@@ -36,10 +33,11 @@ class FreeBoard(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     view_count = models.PositiveIntegerField(default=0)
+    worried_count = models.PositiveIntegerField(default=0)
     is_deleted = models.BooleanField(default=False)
     CATEGORY_CHOICES = [
         ('잡담', '잡담'),
-        ('실시간뉴스', '실시간뉴스'), # 이 카테고리는 이제 NewsArticle 모델로 대체될 수 있음
+        ('실시간뉴스', '실시간뉴스'),
         ('수동공시', '수동공시'),
         ('API공시', 'API공시'),
     ]
@@ -64,6 +62,7 @@ class FreeBoardComment(models.Model):
     reg_dt = models.DateTimeField(auto_now_add=True)
     up_dt = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
+
     def __str__(self):
         return f'Comment by {self.user} on {self.free_board}'
 
@@ -71,10 +70,14 @@ class FreeBoardLike(models.Model):
     free_board = models.ForeignKey(FreeBoard, on_delete=models.CASCADE, related_name='likes')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='free_board_likes')
     reg_dt = models.DateTimeField(auto_now_add=True)
+    is_liked = models.BooleanField(default=False)  # 좋아요 상태
+    is_worried = models.BooleanField(default=False)  # 걱정돼요 상태
+
     class Meta:
         unique_together = ('free_board', 'user')
+
     def __str__(self):
-        return f'Like by {self.user} on {self.free_board}'
+        return f'Like/Worry by {self.user} on {self.free_board}'
 
 class DartDisclosure(models.Model):
     corp_code = models.CharField(max_length=8, help_text="공시대상회사의 고유번호(8자리)")
@@ -91,14 +94,15 @@ class DartDisclosure(models.Model):
     document_content = models.TextField(blank=True, null=True, help_text="공시 상세 본문 내용")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ['-rcept_dt', '-rcept_no']
         verbose_name = "DART 공시 정보"
         verbose_name_plural = "DART 공시 정보 목록"
+
     def __str__(self):
         return f"[{self.rcept_dt}] {self.corp_name} - {self.report_nm}"
 
-# 네이버 뉴스 기사 저장을 위한 모델
 class NewsArticle(models.Model):
     title = models.CharField(max_length=255, help_text="뉴스 기사 제목")
     original_link = models.URLField(max_length=500, unique=True, help_text="뉴스 원문 링크 (중복 방지용)")
@@ -108,7 +112,7 @@ class NewsArticle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text="DB 저장 시각")
 
     class Meta:
-        ordering = ['-pub_date'] # 최신 발행일 순으로 정렬
+        ordering = ['-pub_date']
         verbose_name = "네이버 뉴스 기사"
         verbose_name_plural = "네이버 뉴스 기사 목록"
 
