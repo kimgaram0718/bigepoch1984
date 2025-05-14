@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
-from .models import User
 from django.http import JsonResponse
+from .models import User
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,10 @@ def login_view(request):
     return render(request, 'account/login.html')
 
 def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        logger.info("User logged out successfully")
+        return JsonResponse({'status': 'success'}, status=200)
     logout(request)
     return redirect('account:login')
 
@@ -57,6 +61,6 @@ def signup_view(request):
             logger.info(f"User {login_id} signed up with profile image: {user.profile_image.url}")
         else:
             logger.info(f"User {login_id} signed up with default profile image")
-        login(request, user)  # 회원가입 후 자동 로그인
+        login(request, user)
         return redirect('main:main')
     return render(request, 'signup.html')

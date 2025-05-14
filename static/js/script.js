@@ -1,18 +1,15 @@
-//add1_250513_12_59
-// 푸터 항목 활성화
 document.addEventListener('DOMContentLoaded', () => {
     const footerItems = document.querySelectorAll('.footer-item');
     const currentPath = window.location.pathname;
-  
+
     footerItems.forEach(item => {
-      const href = item.getAttribute('href');
-      if (currentPath === href) {
-        footerItems.forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-      }
+        const href = item.getAttribute('href');
+        if (currentPath === href) {
+            footerItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        }
     });
-  });
-//add2
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
@@ -42,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchNaverNews();
         setInterval(fetchNaverNews, 5 * 60 * 1000);
 
-        // coinSearch 관련 이벤트 리스너 통합
         const coinSearchInput = document.getElementById('coinSearch');
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
@@ -73,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeHeaderFeatures() {
     const alertIcon = document.getElementById('alertIcon');
     const profileIcon = document.getElementById('profileIcon');
-    const mainPanelButton = document.getElementById('mainPanelIcon');
 
     const isLoggedIn = document.body.dataset.isAuthenticated === 'true';
 
@@ -81,7 +76,7 @@ function initializeHeaderFeatures() {
         if (alertIcon) {
             alertIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
-                togglePopup('alert-popup');
+                togglePopup('notification-popup');
             });
         }
 
@@ -93,35 +88,25 @@ function initializeHeaderFeatures() {
         }
     }
 
-    if (mainPanelButton) {
-        mainPanelButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            openLoginPanel();
-        });
-    } else {
-        console.error('Error: mainPanelIcon element not found in the HTML.');
-    }
-
     document.addEventListener('click', (event) => {
-        const activePopups = document.querySelectorAll('.popup-box:not(.d-none)');
-        activePopups.forEach(popup => {
-            if (!popup.contains(event.target)) {
-                let clickedOnToggleButton = false;
-                if (popup.id === 'alert-popup' && alertIcon && alertIcon.contains(event.target)) clickedOnToggleButton = true;
-                if (popup.id === 'profile-popup' && profileIcon && profileIcon.contains(event.target)) clickedOnToggleButton = true;
-
-                if (!clickedOnToggleButton) {
-                    popup.classList.add('d-none');
-                }
-            }
-        });
+        const profilePopup = document.getElementById('profile-popup');
+        const notificationPopup = document.getElementById('notification-popup');
+        if (profilePopup && !profilePopup.contains(event.target) && profileIcon && !profileIcon.contains(event.target)) {
+            profilePopup.classList.add('d-none');
+        }
+        if (notificationPopup && !notificationPopup.contains(event.target) && alertIcon && !alertIcon.contains(event.target)) {
+            notificationPopup.style.display = 'none';
+        }
     });
 }
 
 function setupAndToggleProfilePopup() {
     let profilePopup = document.getElementById('profile-popup');
+    const mypageUrl = document.body.dataset.mypageUrl || '/mypage/';
+    const logoutUrl = document.body.dataset.logoutUrl || '/logout/';
+    const nickname = document.body.dataset.userNickname || '사용자';
+
     if (!profilePopup) {
-        const nickname = document.body.dataset.userNickname;
         const popupHtml = `
             <div id="profile-popup" class="popup-box d-none" style="position: absolute; top: 60px; right: 20px; width: 200px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 9999; font-size: 14px;">
                 <div class="px-3 py-2 d-flex align-items-center">
@@ -129,9 +114,8 @@ function setupAndToggleProfilePopup() {
                     <span class="fw-normal text-dark" style="font-weight: 500;">${nickname}</span>
                 </div>
                 <ul class="list-unstyled m-0">
-                    <li class="px-3 py-2 hover-bg text-muted" onclick="location.href='{% url 'mypage:mypage' %}'">마이페이지 이동</li>
-                    <li class="px-3 py-2 hover-bg text-muted" onclick="location.href='{% url 'space:space' %}'">스페이스 이동</li>
-                    <li class="px-3 py-2 hover-bg text-danger" onclick="performLogout()">로그아웃</li>
+                    <li class="px-3 py-2 hover-bg text-muted" onclick="location.href='${mypageUrl}'">마이페이지 이동</li>
+                    <li class="px-3 py-2 hover-bg text-muted" onclick="performLogout()">로그아웃</li>
                 </ul>
             </div>`;
         document.body.insertAdjacentHTML('beforeend', popupHtml);
@@ -144,101 +128,111 @@ function setupAndToggleProfilePopup() {
 }
 
 function performLogout() {
-    //add1_250512_21_14
-    window.location.href = ''; // 로그아웃 후 main.html로 이동
-    //add2
+    const csrftoken = getCookie('csrftoken');
+    const logoutUrl = document.body.dataset.logoutUrl || '/logout/';
+    fetch(logoutUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = document.body.dataset.mainUrl || '/';
+        } else {
+            console.error('로그아웃 실패');
+            alert('로그아웃 중 오류가 발생했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('로그아웃 오류:', error);
+        alert('로그아웃 중 오류가 발생했습니다.');
+    });
 }
 
 function togglePopup(id) {
     const popup = document.getElementById(id);
     if (popup) {
-        popup.classList.toggle('d-none');
+        if (id === 'notification-popup') {
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+            if (popup.style.display === 'block') {
+                loadNotifications();
+            }
+        } else {
+            popup.classList.toggle('d-none');
+        }
     }
 }
 
-function openLoginPanel() {
-    let panel = document.getElementById('login-panel');
-    if (!panel) {
-        const bodyData = document.body.dataset;
-        const isAuthenticated = bodyData.isAuthenticated === 'true';
-        const logoutUrl = bodyData.logoutUrl || '#';
-        const loginUrl = bodyData.loginUrl || '#';
-
-        const panelHtml = `
-            <div id="login-panel" class="login-panel d-none" style="position: fixed; top: 0; right: 0; width: 250px; height: 100%; background: white; box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); z-index: 10000; transform: translateX(100%); transition: transform 0.3s ease-in-out;">
-                <div id="login-panel-inner" class="p-3">
-                    <!-- 닫기 버튼 추가 -->
-                    <div class="d-flex justify-content-end mb-3">
-                        <i class="bi bi-x-lg" id="closePanelIcon" style="font-size: 20px; cursor: pointer; color: #1b1e26;"></i>
-                    </div>
-                    ${isAuthenticated ? `
-                        <div class="login-menu-wrapper">
-                            <div class="login-menu-header p-3 border-bottom">
-                                <h5 class="mb-0">안녕하세요, ${bodyData.userNickname}님!</h5>
-                            </div>
-                            <div class="login-menu-body">
-                                <div class="login-menu-grid">
-                                    <div class="menu-item" onclick="location.href='{% url 'alert:alert' %}'">
-                                        <i class="bi bi-bell"></i>
-                                        <span style="font-size: 12px;">알림</span>
-                                    </div>
-                                    <div class="menu-item profile-icon" onclick="location.href='{% url 'mypage:mypage' %}'">
-                                        <i class="bi bi-person-circle" style="color: #9376e0;"></i>
-                                        <span style="font-size: 12px;">프로필</span>
-                                    </div>
-                                </div>
-                                <div class="mt-4 px-3">
-                                    <button class="btn btn-outline-secondary w-100" onclick="window.location.href='${logoutUrl}'">로그아웃</button>
-                                </div>
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="text-center mt-5 p-3">
-                            <p class="mt-3 fw-bold">더 많은 기능을 위해<br />로그인하세요.</p>
-                            <button class="btn btn-primary mt-3 px-4 w-100" onclick="location.href='${loginUrl}'">로그인</button>
-                        </div>
-                    `}
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', panelHtml);
-        panel = document.getElementById('login-panel');
-
-        const closePanelIcon = document.getElementById('closePanelIcon');
-        if (closePanelIcon) {
-            closePanelIcon.addEventListener('click', (event) => {
-                event.stopPropagation();
-                closeLoginPanel();
+function loadNotifications() {
+    const csrftoken = getCookie('csrftoken');
+    fetch('/community/notifications/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+    })
+    .then(response => response.json())
+    .then(data => {
+        const body = document.getElementById('notification-body');
+        body.innerHTML = '';
+        let unreadCount = 0;
+        if (data.length > 0) {
+            data.forEach(notification => {
+                if (!notification.is_read) unreadCount++;
+                const item = document.createElement('div');
+                item.className = 'notification-item p-2 border-bottom';
+                item.style.cursor = 'pointer';
+                item.style.transition = 'background 0.2s';
+                item.style.backgroundColor = notification.is_read ? '#fff' : '#f0f8ff';
+                item.onclick = () => {
+                    window.location.href = notification.link;
+                };
+                item.innerHTML = `
+                    <div><span class="comment-user" style="font-weight: bold; color: #007bff;">${notification.user}</span>님이 작성한 댓글</div>
+                    <span class="comment-preview" style="font-size: 14px; color: #495057; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${notification.preview}</span>
+                    <div class="comment-time" style="font-size: 12px; color: #6c757d; margin-top: 2px;">${notification.time}</div>
+                `;
+                body.appendChild(item);
             });
+        } else {
+            body.innerHTML = '<div class="p-2 text-muted">새로운 알림이 없습니다.</div>';
         }
-    }
+        const unreadBadge = document.getElementById('unread-count');
+        if (unreadCount > 0) {
+            unreadBadge.textContent = unreadCount;
+            unreadBadge.style.display = 'block';
+        } else {
+            unreadBadge.style.display = 'none';
+        }
+    })
+    .catch(error => console.error('알림 로드 오류:', error));
+}
 
-    if (panel) {
-        if (panel.classList.contains('d-none')) {
-            panel.classList.remove('d-none');
-            setTimeout(() => panel.style.transform = 'translateX(0)', 0);
-        }
-        document.body.classList.add('no-scroll');
-        setTimeout(() => {
-            document.addEventListener('click', handleOutsideClickForPanel, { once: true });
-        }, 0);
+function closeNotificationPopup() {
+    const popup = document.getElementById('notification-popup');
+    if (popup) {
+        popup.style.display = 'none';
     }
 }
 
-function handleOutsideClickForPanel(e) {
-    const panel = document.getElementById('login-panel');
-    const mainPanelButton = document.getElementById('mainPanelIcon');
-    if (panel && !panel.contains(e.target) && mainPanelButton && !mainPanelButton.contains(e.target)) {
-        closeLoginPanel();
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
     }
-}
-
-function closeLoginPanel() {
-    const panel = document.getElementById('login-panel');
-    if (panel) {
-        panel.style.transform = 'translateX(100%)';
-        setTimeout(() => panel.classList.add('d-none'), 300);
-        document.body.classList.remove('no-scroll');
-    }
+    return cookieValue;
 }
 
 function fetchFooter() {
@@ -301,7 +295,6 @@ function initializeBanners() {
         return;
     }
 
-    // 기존 carousel-item 제거 후 새로 추가
     carouselInner.innerHTML = '';
     banners.forEach((banner, index) => {
         const itemDiv = document.createElement('div');
@@ -511,14 +504,12 @@ function updatePagination() { /* ... 기존 함수 ... */ }
 
 const recentPosts = [ /* ... 기존 데이터 ... */ ];
 
-//add1_250512_14_32
 function initializeWriteButton() {
     const bodyData = document.body.dataset;
     const isLoggedIn = bodyData.isAuthenticated === 'true';
     const writeUrl = bodyData.writeUrl || 'write.html';
-    const currentPath = window.location.pathname.split('/').pop() || 'main'; // 현재 페이지 경로 확인
+    const currentPath = window.location.pathname.split('/').pop() || 'main';
 
-    // main.html 또는 루트(/) 경로에서만 writeBtn 생성을 건너뜀
     if (!isLoggedIn || currentPath === 'main' || currentPath === '') {
         return;
     }
@@ -537,7 +528,6 @@ function initializeWriteButton() {
         window.location.href = writeUrl;
     });
 }
-//add2
 
 async function fetchNaverNews() {
     try {

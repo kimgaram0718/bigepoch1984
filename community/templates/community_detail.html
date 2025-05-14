@@ -56,6 +56,16 @@
     .reaction-bar button {
       margin-right: 10px;
     }
+    .dropdown-menu {
+      min-width: 120px;
+    }
+    .dropdown-item {
+      font-size: 14px;
+      padding: 6px 12px;
+    }
+    .dropdown-item:hover {
+      background-color: #f8f9fa;
+    }
   </style>
 </head>
 <body class="bg-light"
@@ -63,6 +73,12 @@
   data-login-url="{% url 'account:login' %}"
   data-logout-url="{% url 'account:logout' %}"
   data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
+  data-block-url="{% url 'community:block_user' post.id %}"  
+  data-report-url="{% url 'community:report_user' post.id %}"  
+  data-like-url="{% url 'community:like_post' post.id %}"      
+  data-comment-create-url="{% url 'community:comment_create' post.id %}"  
+  data-comment-delete-url="{% url 'community:comment_delete' 0 %}"  
+  data-community-url="{% url 'community:community' %}"        
 >
   <div id="app">
     {% include 'main_header.html' %}
@@ -70,16 +86,7 @@
 
     <div style="height: 55px;"></div>
 
-    {% if messages %}
-      <div class="container py-2">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
+    {% comment %} 알림 메시지 제거 {% endcomment %}
 
     <div class="container py-4">
       <div class="post-card">
@@ -102,16 +109,18 @@
               </span>
             </div>
           </div>
-          <div class="d-flex align-items-center">
-            <div>{{ post.time_ago }}</div>
-            {% if request.user.is_authenticated and request.user.nickname == post.username %}
-              <a href="{% url 'community:edit' post.id %}" class="btn btn-outline-secondary btn-sm ms-2">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a href="{% url 'community:delete' post.id %}" class="btn btn-outline-secondary btn-sm ms-2">
-                <i class="bi bi-trash"></i>
-              </a>
-            {% endif %}
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="postOptions" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
+              {% if request.user.is_authenticated and request.user.nickname == post.username %}
+                <li><a class="dropdown-item" href="{% url 'community:edit' post.id %}"><i class="bi bi-pencil"></i> 수정하기</a></li>
+                <li><a class="dropdown-item" href="{% url 'community:delete' post.id %}"><i class="bi bi-trash"></i> 삭제하기</a></li>
+              {% elif request.user.is_authenticated %}
+                <li><a class="dropdown-item" href="#" data-action="block" data-user="{{ post.username }}" data-post-id="{{ post.id }}"><i class="bi bi-person-x"></i> 차단하기</a></li>
+              {% endif %}
+            </ul>
           </div>
         </div>
         <div class="post-title">{{ post.title }}</div>
@@ -198,169 +207,26 @@
     </button>
   </div>
 
+  <!-- 모달 추가 -->
+  <div class="modal fade" id="blockModal" tabindex="-1" aria-labelledby="blockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="blockModalLabel">차단 완료</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="blockMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="confirmBlock">확인</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/script.js' %}"></script>
   <script src="{% static 'js/community.js' %}"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-      const likeBtn = document.querySelector('.like-btn');
-      const worryBtn = document.querySelector('.worry-btn');
-
-      // 좋아요/걱정돼요 AJAX
-      document.querySelectorAll('.like-btn, .worry-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          const postId = this.getAttribute('data-post-id');
-          const action = this.getAttribute('data-action');
-
-          console.log(`Sending request: postId=${postId}, action=${action}`); // 디버깅 로그
-
-          fetch(`{% url 'community:like_post' 0 %}`.replace('0', postId), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'X-CSRFToken': csrfToken
-            },
-            body: `action=${encodeURIComponent(action)}`
-          })
-          .then(response => {
-            console.log('Response status:', response.status); // 디버깅 로그
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(data => {
-            console.log('Response data:', data); // 디버깅 로그
-            if (data.status === 'success') {
-              if (likeBtn) {
-                likeBtn.querySelector('span').textContent = data.likes_count;
-                likeBtn.classList.toggle('liked', data.is_liked);
-              }
-              if (worryBtn) {
-                worryBtn.querySelector('span').textContent = data.worried_count;
-                worryBtn.classList.toggle('worried', data.is_worried);
-              }
-            } else {
-              console.error('Server error:', data.error);
-              alert(data.error || '요청 처리 중 오류가 발생했습니다.');
-            }
-          })
-          .catch(error => {
-            console.error('Fetch error:', error);
-            alert('서버와의 연결에 문제가 발생했습니다.');
-          });
-        });
-      });
-
-      // 댓글 작성 AJAX
-      document.getElementById('comment-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const postId = this.getAttribute('data-post-id');
-        const content = this.querySelector('input[name="content"]').value;
-        fetch(`{% url 'community:comment_create' 0 %}`.replace('0', postId), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-          },
-          body: JSON.stringify({ content: content })
-        })
-        .then(response => {
-          console.log('Comment response status:', response.status); // 디버깅 로그
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Comment response data:', data); // 디버깅 로그
-          if (data.status === 'success') {
-            const commentList = document.getElementById('comment-list');
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment d-flex justify-content-between align-items-start';
-            commentDiv.setAttribute('data-comment-id', data.comment.id);
-            commentDiv.innerHTML = `
-              <div>
-                <div class="profile-preview me-2">
-                  <i class="bi bi-person-fill profile-icon"></i>
-                </div>
-                <strong>${data.comment.user.nickname}</strong>
-                <span class="badge bg-primary ms-1">${data.comment.user.auth_id === 'admin' ? '운영자' : '일반회원'}</span><br>
-                <span>${data.comment.content}</span><br>
-                <small class="text-muted">방금 전</small>
-              </div>
-              <div class="d-flex gap-2">
-                <a href="{% url 'community:comment_edit' 0 %}" class="btn btn-outline-secondary btn-sm">
-                  <i class="bi bi-pencil"></i>
-                </a>
-                <button class="btn btn-outline-secondary btn-sm delete-comment-btn" data-comment-id="${data.comment.id}">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            `.replace(/0/g, data.comment.id);
-            if (commentList.querySelector('.text-muted')) {
-              commentList.querySelector('.text-muted').remove();
-            }
-            commentList.insertBefore(commentDiv, commentList.firstChild);
-            document.querySelector('.comment-box strong').textContent = `${data.comments_count}개의 댓글`;
-            this.querySelector('input[name="content"]').value = '';
-          } else {
-            console.error('Comment error:', data.error);
-            alert(data.error || '댓글 작성 중 오류가 발생했습니다.');
-          }
-        })
-        .catch(error => {
-          console.error('Comment fetch error:', error);
-          alert('서버와의 연결에 문제가 발생했습니다.');
-        });
-      });
-
-      // 댓글 삭제 AJAX
-      document.querySelectorAll('.delete-comment-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          const commentId = this.getAttribute('data-comment-id');
-          if (confirm('이 댓글을 삭제하시겠습니까?')) {
-            fetch(`{% url 'community:comment_delete' 0 %}`.replace('0', commentId), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-              }
-            })
-            .then(response => {
-              console.log('Delete comment response status:', response.status); // 디버깅 로그
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then(data => {
-              console.log('Delete comment response data:', data); // 디버깅 로그
-              if (data.status === 'success') {
-                document.querySelector(`.comment[data-comment-id="${commentId}"]`).remove();
-                document.querySelector('.comment-box strong').textContent = `${data.comments_count}개의 댓글`;
-                if (document.getElementById('comment-list').children.length === 0) {
-                  const noComments = document.createElement('div');
-                  noComments.className = 'text-muted';
-                  noComments.textContent = '아직 댓글이 없습니다.';
-                  document.getElementById('comment-list').appendChild(noComments);
-                }
-              } else {
-                console.error('Delete comment error:', data.error);
-                alert(data.error || '댓글 삭제 중 오류가 발생했습니다.');
-              }
-            })
-            .catch(error => {
-              console.error('Delete comment fetch error:', error);
-              alert('서버와의 연결에 문제가 발생했습니다.');
-            });
-          }
-        });
-      });
-    });
-  </script>
 </body>
 </html>

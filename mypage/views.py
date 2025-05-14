@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from account.models import User
 from community.models import FreeBoard
@@ -10,6 +10,28 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.http import JsonResponse
+from account.models import ReportedUser
+from account.models import BlockedUser
+from django.views.decorators.http import require_http_methods
+
+@login_required
+def unblock_user(request, blocked_id):
+    """
+    현재 로그인된 사용자가 특정 사용자를 차단 해제하는 기능
+    """
+    if request.method == 'POST':
+        logger.debug(f"Unblock request received for blocked_id: {blocked_id}")
+        blocker = request.user
+        blocked_user = get_object_or_404(User, user_id=blocked_id)
+        block_relation = BlockedUser.objects.filter(blocker=blocker, blocked=blocked_user).first()
+        if not block_relation:
+            logger.warning(f"No block relation found for blocker: {blocker.user_id}, blocked: {blocked_id}")
+            return redirect('mypage:mypage')
+        block_relation.delete()
+        logger.info(f"Blocked user {blocked_user.nickname} (user_id: {blocked_id}) unblocked by {blocker.nickname}")
+        return redirect('mypage:mypage')
+    logger.debug(f"Non-POST request to unblock_user: {request.method}")
+    return redirect('mypage:mypage')
 
 @login_required
 def mypage(request):
@@ -18,15 +40,17 @@ def mypage(request):
 # 로거 설정
 logger = logging.getLogger(__name__)
 
+# views.py
+@login_required
 def mypage_view(request):
     if not request.user.is_authenticated:
         logger.warning("Unauthorized access to mypage_view - redirecting to login")
         return HttpResponseRedirect('/account/login/?next=/mypage/')
     user = request.user
-    # FreeBoard에서 최대 5개 게시글 가져오기 (title, reg_dt 포함)
+    # FreeBoard에서 최대 5개 게시글 가져오기
     user_posts_qs = FreeBoard.objects.filter(user=user, is_deleted=False).select_related('user').order_by('-reg_dt')[:5]
 
-    # 시간 경과 계산 및 데이터 처리
+    # 시간 경과 계산
     user_posts = []
     for post in user_posts_qs:
         time_diff = timezone.now() - post.reg_dt
@@ -44,6 +68,15 @@ def mypage_view(request):
             'url': post.get_absolute_url(),
         })
 
+    # 신고/차단 목록 데이터 (최대 5개)
+    reported_users = ReportedUser.objects.filter(reporter=user).select_related('reported')[:5]
+    # 차단 목록에서 유효한 유저만 가져오기
+    blocked_users = BlockedUser.objects.filter(blocker=user).select_related('blocked').filter(blocked__isnull=False)[:5]
+    
+    # 디버깅: blocked_users의 user_id와 nickname 로깅
+    for block in blocked_users:
+        logger.debug(f"Blocked user - User ID: {block.blocked.user_id}, Nickname: {block.blocked.nickname}")
+
     context = {
         'user': user,
         'prediction_items': [
@@ -55,6 +88,8 @@ def mypage_view(request):
             {'name': '애플'},
         ],
         'user_posts': user_posts,
+        'reported_users': reported_users,
+        'blocked_users': blocked_users,
         'now': timezone.now(),
     }
     return render(request, 'mypage.html', context)

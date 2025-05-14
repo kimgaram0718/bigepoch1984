@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>마이페이지</title>
 
-  <!-- Google Fonts (퍼블리셔 추가) -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
   <!-- CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="{% static 'css/myPage.css' %}">
   <link rel="stylesheet" href="{% static 'css/community.css' %}">
   <style>
-    /* 프로필 아이콘 스타일 */
+    /* 기존 스타일 유지 */
     .profile-icon-container {
       display: inline-block;
       width: 48px;
@@ -31,14 +31,12 @@
     .profile-icon-container i {
       vertical-align: middle;
     }
-    /* 이미지가 있을 때 스타일 */
     .profile-img {
       width: 48px;
       height: 48px;
       object-fit: cover;
       border-radius: 50%;
     }
-    /* 내가 쓴 글 항목 스타일 */
     .post-item {
       display: flex;
       justify-content: space-between;
@@ -56,24 +54,23 @@
       color: #6c757d;
       font-size: 12px;
     }
-    /* 슬라이드 입력창 스타일 */
     .greeting-input-container {
       position: fixed;
       top: 0;
-      right: -300px; /* 초기 위치: 화면 우측 밖 */
+      right: -300px;
       width: 300px;
       height: 100%;
       background: #fff;
       box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
       z-index: 2000;
-      transition: right 0.3s ease; /* 슬라이드 애니메이션 */
+      transition: right 0.3s ease;
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
     .greeting-input-container.show {
-      right: 0; /* 표시 위치: 화면 우측에 붙임 */
+      right: 0;
     }
     .greeting-input-container textarea {
       width: 100%;
@@ -104,21 +101,74 @@
       color: #212529;
       border: none;
     }
+    .report-block-tab .nav-link {
+      color: #6c757d;
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+    .report-block-tab .nav-link.active {
+      color: #212529;
+      font-weight: 700;
+      border-bottom: 2px solid #9376e0;
+      background: transparent;
+    }
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .user-name {
+      font-size: 14px;
+      color: #212529;
+    }
+    .unblock-btn {
+      font-size: 12px;
+      color: #9376e0;
+      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .unblock-btn:hover {
+      text-decoration: underline;
+    }
+    .pagination .page-link {
+      color: #9376e0;
+      font-size: 14px;
+    }
+    .pagination .page-item.active .page-link {
+      background-color: #9376e0;
+      border-color: #9376e0;
+      color: white;
+    }
   </style>
 </head>
 
-<!-- ✅ 로그인 여부를 JS에서 확인할 수 있도록 -->
 <body 
-data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+  data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
   data-login-url="{% url 'account:login' %}"
   data-logout-url="{% url 'account:logout' %}"
   data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
-  >
-
-    <!-- ✅ header.html 포함 -->
+>
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <div id="app">
     {% include 'main_header.html' %}
 
-    <!-- 메인 콘텐츠 (퍼블리셔 HTML 반영) -->
+    <!-- 메시지 표시 -->
+    {% if messages %}
+      <div class="container my-3">
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- 메인 콘텐츠 -->
     <div id="content-mypage" class="content-block">
       <!-- 회원 정보 영역 -->
       <div class="bg-white p-3 d-flex justify-content-between align-items-center border-bottom">
@@ -180,6 +230,31 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
           {% endfor %}
         </ul>
       </div>
+
+      <!-- 차단 목록 -->
+      <div class="container my-3">
+        <h6 class="fw-bold mb-2">차단 목록</h6>
+        <div class="user-list mt-3">
+          {% for block in blocked_users %}
+            {% if block.blocked %}
+              <div class="user-item">
+                <span class="user-name">{{ block.blocked.nickname|default:"알 수 없는 사용자" }}</span>
+                <form action="{% url 'mypage:unblock_user' block.blocked.user_id %}" method="post" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="unblock-btn" onclick="return confirm('차단을 해제하시겠습니까?')">차단 해제</button>
+                </form>
+                <!-- 디버깅: Blocked User ID: {{ block.blocked.user_id }} -->
+              </div>
+            {% else %}
+              <div class="user-item text-muted">
+                <span class="user-name">유효하지 않은 차단 항목</span>
+              </div>
+            {% endif %}
+          {% empty %}
+            <div class="user-item">차단한 유저가 없습니다.</div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
 
     <!-- 서브 콘텐츠들 -->
@@ -226,12 +301,11 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
       <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
     </button>
 
-    <!-- ✅ footer.html 포함 -->
     {% include 'main_footer.html' %}
   </div>
 
   <!-- JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'js/myPage.js' %}"></script>
+  <!-- <script src="{% static 'js/myPage.js' %}"></script> --> <!-- 차단 해제에 JavaScript 불필요 -->
 </body>
 </html>

@@ -1,10 +1,15 @@
 {% load static %}
 
+<<<<<<< Updated upstream
 <link rel="icon" href="{% static 'img/favicon_bigepoch1984_circular.ico' %}" type="image/x-icon">
 <link rel="apple-touch-icon" href="{% static 'img/bigepoch1984_circular_logo.png' %}">
 
 
 
+=======
+<!-- body 태그에 데이터 속성 추가 -->
+<body data-mypage-url="{% url 'mypage:mypage' %}" data-logout-url="{% url 'account:logout' %}" data-main-url="{% url 'main:main' %}" data-user-nickname="{{ request.user.username|default:'사용자' }}" data-is-authenticated="{{ request.user.is_authenticated|lower }}">
+>>>>>>> Stashed changes
 
 <nav class="navbar navbar-light bg-white px-3 py-2 d-flex justify-content-between align-items-center"
  style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 60px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
@@ -22,15 +27,15 @@
                 <i class="bi bi-bell" id="alertIcon" style="font-size: 24px; cursor: pointer;" title="알림"></i>
                 <span id="unread-count" style="position: absolute; top: -5px; right: -5px; background: #ff4d4f; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;"></span>
             </div>
-            <a href="{% url 'mypage:mypage' %}">
-                <div class="profile-preview" id="profileIcon">
-                    {% if request.user.profile_image %}
-                        <img src="{{ request.user.profile_image.url }}?t={{ now|date:'U' }}" alt="프로필 이미지" class="rounded-circle">
-                    {% else %}
-                        <i class="bi bi-person-fill profile-icon"></i>
-                    {% endif %}
-                </div>
-            </a>
+            
+            <div class="profile-preview" id="profileIcon">
+                {% if request.user.profile_image %}
+                    <img src="{{ request.user.profile_image.url }}?t={{ now|date:'U' }}" alt="프로필 이미지" class="rounded-circle">
+                {% else %}
+                    <i class="bi bi-person-fill profile-icon"></i>
+                {% endif %}
+            </div>
+            
         {% else %}
             <a href="{% url 'account:login' %}" style="text-decoration: none;">
                 <button type="button" class="btn p-0 m-0" style="background: none; border: none; font-size: 16px; font-weight: 700; color: #1b1e26;">
@@ -38,10 +43,6 @@
                 </button>
             </a>
         {% endif %}
-
-        <button class="btn btn-link text-decoration-none p-0 ms-1" type="button" id="mainPanelIcon" style="color: #1b1e26; line-height: 1;">
-            <i class="bi bi-list" style="font-size: 28px; vertical-align: middle;"></i>
-        </button>
     </div>
 
     <!-- 알림 팝업 -->
@@ -70,8 +71,8 @@
         overflow: hidden;
     }
     .profile-icon {
-        font-size: 16px; /* 아이콘 크기 (24px에 맞게 조정) */
-        color: #9376e0; /* mypage.html과 동일한 색상 */
+        font-size: 16px;
+        color: #9376e0;
     }
     .profile-preview img {
         width: 100%;
@@ -81,114 +82,20 @@
         top: 0;
         left: 0;
     }
+    .hover-bg:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+
+    /* 슬라이드 다운 애니메이션 */
+    @keyframes slideDown {
+        from { transform: translateY(-10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    #notification-popup {
+        animation: slideDown 0.3s ease-in-out;
+    }
 </style>
 
-<script>
-    // CSRF 토큰 설정
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    const csrftoken = getCookie('csrftoken');
-
-    // 알림 팝업 토글 및 데이터 로드
-    document.getElementById('alertIcon').addEventListener('click', function() {
-        const popup = document.getElementById('notification-popup');
-        if (popup.style.display === 'block') {
-            popup.style.display = 'none';
-        } else {
-            popup.style.display = 'block';
-            loadNotifications(); // 알림 데이터 로드
-        }
-    });
-
-    // 알림 데이터 AJAX 로드
-    function loadNotifications() {
-        fetch('/community/notifications/', {
-            method: 'GET',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        })
-        .then(response => response.json())
-        .then(data => {
-            const body = document.getElementById('notification-body');
-            body.innerHTML = ''; // 기존 내용 지우기
-            let unreadCount = 0;
-            if (data.length > 0) {
-                data.forEach(notification => {
-                    if (!notification.is_read) unreadCount++;
-                    const item = document.createElement('div');
-                    item.className = 'notification-item p-2 border-bottom';
-                    item.style.cursor = 'pointer';
-                    item.style.transition = 'background 0.2s';
-                    item.style.backgroundColor = notification.is_read ? '#fff' : '#f0f8ff'; // 읽음 여부에 따라 배경색 변경
-                    item.onclick = () => {
-                        window.location.href = notification.link;
-                        // 알림 클릭 시 읽음 처리 (필요 시 서버에 요청 추가 가능)
-                    };
-                    item.innerHTML = `
-                        <div><span class="comment-user" style="font-weight: bold; color: #007bff;">${notification.user}</span>님이 작성한 댓글</div>
-                        <span class="comment-preview" style="font-size: 14px; color: #495057; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${notification.preview}</span>
-                        <div class="comment-time" style="font-size: 12px; color: #6c757d; margin-top: 2px;">${notification.time}</div>
-                    `;
-                    body.appendChild(item);
-                });
-            } else {
-                body.innerHTML = '<div class="p-2 text-muted">새로운 알림이 없습니다.</div>';
-            }
-            // 읽지 않은 알림 개수 표시
-            const unreadBadge = document.getElementById('unread-count');
-            if (unreadCount > 0) {
-                unreadBadge.textContent = unreadCount;
-                unreadBadge.style.display = 'block';
-            } else {
-                unreadBadge.style.display = 'none';
-            }
-        })
-        .catch(error => console.error('알림 로드 오류:', error));
-    }
-
-    // 알림 팝업 닫기
-    function closeNotificationPopup() {
-        document.getElementById('notification-popup').style.display = 'none';
-    }
-
-    // 팝업 외부 클릭 시 닫기
-    document.addEventListener('click', function(event) {
-        const popup = document.getElementById('notification-popup');
-        const bellIcon = document.getElementById('alertIcon');
-        if (!popup.contains(event.target) && event.target !== bellIcon) {
-            popup.style.display = 'none';
-        }
-    });
-
-    // 페이지 로드 시 알림 개수 확인
-    window.addEventListener('load', loadNotifications);
-
-    // 슬라이드 다운 애니메이션
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideDown {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        #notification-popup {
-            animation: slideDown 0.3s ease-in-out;
-        }
-    `;
-    document.head.appendChild(style);
-</script>
 <script src="{% static 'js/script.js' %}"></script>
+</body>

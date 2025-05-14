@@ -2,6 +2,34 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.conf import settings
 
+#add1_250514_13_14
+class ReportedUser(models.Model):
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='reported_users', on_delete=models.CASCADE)
+    reported = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='reported_by', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('reporter', 'reported')  # 중복 신고 방지
+        verbose_name = '신고한 유저'
+        verbose_name_plural = '신고한 유저 목록'
+
+    def __str__(self):
+        return f"{self.reporter.nickname} -> {self.reported.nickname}"
+
+class BlockedUser(models.Model):
+    blocker = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='blocked_users', on_delete=models.CASCADE)
+    blocked = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='blocked_by', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('blocker', 'blocked')  # 중복 차단 방지
+        verbose_name = '차단한 유저'
+        verbose_name_plural = '차단한 유저 목록'
+
+    def __str__(self):
+        return f"{self.blocker.nickname} -> {self.blocked.nickname}"
+#add2
+
 class UserManager(BaseUserManager):
     def create_user(self, login_id, email, nickname, password=None, **extra_fields):
         if not login_id:
