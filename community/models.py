@@ -48,6 +48,7 @@ class FreeBoard(models.Model):
         db_index=True
     )
     dart_rcept_no = models.CharField(max_length=14, blank=True, null=True, unique=True, help_text="DART API 공시의 경우 원본 접수번호")
+    image = models.ImageField(upload_to='community_images/', blank=True, null=True)
 
     def __str__(self):
         return self.title

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static community_filters %}
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -66,6 +66,15 @@
     .dropdown-item:hover {
       background-color: #f8f9fa;
     }
+    .post-content img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+    .post-content {
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body class="bg-light"
@@ -85,8 +94,6 @@
     {% include 'community_header.html' with active_tab='community' %}
 
     <div style="height: 55px;"></div>
-
-    {% comment %} 알림 메시지 제거 {% endcomment %}
 
     <div class="container py-4">
       <div class="post-card">
@@ -124,7 +131,16 @@
           </div>
         </div>
         <div class="post-title">{{ post.title }}</div>
-        <div class="post-content">{{ post.content|linebreaksbr }}</div>
+        <!-- add1 -->
+        <div class="post-content">
+          {% if post.image and post.has_photo_tag %}
+            {{ post.content|safe }}
+            <img src="{{ post.image.url }}" alt="게시글 이미지" class="img-fluid">
+          {% else %}
+            {{ post.content|linebreaksbr }}
+          {% endif %}
+        </div>
+        <!-- add2 -->
         <div class="reaction-bar d-flex align-items-center">
           {% if request.user.is_authenticated and request.user.nickname != post.username %}
             <button class="like-btn btn p-0 border-0 bg-transparent {% if post.is_liked %}liked{% endif %}" data-post-id="{{ post.id }}" data-action="like">
@@ -207,7 +223,6 @@
     </button>
   </div>
 
-  <!-- 모달 추가 -->
   <div class="modal fade" id="blockModal" tabindex="-1" aria-labelledby="blockModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">

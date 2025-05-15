@@ -15,6 +15,13 @@ from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, Page
 from account.models import BlockedUser  # BlockedUser 모델 임포트 추가
 
+import os
+import shutil
+from django.utils import timezone
+from PIL import Image
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -215,10 +222,6 @@ def community_view(request):
     return render(request, 'community.html', context)
 
 def write_view(request):
-    """
-    새 게시글 작성 뷰입니다.
-    로그인된 사용자만 접근 가능하며, 캡차 검증을 포함합니다.
-    """
     if not request.user.is_authenticated:
         next_url = request.path
         if request.GET:
@@ -232,6 +235,7 @@ def write_view(request):
         content = request.POST.get('content', '').strip()
         captcha_value = request.POST.get('captcha_value', '').strip()
         captcha_answer = request.POST.get('captcha_answer', '').strip()
+        image = request.FILES.get('image')  # 사용자가 업로드한 이미지
 
         logger.info(f"write_view POST: title='{title}', content_len={len(content)}, captcha_value='{captcha_value}', captcha_answer='{captcha_answer}', board_type='{board_type}'")
 
@@ -271,40 +275,32 @@ def write_view(request):
         elif board_type == 'disclosure_manual':
             post_category = '수동공시'
 
-        if board_type != 'realtime_news':
+        with transaction.atomic():
             new_post = FreeBoard.objects.create(
                 user=request.user,
                 title=title,
                 content=content,
-                category=post_category
+                category=post_category,
+                image=image if image else None  # 사용자가 업로드한 이미지를 저장
             )
             messages.success(request, '게시물이 성공적으로 등록되었습니다.')
-            logger.info(f"Post created successfully: id={new_post.id}, title='{new_post.title}', category='{post_category}'")
+            logger.info(f"Post created successfully: id={new_post.id}, title='{new_post.title}', image='{new_post.image}'")
 
-        if board_type == 'realtime_news':
-            return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
-        elif board_type == 'disclosure_manual':
-            return redirect(f"{reverse('community:community')}?tab=news&subtab=disclosure")
-        else:
-            return redirect('community:community')
+        return redirect('community:community')
 
     return render(request, 'community_write.html', {
         'board_type': board_type
     })
 
 def community_detail_view(request, post_id):
-    # 차단된 사용자 목록 가져오기
     blocked_user_ids = []
     if request.user.is_authenticated:
         blocked_user_ids = BlockedUser.objects.filter(blocker=request.user).values_list('blocked_id', flat=True)
 
-    # 게시글 조회 (차단된 사용자의 글 접근 시 404)
     post = get_object_or_404(FreeBoard.objects.select_related('user').exclude(user_id__in=blocked_user_ids), id=post_id, is_deleted=False)
 
-    # 댓글 조회 (차단된 사용자의 댓글 제외)
     comments = FreeBoardComment.objects.filter(free_board=post, is_deleted=False).exclude(user_id__in=blocked_user_ids).select_related('user').order_by('reg_dt')
 
-    # 기존 코드 유지
     if request.user.is_authenticated:
         viewed_posts_key = f'viewed_post_{post_id}'
         if not request.session.get(viewed_posts_key, False):
@@ -342,13 +338,17 @@ def community_detail_view(request, post_id):
     if post.category == 'API공시':
         company_name_for_detail, dart_link_for_detail = extract_api_disclosure_info(post.content)
 
+    # [사진] 태그 처리
+    has_photo_tag = '[사진]' in post.content
+    content = post.content.replace('[사진]', '') if has_photo_tag else post.content
+
     post_data = {
         'id': post.id,
         'user': post.user,
         'username': post.user.nickname if hasattr(post.user, 'nickname') and post.user.nickname else post.user.get_username(),
         'auth_id': post.user.auth_id if hasattr(post.user, 'auth_id') else '',
         'title': post.title,
-        'content': post.content,
+        'content': content,
         'time_ago': time_ago,
         'reg_dt': post.reg_dt,
         'likes_count': post.likes_count,
@@ -361,6 +361,8 @@ def community_detail_view(request, post_id):
         'category': getattr(post, 'category', '잡담'),
         'dart_link': dart_link_for_detail,
         'company_name_for_api_disclosure': company_name_for_detail,
+        'image': post.image,
+        'has_photo_tag': has_photo_tag,  # [사진] 태그 존재 여부
     }
     return render(request, 'community_detail.html', {'post': post_data, 'comments': comments})
 
