@@ -24,6 +24,86 @@
     }
     .profile-icon i { vertical-align: middle; }
     .profile-img { width: 32px; height: 32px; object-fit: cover; border-radius: 50%; }
+    /* 페이지네이션 스타일 */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .pagination .page-item .page-link {
+      border: none;
+      color: #212529;
+      background-color: #f5f6f8;
+      margin: 0 5px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .pagination .page-item.active .page-link {
+      background-color: #9376e0;
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .pagination .page-item .page-link:hover {
+      background-color: #9376e0;
+      color: #fff;
+      transform: translateY(-2px);
+    }
+    .pagination .page-item.disabled .page-link {
+      color: #adb5bd;
+      background-color: #f5f6f8;
+      cursor: not-allowed;
+    }
+    .pagination .page-item.disabled .page-link:hover {
+      transform: none;
+    }
+    /* 검색 폼 스타일 */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .search-form {
+      display: flex;
+      max-width: 600px;
+      width: 100%;
+      gap: 10px;
+    }
+    .search-form input {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 10px 15px;
+      background-color: #f5f6f8;
+      transition: all 0.2s ease;
+    }
+    .search-form input:focus {
+      border-color: #9376e0;
+      box-shadow: 0 0 0 0.2rem rgba(147, 118, 224, 0.25);
+      outline: none;
+    }
+    .search-form button {
+      background-color: #9376e0;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: #fff;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .search-form button:hover {
+      background-color: #7a5dc7;
+      transform: translateY(-2px);
+    }
+    .search-form button i {
+      margin-right: 5px;
+    }
+    .no-results {
+      text-align: center;
+      color: #6c757d;
+      font-size: 16px;
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body
@@ -87,52 +167,103 @@
 
     <div id="community-list" class="community-list">
       {% for post in posts %}
-  <div class="community-item d-flex p-3 border-bottom">
-    <div class="flex-grow-1 d-flex flex-column">
-      <div class="d-flex align-items-center mb-2">
-        {% if post.user.profile_image %}
-          <img src="{{ post.user.profile_image.url }}" alt="프로필" class="profile-img me-2">
-        {% else %}
-          <span class="profile-icon me-2"><i class="bi bi-person-fill"></i></span>
-        {% endif %}
-        <div>
-          <div class="small">
-            <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
-            <span class="badge bg-primary ms-1">{% if post.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
-          </div>
-          <div class="text-muted small">
-            <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}
+        <div class="community-item d-flex p-3 border-bottom">
+          <div class="flex-grow-1 d-flex flex-column">
+            <div class="d-flex align-items-center mb-2">
+              {% if post.user.profile_image %}
+                <img src="{{ post.user.profile_image.url }}" alt="프로필" class="profile-img me-2">
+              {% else %}
+                <span class="profile-icon me-2"><i class="bi bi-person-fill"></i></span>
+              {% endif %}
+              <div>
+                <div class="small">
+                  <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
+                  <span class="badge bg-primary ms-1">{% if post.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
+                </div>
+                <div class="text-muted small">
+                  <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}
+                </div>
+              </div>
+            </div>
+            <a href="{% url 'community:detail' post.id %}" class="d-flex mb-2 text-decoration-none text-dark">
+              <div class="community-text-area">
+                <div class="title d-block">{{ post.title }}</div>
+                <div class="content">{{ post.content|truncatechars:100 }}</div>
+              </div>
+              {% if post.image %}
+                <div class="ms-3 flex-shrink-0">
+                  <img src="{{ post.image.url }}" alt="게시글 이미지" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
+                </div>
+              {% elif post.thumbnail %}
+                <div class="ms-3 flex-shrink-0">
+                  <img src="{{ post.thumbnail }}" alt="썸네일" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
+                </div>
+              {% endif %}
+            </a>
+            <div class="mt-2">
+              <div class="d-flex align-items-center gap-2">
+                <!-- 기존 코드 유지 -->
+              </div>
+              <div class="d-flex align-items-center gap-4 mt-2">
+                <!-- 기존 코드 유지 -->
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- 아래 부분을 a 태그로 전체 감싸기 -->
-      <a href="{% url 'community:detail' post.id %}" class="d-flex mb-2 text-decoration-none text-dark">
-        <div class="community-text-area">
-          <div class="title d-block">{{ post.title }}</div>
-          <div class="content">{{ post.content|truncatechars:100 }}</div>
-        </div>
-        {% if post.image %}
-          <div class="ms-3 flex-shrink-0">
-            <img src="{{ post.image.url }}" alt="게시글 이미지" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
-          </div>
-        {% elif post.thumbnail %}
-          <div class="ms-3 flex-shrink-0">
-            <img src="{{ post.thumbnail }}" alt="썸네일" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
-          </div>
-        {% endif %}
-      </a>
-      <!-- 이하 기존 코드 유지 -->
-      <div class="mt-2">
-        <div class="d-flex align-items-center gap-2">
-          <!-- ...existing code... -->
-        </div>
-        <div class="d-flex align-items-center gap-4 mt-2">
-          <!-- ...existing code... -->
-        </div>
-      </div>
+      {% empty %}
+        <div class="no-results">[조회 결과가 없습니다.]</div>
+      {% endfor %}
     </div>
-  </div>
-{% endfor %}
+
+    <!-- 페이지네이션 -->
+    <div class="pagination-container">
+      <nav aria-label="Community pagination">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.period %}&period={{ request.GET.period }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}" aria-label="Previous">
+                <span aria-hidden="true">«</span>
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link" aria-hidden="true">«</span>
+            </li>
+          {% endif %}
+          
+          {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+              <a class="page-link" href="?page={{ num }}{% if request.GET.period %}&period={{ request.GET.period }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">{{ num }}</a>
+            </li>
+          {% endfor %}
+          
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.period %}&period={{ request.GET.period }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}" aria-label="Next">
+                <span aria-hidden="true">»</span>
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link" aria-hidden="true">»</span>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+
+    <!-- 검색 폼 -->
+    <div class="search-container">
+      <form class="search-form" method="get" action="{% url 'community:community' %}">
+        <input type="text" name="q" placeholder="게시글 제목 또는 내용을 검색..." value="{{ request.GET.q|default:'' }}" class="form-control">
+        <button type="submit" class="btn"><i class="bi bi-search"></i></button>
+        {% if request.GET.period %}
+          <input type="hidden" name="period" value="{{ request.GET.period }}">
+        {% endif %}
+        {% if request.GET.sort %}
+          <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        {% endif %}
+      </form>
     </div>
 
     <div id="share-popup" class="share-popup" style="display:none;">
