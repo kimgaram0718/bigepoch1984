@@ -98,7 +98,7 @@ def extract_api_disclosure_info(content_str):
 
 def community_view(request):
     tab = request.GET.get('tab', 'community')
-    subtab = request.GET.get('subtab', '') 
+    subtab = request.GET.get('subtab', '')
 
     blocked_user_ids = []
     if request.user.is_authenticated:
@@ -111,6 +111,9 @@ def community_view(request):
 
     processed_carousel_disclosure_list = []
     for post in disclosure_posts_for_carousel_qs:
+        if not post.user:
+            logger.warning(f"Post {post.id} has no associated user")
+            continue
         item_data = {
             'obj': post,
             'display_title': post.title,
@@ -118,7 +121,7 @@ def community_view(request):
             'display_date': post.reg_dt,
             'display_category': post.get_category_display(),
             'link': post.get_absolute_url(),
-            'is_api': (post.category == 'API공시') 
+            'is_api': (post.category == 'API공시')
         }
         if post.category == 'API공시':
             company_name, report_link = extract_api_disclosure_info(post.content)
@@ -130,7 +133,7 @@ def community_view(request):
     try:
         carousel_page_obj = paginator_for_carousel.page(1)
     except EmptyPage:
-        carousel_page_obj = Page([], 1, paginator_for_carousel) 
+        carousel_page_obj = Page([], 1, paginator_for_carousel)
 
     common_context_data = {
         'community_menus': [{'name': '커뮤니티'}, {'name': '뉴스'}, {'name': '종목'}, {'name': '예측'}, {'name': '공지'}],
@@ -139,33 +142,25 @@ def community_view(request):
 
     if tab == 'news':
         active_subtab = subtab if subtab in ['realtime', 'disclosure'] else 'realtime'
-
-        # 실시간 뉴스 데이터: FreeBoard 모델에서 '실시간뉴스' 카테고리 사용
         if active_subtab == 'realtime':
-            # FreeBoard에서 '실시간뉴스' 카테고리 게시글을 가져옵니다.
             realtime_posts_qs = FreeBoard.objects.filter(
-                category='실시간뉴스', 
+                category='실시간뉴스',
                 is_deleted=False
             ).exclude(user_id__in=blocked_user_ids).select_related('user').order_by('-reg_dt')
             
-            # 페이지네이션 처리
-            paginator_realtime = Paginator(realtime_posts_qs, 10) # 페이지당 10개
+            paginator_realtime = Paginator(realtime_posts_qs, 10)
             page_number_realtime = request.GET.get('page', 1)
             try:
                 realtime_page_obj = paginator_realtime.page(page_number_realtime)
             except (EmptyPage, PageNotAnInteger):
                 realtime_page_obj = paginator_realtime.page(1)
             
-            # 컨텍스트에 FreeBoard Page 객체 전달
-            # community_realtime.html 템플릿에서 이 객체를 사용하도록 수정 필요
-            posts_for_template = realtime_page_obj 
+            posts_for_template = realtime_page_obj
             page_obj_for_template = realtime_page_obj
-        else: # active_subtab == 'disclosure' 또는 기타
-            posts_for_template = None # 또는 빈 리스트/페이지 객체
+        else:
+            posts_for_template = None
             page_obj_for_template = None
 
-
-        # 거래소 공시 데이터 (FreeBoard의 '수동공시', 'API공시')
         disclosure_posts_qs = FreeBoard.objects.filter(
             Q(category='수동공시') | Q(category='API공시'),
             is_deleted=False
@@ -173,8 +168,11 @@ def community_view(request):
 
         processed_disclosure_list = []
         for post in disclosure_posts_qs:
+            if not post.user:
+                logger.warning(f"Post {post.id} has no associated user")
+                continue
             item_data = {
-                'obj': post, 
+                'obj': post,
                 'display_title': post.title,
                 'display_company_name': post.user.nickname if hasattr(post.user, 'nickname') and post.user.nickname else post.user.get_username(),
                 'display_date': post.reg_dt,
@@ -189,7 +187,7 @@ def community_view(request):
             processed_disclosure_list.append(item_data)
 
         paginator_disclosure = Paginator(processed_disclosure_list, 10)
-        page_number_disclosure = request.GET.get('page', 1) 
+        page_number_disclosure = request.GET.get('page', 1)
         try:
             disclosure_list_page_obj = paginator_disclosure.page(page_number_disclosure)
         except (EmptyPage, PageNotAnInteger):
@@ -197,39 +195,64 @@ def community_view(request):
 
         context = {
             **common_context_data,
-            'disclosures': carousel_page_obj, 
+            'disclosures': carousel_page_obj,
             'active_tab': 'news',
             'active_subtab': active_subtab,
-            # community_realtime.html 로 전달되는 데이터
-            'posts': posts_for_template, # FreeBoard Page 객체 또는 그 안의 object_list
-            'page_obj': page_obj_for_template, # FreeBoard Page 객체
-            # community_disclosure.html 로 전달되는 데이터
-            'disclosure_list_page_obj': disclosure_list_page_obj, 
+            'posts': posts_for_template,
+            'page_obj': page_obj_for_template,
+            'disclosure_list_page_obj': disclosure_list_page_obj,
         }
         return render(request, 'community_news.html', context)
 
-    else: # tab == 'community' 또는 기본값
+    else:  # tab == 'community'
         period = request.GET.get('period', '한달')
         sort = request.GET.get('sort', '최신순')
+        search_query = request.GET.get('q', '').strip()
         now = django_timezone.now()
 
         all_posts_queryset = FreeBoard.objects.filter(
             is_deleted=False,
-            category='잡담', # 커뮤니티 탭은 '잡담' 카테고리만
+            category='잡담',
             reg_dt__gte=now - timedelta(days={'하루': 1, '일주일': 7, '한달': 30, '반년': 180}.get(period, 30))
         ).exclude(user_id__in=blocked_user_ids).select_related('user')
+
+        # 검색어 필터링
+        if search_query:
+            all_posts_queryset = all_posts_queryset.filter(
+                Q(title__icontains=search_query) | Q(content__icontains=search_query)
+            )
+
+        # 정렬
+        sort_fields = {
+            '최신순': '-reg_dt',
+            '조회수순': '-view_count',
+            '중요순': '-likes_count',
+            '걱정순': '-worried_count',
+        }
+        all_posts_queryset = all_posts_queryset.order_by(sort_fields.get(sort, '-reg_dt'))
+
+        paginator_community = Paginator(all_posts_queryset, 10)
+        page_number_community = request.GET.get('page', 1)
+        try:
+            community_page_obj = paginator_community.page(page_number_community)
+        except (EmptyPage, PageNotAnInteger):
+            community_page_obj = paginator_community.page(1)
 
         processed_post_list = []
         liked_post_ids = set()
         if request.user.is_authenticated:
+            post_ids = [post.id for post in community_page_obj.object_list]
             liked_post_ids = set(FreeBoardLike.objects.filter(
                 user=request.user,
-                free_board__in=all_posts_queryset,
+                free_board_id__in=post_ids,
                 is_liked=True
             ).values_list('free_board_id', flat=True))
 
-        for post_obj in all_posts_queryset:
-            time_diff = now - post_obj.reg_dt
+        for post in community_page_obj.object_list:
+            if not post.user:
+                logger.warning(f"Post {post.id} has no associated user")
+                continue
+            time_diff = now - post.reg_dt
             days_ago = time_diff.days
             time_ago_str = "방금 전"
             if days_ago == 0:
@@ -239,46 +262,38 @@ def community_view(request):
             else: time_ago_str = f"{days_ago}일 전"
 
             processed_post_list.append({
-                'id': post_obj.id, 'user': post_obj.user,
-                'username': post_obj.user.nickname if hasattr(post_obj.user, 'nickname') and post_obj.user.nickname else post_obj.user.get_username(),
-                'auth_id': post_obj.user.auth_id if hasattr(post_obj.user, 'auth_id') else '', 
-                'category': getattr(post_obj, 'category', '잡담'),
-                'time_ago': time_ago_str, 'days_ago': days_ago,
-                'title': post_obj.title, 'content': post_obj.content,
-                'likes_count': post_obj.likes_count, 'comments_count': post_obj.comments_count,
-                'view_count': post_obj.view_count, 'worried_count': post_obj.worried_count,
-                'reg_dt': post_obj.reg_dt,
-                'is_liked': post_obj.id in liked_post_ids,
-                'get_absolute_url': post_obj.get_absolute_url(),
-                'thumbnail': getattr(post_obj, 'thumbnail', None), 
-                'image': post_obj.image if hasattr(post_obj, 'image') else None, # 이미지 필드 추가
+                'id': post.id,
+                'user': post.user,
+                'username': post.user.nickname if hasattr(post.user, 'nickname') and post.user.nickname else post.user.get_username(),
+                'auth_id': getattr(post.user, 'auth_id', ''),
+                'category': getattr(post, 'category', '잡담'),
+                'time_ago': time_ago_str,
+                'days_ago': days_ago,
+                'title': post.title,
+                'content': post.content,
+                'likes_count': post.likes_count,
+                'comments_count': post.comments_count,
+                'view_count': post.view_count,
+                'worried_count': post.worried_count,
+                'reg_dt': post.reg_dt,
+                'is_liked': post.id in liked_post_ids,
+                'get_absolute_url': post.get_absolute_url(),
+                'thumbnail': getattr(post, 'thumbnail', None),
+                'image': post.image if hasattr(post, 'image') else None,
             })
-        
-        if sort == '최신순': processed_post_list.sort(key=lambda x: x['reg_dt'], reverse=True)
-        elif sort == '조회수순': processed_post_list.sort(key=lambda x: (-x['view_count'], -x['reg_dt'].timestamp()))
-        elif sort == '중요순': processed_post_list.sort(key=lambda x: (-x['likes_count'], -x['reg_dt'].timestamp())) 
-        elif sort == '걱정순': processed_post_list.sort(key=lambda x: (-x['worried_count'], -x['reg_dt'].timestamp()))
-        else: processed_post_list.sort(key=lambda x: x['reg_dt'], reverse=True) 
-
-        paginator_community = Paginator(processed_post_list, 10)
-        page_number_community = request.GET.get('page', 1)
-        try:
-            community_page_obj = paginator_community.page(page_number_community)
-        except (EmptyPage, PageNotAnInteger):
-            community_page_obj = paginator_community.page(1)
 
         context = {
             **common_context_data,
-            'disclosures_for_carousel': carousel_page_obj, 
-            'posts': community_page_obj, 
-            'page_obj': community_page_obj, 
+            'disclosures_for_carousel': carousel_page_obj,
+            'posts': processed_post_list,
+            'page_obj': community_page_obj,
             'period': period,
             'sort': sort,
+            'search_query': search_query,
             'active_tab': 'community',
-            'active_subtab': '', 
+            'active_subtab': '',
         }
         return render(request, 'community.html', context)
-
 
 @login_required
 def write_view(request):
