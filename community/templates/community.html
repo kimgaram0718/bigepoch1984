@@ -87,69 +87,52 @@
 
     <div id="community-list" class="community-list">
       {% for post in posts %}
-        <div class="community-item d-flex p-3 border-bottom">
-          <div class="flex-grow-1 d-flex flex-column">
-            <div class="d-flex align-items-center mb-2">
-              {% if post.user.profile_image %}
-                <img src="{{ post.user.profile_image.url }}" alt="프로필" class="profile-img me-2">
-              {% else %}
-                <span class="profile-icon me-2"><i class="bi bi-person-fill"></i></span>
-              {% endif %}
-              <div>
-                <div class="small">
-                  <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
-                  <span class="badge bg-primary ms-1">{% if post.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
-                </div>
-                <div class="text-muted small">
-                  <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}
-                </div>
-              </div>
-            </div>
-            <div class="mb-2 d-flex">
-              <div class="community-text-area">
-                <a href="{% url 'community:detail' post.id %}" class="title text-decoration-none d-block">{{ post.title }}</a>
-                <div class="content">{{ post.content|truncatechars:100 }}</div>
-              </div>
-              <div class="ms-3 flex-shrink-0">
-                <img src="{% if post.thumbnail %}{{ post.thumbnail }}{% else %}https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400{% endif %}" alt="썸네일" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
-              </div>
-            </div>
-            <div class="mt-2">
-              <div class="d-flex align-items-center gap-2">
-                <a href="{% url 'community:community' %}?coin=CBK" class="coin-price-badge text-decoration-none d-flex align-items-center gap-1 px-2 py-1 border rounded-pill small">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg" alt="코인" style="width:20px;height:20px;"> CBK
-                  <span class="text-danger">-0.38%</span>
-                </a>
-                <a href="{% url 'community:community' %}?coin=BTC" class="coin-price-badge text-decoration-none d-flex align-items-center gap-1 px-2 py-1 border rounded-pill small">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg" alt="코인" style="width:20px;height:20px;"> BTC
-                  <span class="text-success">+0.41%</span>
-                </a>
-              </div>
-              <div class="d-flex align-items-center gap-4 mt-2">
-                <span class="text-muted small">조회: {{ post.view_count }}</span>
-                {% if post.likes_count > 0 %}
-                  <a href="{% url 'community:detail' post.id %}#comments" class="d-flex align-items-center text-muted text-decoration-none">
-                    <i class="bi bi-emoji-smile"></i> <span class="ms-1">{{ post.likes_count }}</span>
-                  </a>
-                {% endif %}
-                {% if post.worried_count > 0 %}
-                  <a href="{% url 'community:detail' post.id %}#comments" class="d-flex align-items-center text-muted text-decoration-none">
-                    <i class="bi bi-exclamation-triangle-fill"></i> <span class="ms-1">{{ post.worried_count }}</span>
-                  </a>
-                {% endif %}
-                {% if post.comments_count > 0 %}
-                  <a href="{% url 'community:detail' post.id %}#comments" class="d-flex align-items-center text-muted text-decoration-none">
-                    <i class="bi bi-chat"></i> <span class="ms-1">{{ post.comments_count }}</span>
-                  </a>
-                {% endif %}
-                <button onclick="openSharePopup()" class="ms-auto btn p-0 border-0 bg-transparent">
-                  <i class="bi bi-box-arrow-up-right"></i>
-                </button>
-              </div>
-            </div>
+  <div class="community-item d-flex p-3 border-bottom">
+    <div class="flex-grow-1 d-flex flex-column">
+      <div class="d-flex align-items-center mb-2">
+        {% if post.user.profile_image %}
+          <img src="{{ post.user.profile_image.url }}" alt="프로필" class="profile-img me-2">
+        {% else %}
+          <span class="profile-icon me-2"><i class="bi bi-person-fill"></i></span>
+        {% endif %}
+        <div>
+          <div class="small">
+            <a href="{% url 'community:detail' post.id %}" class="fw-bold text-dark text-decoration-none">{{ post.username }}</a>
+            <span class="badge bg-primary ms-1">{% if post.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}</span>
+          </div>
+          <div class="text-muted small">
+            <a href="{% url 'community:community' %}?tag=event" class="text-muted text-decoration-none">공지/이벤트</a> · {{ post.time_ago }}
           </div>
         </div>
-      {% endfor %}
+      </div>
+      <!-- 아래 부분을 a 태그로 전체 감싸기 -->
+      <a href="{% url 'community:detail' post.id %}" class="d-flex mb-2 text-decoration-none text-dark">
+        <div class="community-text-area">
+          <div class="title d-block">{{ post.title }}</div>
+          <div class="content">{{ post.content|truncatechars:100 }}</div>
+        </div>
+        {% if post.image %}
+          <div class="ms-3 flex-shrink-0">
+            <img src="{{ post.image.url }}" alt="게시글 이미지" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
+          </div>
+        {% elif post.thumbnail %}
+          <div class="ms-3 flex-shrink-0">
+            <img src="{{ post.thumbnail }}" alt="썸네일" class="rounded-3" style="width:90px;height:90px;object-fit:cover;">
+          </div>
+        {% endif %}
+      </a>
+      <!-- 이하 기존 코드 유지 -->
+      <div class="mt-2">
+        <div class="d-flex align-items-center gap-2">
+          <!-- ...existing code... -->
+        </div>
+        <div class="d-flex align-items-center gap-4 mt-2">
+          <!-- ...existing code... -->
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
     </div>
 
     <div id="share-popup" class="share-popup" style="display:none;">

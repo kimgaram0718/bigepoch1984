@@ -6,16 +6,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if is_edit %}게시글 수정{% else %}게시글 작성{% endif %}</title>
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Bootstrap CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons (아이콘용) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/community.css' %}">
-  <!-- 퍼블리셔의 인라인 스타일 -->
   <style>
     body { background-color: #f8f9fa; }
     .form-control::placeholder { color: #adb5bd; }
@@ -33,8 +28,6 @@
   data-logout-url="{% url 'account:logout' %}"
   data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
 >
-
-  <!-- 헤더 삽입 -->
   {% include 'main_header.html' %}
 
   <nav class="navbar bg-white px-3 py-2 border-bottom">
@@ -42,7 +35,6 @@
     <span class="ms-2 fw-bold">게시글 작성</span>
   </nav>
 
-  <!-- 본문 감싸는 div 추가 -->
   <div id="app" style="padding-top: 60px;">
     <div class="container py-4">
       <h5 class="mb-3 fw-bold">{% if is_edit %}게시글 수정{% else %}게시글 작성{% endif %}</h5>
@@ -53,7 +45,7 @@
         </div>
       {% endif %}
 
-      <form method="POST" action="{% if is_edit %}{% url 'community:edit' post_id %}{% else %}{% url 'community:write' %}{% endif %}" id="postForm">
+      <form method="POST" action="{% if is_edit %}{% url 'community:edit' post_id %}{% else %}{% url 'community:write' %}{% endif %}" id="postForm" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
           <input type="text" class="form-control" id="title" name="title" placeholder="제목" value="{{ title|default_if_none:'' }}" required>
@@ -61,10 +53,15 @@
         <div class="mb-3">
           <input type="text" class="form-control" id="tags" name="tags" placeholder="태그">
         </div>
-        <div class="mb-3">
-          <textarea class="form-control" id="content" name="content" rows="8" placeholder="텍스트 입력" required>{{ content|default_if_none:'' }}</textarea>
+        <div class="form-group mt-3">
+          <label for="contentEditor">내용</label>
+          <div id="contentEditor" contenteditable="true" class="form-control" style="min-height: 200px; overflow-y: auto; border: 1px solid #ced4da; padding: 10px;">{% if content %}{{ content }}{% endif %}</div>
+          <input type="hidden" name="content" id="contentInput">
         </div>
-
+        <div class="form-group mt-3">
+          <label for="imageUpload">사진 첨부</label>
+          <input type="file" id="imageUpload" name="image" class="form-control" accept="image/*">
+        </div>
         <div class="mb-3">
           <div class="d-flex gap-2" id="captcha-container">
             <button type="button" class="btn btn-outline-dark w-50" id="captcha-btn">메크로방지</button>
@@ -83,40 +80,60 @@
     </div>
   </div>
 
-  <!-- 푸터 삽입 -->
   {% include 'main_footer.html' %}
 
-  <!-- Bootstrap JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <!-- Custom JS -->
   <script src="{% static 'js/community.js' %}"></script>
   <script src="{% static 'js/script.js' %}"></script>
   <script>
-    // 매크로 방지 기능: 4자리 숫자 생성
+    //add1
+    document.getElementById('imageUpload').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const contentEditor = document.getElementById('contentEditor');
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file); // 로컬 URL 사용
+          img.style.maxWidth = '100%';
+          img.style.marginTop = '10px';
+          contentEditor.appendChild(img);
+
+          const br = document.createElement('br');
+          contentEditor.appendChild(br);
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(contentEditor);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          contentEditor.focus();
+        };
+        reader.readAsDataURL(file); // 미리보기용
+      }
+    });
+    //add2
+
     function generateCaptcha() {
-      const captchaNumber = Math.floor(1000 + Math.random() * 9000); // 1000~9999 사이의 4자리 숫자
+      const captchaNumber = Math.floor(1000 + Math.random() * 9000);
       document.getElementById('captcha-value').value = captchaNumber;
       document.getElementById('captcha-btn').textContent = `메크로방지 (${captchaNumber})`;
-      document.getElementById('captcha-input').value = ''; // 입력값 초기화
-      document.getElementById('submit-btn').disabled = true; // 버튼 비활성화
-      document.getElementById('captcha-error').style.display = 'none'; // 경고 메시지 숨김
+      document.getElementById('captcha-input').value = '';
+      document.getElementById('submit-btn').disabled = true;
+      document.getElementById('captcha-error').style.display = 'none';
     }
 
-    // 초기 캡차 생성
     document.addEventListener('DOMContentLoaded', () => {
       generateCaptcha();
 
-      // 새 캡차 생성 버튼
       document.getElementById('captcha-refresh-btn').addEventListener('click', generateCaptcha);
 
-      // 캡차 입력 검증
       document.getElementById('captcha-input').addEventListener('input', () => {
         const userAnswer = document.getElementById('captcha-input').value;
         const correctAnswer = document.getElementById('captcha-value').value;
         const submitBtn = document.getElementById('submit-btn');
         const errorMsg = document.getElementById('captcha-error');
 
-        // 입력값이 4자리 숫자인지 확인
         const isValidInput = /^[0-9]{4}$/.test(userAnswer);
 
         if (userAnswer && isValidInput) {
@@ -137,16 +154,25 @@
         }
       });
 
-      // 폼 제출 시 추가 검증
+      //add1
       document.getElementById('postForm').addEventListener('submit', (e) => {
+        const contentEditor = document.getElementById('contentEditor');
+        const contentInput = document.getElementById('contentInput');
+        let content = contentEditor.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/?div[^>]*>/gi, '\n')
+          .replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, '[사진]'); // 이미지 태그를 [사진]으로 변환
+        contentInput.value = content.trim();
+
         const userAnswer = document.getElementById('captcha-input').value;
         const correctAnswer = document.getElementById('captcha-value').value;
         if (userAnswer !== correctAnswer.toString()) {
           e.preventDefault();
           alert('잘못 입력했습니다.');
           generateCaptcha();
-        }
-      });
+      }});
+      //add2
+
     });
   </script>
 </body>

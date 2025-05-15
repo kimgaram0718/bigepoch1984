@@ -1,15 +1,9 @@
 {% load static %}
 
-<<<<<<< Updated upstream
 <link rel="icon" href="{% static 'img/favicon_bigepoch1984_circular.ico' %}" type="image/x-icon">
 <link rel="apple-touch-icon" href="{% static 'img/bigepoch1984_circular_logo.png' %}">
-
-
-
-=======
 <!-- body 태그에 데이터 속성 추가 -->
 <body data-mypage-url="{% url 'mypage:mypage' %}" data-logout-url="{% url 'account:logout' %}" data-main-url="{% url 'main:main' %}" data-user-nickname="{{ request.user.username|default:'사용자' }}" data-is-authenticated="{{ request.user.is_authenticated|lower }}">
->>>>>>> Stashed changes
 
 <nav class="navbar navbar-light bg-white px-3 py-2 d-flex justify-content-between align-items-center"
  style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 60px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
