@@ -1,3 +1,4 @@
+# news_data_fetcher_kosdaq.py
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -12,10 +13,11 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 import FinanceDataReader as fdr
 from time import perf_counter
+from data_save_db_utils import save_record_to_db
 
 # 설정
 CHROMEDRIVER_PATH = "/usr/bin/chromedriver"
-SAVE_DIR = "news_data/chosun"
+SAVE_DIR = "data_store/news_data/chosun"
 os.makedirs(SAVE_DIR, exist_ok=True)
 START_DATE = datetime(2020, 1, 1)
 END_DATE = datetime.today() - timedelta(days=1)
@@ -37,7 +39,7 @@ def extract_date(text):
             return None
     return None
 
-#크롬 드라이버 설정
+# 크롬 드라이버 설정
 def get_driver():
     options = Options()
     options.add_argument("--headless=new")
@@ -47,10 +49,9 @@ def get_driver():
     options.add_argument("user-agent=Mozilla/5.0")
     options.add_argument("--disable-gpu")
     options.add_argument("--blink-settings=imagesEnabled=false")
-
     return webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=options)
-    
-# 서브도메인 구분 및 파싱
+
+# 서브도메인별 파서
 def parse_chosun(driver):
     soup = BeautifulSoup(driver.page_source, "html.parser")
     paragraphs = soup.select("p.article-body__content-text")
@@ -81,24 +82,23 @@ def get_parser_by_url(url):
     else:
         return parse_chosun, "조선일보"
 
-# 기사 크롤링
+# 기사 크롤링 함수
 def crawl_chosun_news(keyword):
     driver = get_driver()
-    page, print_count, empty_count = 1, 0, 0
+    page, print_count, empty_count_in_page = 1, 0, 0
     results, seen_links = [], set()
 
     while True:
         query_url = f"https://www.chosun.com/nsearch/?query={keyword}&pageno={page}"
         driver.get(query_url)
-        time.sleep(2)
+        time.sleep(1)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         cards = soup.select("div.story-card")
         if not cards:
             break
 
         total_cards = len(cards)
-        added, excluded = 0, 0
-        valid = False
+        added, excluded, valid = 0, 0, False
 
         for card in cards:
             title_tag = card.select_one("a.text__link.story-card__headline")
@@ -127,14 +127,14 @@ def crawl_chosun_news(keyword):
 
             try:
                 driver.get(link)
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+                WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
                 parser, press = get_parser_by_url(link)
                 content = parser(driver)
             except Exception as e:
                 tqdm.write(f"[파싱 실패] {link} ▶ {e}")
                 continue
 
-            results.append({
+            article = {
                 "종목명": keyword,
                 "날짜": date.strftime("%Y-%m-%d"),
                 "제목": title,
@@ -142,8 +142,14 @@ def crawl_chosun_news(keyword):
                 "본문": content,
                 "URL": link,
                 "언론사": press
-            })
-            added += 1
+            }
+            if save_record_to_db(article, "news_articles", "URL"):
+                results.append(article)
+                added += 1
+            else:
+                tqdm.write(f"⛔ 저장 중단: {keyword}")
+                driver.quit()
+                return results, print_count
 
         tqdm.write(
             f"[🔍 {keyword}] Page {page} | 기사 수: {total_cards}, 제외: {excluded}, 수집: {added}, 누적: {print_count}"
@@ -164,21 +170,19 @@ def crawl_chosun_news(keyword):
     driver.quit()
     return results, print_count
 
-
 # 실행부
 if __name__ == "__main__":
+    TODAY = datetime.today().strftime("%Y%m%d")
     start_time = perf_counter()
 
-    print("FDR에서 코스피/코스닥 종목 불러오는 중...")
+    print("FDR에서 KOSDAQ 종목 불러오는 중...")
     kosdaq_list = fdr.StockListing('KOSDAQ')['Name'].dropna().unique().tolist()
 
-    completed_kosdaq = get_completed_stocks(os.path.join(SAVE_DIR, "chosun_kosdaq_articles.csv"))
-
+    completed_kosdaq = get_completed_stocks(os.path.join(SAVE_DIR, f"chosun_kosdaq_{TODAY}.csv"))
     kosdaq_list = [s for s in kosdaq_list if s not in completed_kosdaq]
     print(f"→ 이어받기 적용: KOSDAQ {len(kosdaq_list)}개")
 
     combined_list = [("KOSDAQ", stock) for stock in kosdaq_list]
-    
     all_kosdaq = []
     total_kosdaq = 0
 
@@ -194,22 +198,22 @@ if __name__ == "__main__":
     try:
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(threaded_crawl, arg) for arg in combined_list]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="전체 진행률", ncols=100, dynamic_ncols=True):
+            for future in tqdm(as_completed(futures), total=len(futures), desc="전체 진행률", ncols=100):
                 market, stock, articles, count = future.result()
                 if market == "KOSDAQ":
                     all_kosdaq.extend(articles)
                     total_kosdaq += count
-                else:
-                    continue
                 tqdm.write(f"[✔] {stock} 수집 완료 ▶ 종목 누적: {count}, KOSDAQ 총: {total_kosdaq}")
 
     except KeyboardInterrupt:
         print("\n⛔ [중단] 사용자 수동 종료")
 
     finally:
-        cols = ["종목명", "날짜", "제목", "요약", "본문", "URL", "언론사"]
         if all_kosdaq:
-            pd.DataFrame(all_kosdaq)[cols].to_csv(os.path.join(SAVE_DIR, "chosun_kosdaq_articles.csv"), index=False, encoding="utf-8-sig")
+            cols = ["종목명", "날짜", "제목", "요약", "본문", "URL", "언론사"]
+            pd.DataFrame(all_kosdaq)[cols].to_csv(
+                os.path.join(SAVE_DIR, f"chosun_kosdaq_{TODAY}.csv"),
+                index=False, encoding="utf-8-sig")
             print(f"KOSDAQ 저장 완료: {len(all_kosdaq)}건")
 
         elapsed = perf_counter() - start_time
