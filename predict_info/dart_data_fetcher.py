@@ -1,43 +1,37 @@
+# dart_data_fetcher.py (리팩토링 버전)
 import os
-import time
-import sys
 import requests
 import pandas as pd
 import xml.etree.ElementTree as ET
-import FinanceDataReader as fdr
 from datetime import datetime, timedelta
-from tqdm import tqdm
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pdfminer.high_level import extract_text
 from pdfminer.pdfparser import PDFSyntaxError
+import FinanceDataReader as fdr
+from data_save_db_utils import save_record_to_db
 
 # 설정
 API_KEY = "629d8774e6b825dba0c3ee060bd7e19646d286de"
 START_DATE = "20200101"
 END_DATE = (datetime.today() - timedelta(days=1)).strftime("%Y%m%d")
 TODAY = datetime.today().strftime("%Y%m%d")
-SAVE_DIR = f"./data/dart_data/{TODAY}"
+SAVE_DIR = f"./data_store/dart_data/{TODAY}"
 os.makedirs(SAVE_DIR, exist_ok=True)
 MAX_WORKERS = 4
-
-
-def get_completed_corp_codes(path):
-    if not os.path.exists(path):
-        return set()
-    df = pd.read_csv(path)
-    return set(df['corp_code'].astype(str).unique())
 
 
 def generate_corp_df():
     tree = ET.parse("./data/CORPCODE.xml")
     root = tree.getroot()
-    dart_list = [{
-        "corp_name": child.find("corp_name").text,
-        "corp_code": child.find("corp_code").text,
-        "stock_code": child.find("stock_code").text
-    } for child in root.iter("list") if child.find("stock_code").text]
+    dart_list = [
+        {
+            "corp_name": child.find("corp_name").text,
+            "corp_code": child.find("corp_code").text,
+            "stock_code": child.find("stock_code").text
+        } for child in root.iter("list") if child.find("stock_code").text
+    ]
     dart_df = pd.DataFrame(dart_list)
 
     fdr_df = fdr.StockListing("KRX")[["Name", "Code", "Market"]]
@@ -59,11 +53,10 @@ def fetch_dart_reports(corp_code, bgn_date, end_date):
     try:
         res = requests.get(url, params=params)
         data = res.json()
-        if data.get("status") != "013" and "list" in data:
-            return data["list"]
+        return data.get("list", []) if data.get("status") != "013" else []
     except Exception as e:
         tqdm.write(f"[예외] {corp_code}: {e}")
-    return []
+        return []
 
 
 def fetch_pdf_text(rcp_no, dcm_no):
@@ -102,7 +95,6 @@ def fetch_dart_text(rcp_no):
             pdf_text = fetch_pdf_text(rcp_no, dcm_no)
             return html_text, pdf_text
 
-        time.sleep(0.3)  # 딜레이 추가
         return html_text, text_only[:3000]
     except Exception as e:
         return "", f"[본문 오류] {e}"
@@ -115,7 +107,6 @@ def process_company(row):
     for r in reports:
         rcp = r.get("rcept_no")
         html, text = fetch_dart_text(rcp)
-        tqdm.write(f"[처리중] {name} - {rcp}")
         enriched = {
             "corp_name": name,
             "corp_code": code,
@@ -128,50 +119,44 @@ def process_company(row):
             "content_text": text,
             "summary": ""
         }
-        results.append(enriched)
+        if save_record_to_db(enriched, "dart_disclosures", "rcept_no"):
+            results.append(enriched)
     return results, market
 
 
 def main():
     corp_df = generate_corp_df()
-    kospi_done = get_completed_corp_codes(os.path.join(SAVE_DIR, "dart_kospi_with_text.csv"))
-    kosdaq_done = get_completed_corp_codes(os.path.join(SAVE_DIR, "dart_kosdaq_with_text.csv"))
+    tqdm.write(f"\n📅 수집 범위: {START_DATE} ~ {END_DATE} | 총 기업 수: {len(corp_df)}")
     kospi_reports, kosdaq_reports = [], []
-    cols = ["rcept_dt", "market", "corp_name", "corp_code", "rcept_no", "report_nm", "url", "content_html", "content_text", "summary"]
-
-    tqdm.write(f"📅 수집 범위: {START_DATE} ~ {END_DATE} | 총 기업 수: {len(corp_df)}")
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = []
-        for _, row in corp_df.iterrows():
-            if (row['시장구분'] == "KOSPI" and str(row['corp_code']) in kospi_done) or \
-               (row['시장구분'] == "KOSDAQ" and str(row['corp_code']) in kosdaq_done):
-                continue
-            futures.append(executor.submit(process_company, row))
+        futures = [executor.submit(process_company, row) for _, row in corp_df.iterrows()]
 
         for future in tqdm(as_completed(futures), total=len(futures), ncols=100):
             try:
                 results, market = future.result()
                 if market == "KOSPI":
                     kospi_reports.extend(results)
-                else:
+                elif market == "KOSDAQ":
                     kosdaq_reports.extend(results)
             except Exception as e:
                 tqdm.write(f"[오류] 스레드 처리 중 문제 발생: {e}")
 
+    cols = ["rcept_dt", "market", "corp_name", "corp_code", "rcept_no", "report_nm", "url", "content_html", "content_text", "summary"]
     if kospi_reports:
         pd.DataFrame(kospi_reports)[cols].to_csv(
-            os.path.join(SAVE_DIR, "dart_kospi_data.csv"),
+            os.path.join(SAVE_DIR, f"dart_kospi_data_{TODAY}.csv"),
             index=False, encoding="utf-8-sig")
         tqdm.write(f"\n✅ KOSPI 저장 완료: {len(kospi_reports)}건")
 
     if kosdaq_reports:
         pd.DataFrame(kosdaq_reports)[cols].to_csv(
-            os.path.join(SAVE_DIR, "dart_kosdaq_data.csv"),
+            os.path.join(SAVE_DIR, f"dart_kosdaq_data_{TODAY}.csv"),
             index=False, encoding="utf-8-sig")
         tqdm.write(f"\n✅ KOSDAQ 저장 완료: {len(kosdaq_reports)}건")
 
     tqdm.write("\n🏁 전체 공시 본문 수집 완료")
+
 
 if __name__ == "__main__":
     main()
