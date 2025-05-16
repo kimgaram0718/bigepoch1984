@@ -14,6 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, Page
 from account.models import BlockedUser
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
@@ -509,60 +510,57 @@ def like_post(request, post_id):
 
     return JsonResponse(response_data)
 
-
 @login_required
+@require_POST
 def comment_create(request, post_id):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': '로그인이 필요합니다.'}, status=401)
-
     post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
-    if request.method == 'POST':
-        content = request.POST.get('content', '').strip()
-        if not content:
+    content = request.POST.get('content', '').strip()
+    if not content:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'error': '댓글 내용을 입력해주세요.'}, status=400)
+        else:
+            messages.error(request, '댓글 내용을 입력해주세요.')
+            return redirect('community:detail', post_id=post_id)
 
-        with transaction.atomic():
-            comment = FreeBoardComment.objects.create(free_board=post, user=request.user, content=content)
-            
-            post_for_update = FreeBoard.objects.select_for_update().get(id=post.id)
-            post_for_update.comments_count += 1
-            post_for_update.save(update_fields=['comments_count'])
+    with transaction.atomic():
+        comment = FreeBoardComment.objects.create(free_board=post, user=request.user, content=content)
+        post_for_update = FreeBoard.objects.select_for_update().get(id=post.id)
+        post_for_update.comments_count += 1
+        post_for_update.save(update_fields=['comments_count'])
 
-            if post.user != request.user:
-                notification_message = f"{request.user.nickname or request.user.username}님이 회원님의 게시글에 댓글을 남겼습니다: \"{content[:20]}...\""
-                if len(content) <= 20:
-                     notification_message = f"{request.user.nickname or request.user.username}님이 회원님의 게시글에 댓글을 남겼습니다: \"{content}\""
+        if post.user != request.user:
+            notification_message = f"{request.user.nickname or request.user.username}님이 회원님의 게시글에 댓글을 남겼습니다: \"{content[:20]}...\""
+            if len(content) <= 20:
+                notification_message = f"{request.user.nickname or request.user.username}님이 회원님의 게시글에 댓글을 남겼습니다: \"{content}\""
+            Notification.objects.create(
+                recipient=post.user,
+                sender=request.user,
+                comment=comment,
+                message=notification_message
+            )
 
-                Notification.objects.create(
-                    recipient=post.user,
-                    sender=request.user,
-                    comment=comment,
-                    message=notification_message 
-                )
-        
-        comment_time_diff = django_timezone.now() - comment.reg_dt
-        comment_time_ago = "방금 전" 
-
+    # AJAX 요청이면 JSON 반환, 아니면 리다이렉트
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        comment_time_ago = "방금 전"
         comment_data = {
             'id': comment.id,
-            'user': { 
+            'user': {
                 'nickname': request.user.nickname or request.user.get_username(),
                 'auth_id': getattr(request.user, 'auth_id', ''),
                 'profile_image_url': request.user.profile_image.url if hasattr(request.user, 'profile_image') and request.user.profile_image else None,
             },
             'content': comment.content,
             'reg_dt_formatted': comment.reg_dt.strftime('%Y.%m.%d %H:%M'),
-            'time_ago': comment_time_ago, 
-            'is_author': True, 
+            'time_ago': comment_time_ago,
+            'is_author': True,
         }
         return JsonResponse({
             'status': 'success',
             'comment': comment_data,
             'comments_count': post_for_update.comments_count
         })
-
-    return JsonResponse({'error': '잘못된 요청입니다.'}, status=400)
-
+    else:
+        return redirect('community:detail', post_id=post_id)
 
 @login_required
 def edit_view(request, post_id):
