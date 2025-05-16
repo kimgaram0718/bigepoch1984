@@ -1,17 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const footerItems = document.querySelectorAll('.footer-item');
-    const currentPath = window.location.pathname;
-
-    footerItems.forEach(item => {
-        const href = item.getAttribute('href');
-        if (currentPath === href) {
-            footerItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-        }
-    });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         initializeHeaderFeatures();
         fetchFooter();
@@ -69,30 +56,42 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeHeaderFeatures() {
     const alertIcon = document.getElementById('alertIcon');
     const profileIcon = document.getElementById('profileIcon');
-
     const isLoggedIn = document.body.dataset.isAuthenticated === 'true';
+
+    console.log('initializeHeaderFeatures called');
+    console.log('isLoggedIn:', isLoggedIn);
+    console.log('alertIcon:', alertIcon);
+    console.log('profileIcon:', profileIcon);
 
     if (isLoggedIn) {
         if (alertIcon) {
             alertIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
+                console.log('alertIcon clicked');
                 togglePopup('notification-popup');
             });
+        } else {
+            console.warn('alertIcon not found');
         }
 
         if (profileIcon) {
             profileIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
-                setupAndToggleProfilePopup();
+                console.log('profileIcon clicked');
+                togglePopup('profile-popup');
             });
+        } else {
+            console.warn('profileIcon not found');
         }
+    } else {
+        console.log('User is not logged in, skipping header feature initialization');
     }
 
     document.addEventListener('click', (event) => {
         const profilePopup = document.getElementById('profile-popup');
         const notificationPopup = document.getElementById('notification-popup');
         if (profilePopup && !profilePopup.contains(event.target) && profileIcon && !profileIcon.contains(event.target)) {
-            profilePopup.classList.add('d-none');
+            profilePopup.style.display = 'none';
         }
         if (notificationPopup && !notificationPopup.contains(event.target) && alertIcon && !alertIcon.contains(event.target)) {
             notificationPopup.style.display = 'none';
@@ -100,30 +99,16 @@ function initializeHeaderFeatures() {
     });
 }
 
-function setupAndToggleProfilePopup() {
-    let profilePopup = document.getElementById('profile-popup');
-    const mypageUrl = document.body.dataset.mypageUrl || '/mypage/';
-    const logoutUrl = document.body.dataset.logoutUrl || '/logout/';
-    const nickname = document.body.dataset.userNickname || '사용자';
-
-    if (!profilePopup) {
-        const popupHtml = `
-            <div id="profile-popup" class="popup-box d-none" style="position: absolute; top: 60px; right: 20px; width: 200px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 9999; font-size: 14px;">
-                <div class="px-3 py-2 d-flex align-items-center">
-                    <i class="bi bi-person-circle me-2" style="font-size: 20px; color: #9376e0;"></i>
-                    <span class="fw-normal text-dark" style="font-weight: 500;">${nickname}</span>
-                </div>
-                <ul class="list-unstyled m-0">
-                    <li class="px-3 py-2 hover-bg text-muted" onclick="location.href='${mypageUrl}'">마이페이지 이동</li>
-                    <li class="px-3 py-2 hover-bg text-muted" onclick="performLogout()">로그아웃</li>
-                </ul>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', popupHtml);
-        profilePopup = document.getElementById('profile-popup');
-    }
-
-    if (profilePopup) {
-        profilePopup.classList.toggle('d-none');
+function togglePopup(id) {
+    const popup = document.getElementById(id);
+    if (popup) {
+        console.log(`Toggling popup: ${id}, current display: ${popup.style.display}`);
+        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        if (id === 'notification-popup' && popup.style.display === 'block') {
+            loadNotifications();
+        }
+    } else {
+        console.warn(`Popup with id ${id} not found`);
     }
 }
 
@@ -150,20 +135,6 @@ function performLogout() {
         console.error('로그아웃 오류:', error);
         alert('로그아웃 중 오류가 발생했습니다.');
     });
-}
-
-function togglePopup(id) {
-    const popup = document.getElementById(id);
-    if (popup) {
-        if (id === 'notification-popup') {
-            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-            if (popup.style.display === 'block') {
-                loadNotifications();
-            }
-        } else {
-            popup.classList.toggle('d-none');
-        }
-    }
 }
 
 function loadNotifications() {
@@ -282,41 +253,27 @@ const banners = [
     { link: "https://example.com/banner3", img: "https://images.pexels.com/photos/6694543/pexels-photo-6694543.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "투자 분석 배너" }
 ];
 
+//add1
 function initializeBanners() {
     const carouselInner = document.getElementById('carousel-inner');
     const bannerCountDiv = document.getElementById('carousel-count');
     const carouselElement = document.getElementById('mainBannerCarousel');
-
-    console.log('Initializing banners...');
-    console.log({ carouselInner, carouselElement, bannerCountDiv });
 
     if (!carouselInner || !carouselElement || !bannerCountDiv) {
         console.error('Required elements not found:', { carouselInner, carouselElement, bannerCountDiv });
         return;
     }
 
-    carouselInner.innerHTML = '';
-    banners.forEach((banner, index) => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = `carousel-item ${index === 0 ? 'active' : ''}`;
-        itemDiv.innerHTML = `
-            <a href="${banner.link}" target="_blank">
-                <img src="${banner.img}" class="d-block w-100" alt="${banner.alt}" style="max-height: 300px; object-fit: cover; border-radius: 0.5rem;">
-            </a>
-        `;
-        carouselInner.appendChild(itemDiv);
-    });
-
-    if (banners.length > 0) {
-        bannerCountDiv.textContent = `1 / ${banners.length}`;
+    // 서버에서 제공한 admin_posts를 사용 (이미 HTML에서 렌더링됨)
+    const items = carouselInner.getElementsByClassName('carousel-item');
+    if (items.length > 0) {
+        bannerCountDiv.textContent = `1 / ${items.length}`;
         const carousel = new bootstrap.Carousel(carouselElement, {
             interval: 3000,
             wrap: true
         });
-        console.log('Carousel initialized:', carousel);
         carouselElement.addEventListener('slide.bs.carousel', (e) => {
-            console.log('Slide event triggered, to:', e.to);
-            const total = banners.length;
+            const total = items.length;
             let current = e.to + 1;
             if (current > total) {
                 current = 1;
@@ -327,6 +284,7 @@ function initializeBanners() {
         bannerCountDiv.textContent = `0 / 0`;
     }
 }
+//add2
 
 const realtimeItems = [
     { rank: 1, title: "밀크", link: "milk.html" }, { rank: 2, title: "cobak-token", link: "cobak-token.html" },

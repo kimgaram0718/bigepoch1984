@@ -1,12 +1,31 @@
 # main/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 import requests
 import json
 from django.views.decorators.http import require_http_methods
+from community.models import AdminBoard  # AdminBoard 모델 임포트
+
+#add1
+def admin_board_detail(request, pk):
+    """
+    AdminBoard의 상세 페이지 뷰.
+    pk로 특정 게시글을 조회하고, is_visible=True인 경우에만 표시.
+    """
+    post = get_object_or_404(AdminBoard, pk=pk, is_visible=True)
+    context = {
+        'post': post,
+    }
+    return render(request, 'community_admin_content.html', context)  # 템플릿 변경
+#add2
 
 def main(request):
-    return render(request, 'main.html')
+    # is_visible=True인 AdminBoard 데이터 가져오기
+    admin_posts = AdminBoard.objects.filter(is_visible=True).select_related('user')[:3]
+    context = {
+        'admin_posts': admin_posts,
+    }
+    return render(request, 'main.html', context)
 
 def get_naver_news(request):
     client_id = "OCRZok3QLNl9VF2e0Uo_"

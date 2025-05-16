@@ -3,6 +3,29 @@ from django.conf import settings
 from django.utils import timezone
 from django.urls import reverse
 
+#add1
+class AdminBoard(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='admin_boards')
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    image = models.ImageField(upload_to='admin_board_images/', blank=True, null=True)
+    reg_dt = models.DateTimeField(auto_now_add=True)
+    up_dt = models.DateTimeField(auto_now=True)
+    is_visible = models.BooleanField(default=True)  # 보여질지 여부 (YN 처리)
+    
+    class Meta:
+        ordering = ['-reg_dt']  # 최신순 정렬
+        verbose_name = "관리자 게시글"
+        verbose_name_plural = "관리자 게시글 목록"
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        # 추후 상세 페이지가 필요하면 URL 정의
+        return reverse('main:admin_board_detail', args=[str(self.id)])
+#add2
+
 # 알림 모델
 class Notification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')

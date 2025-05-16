@@ -146,6 +146,35 @@ body {
   margin-top: 10px;
 }
 
+/* add1 */
+#mainBannerCarousel .carousel-inner {
+  height: 300px;
+  overflow: hidden;
+}
+
+#mainBannerCarousel .carousel-item {
+  height: 100%;
+}
+
+#mainBannerCarousel .carousel-item img {
+  width: 100%;
+  height: 300px; /* 고정 높이로 강제 적용 */
+  object-fit: cover; /* 해상도 깨짐 허용 */
+}
+#carousel-count {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  padding: 2px 8px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 3px;
+  font-size: 12px;
+}
+/* add2 */
+
 .carousel-inner img {
   height: 300px; /* HTML에서 설정한 값과 일치 */
   object-fit: cover;

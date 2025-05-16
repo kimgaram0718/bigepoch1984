@@ -130,16 +130,28 @@
     <!-- 분리선 -->
     <hr style="border-top: 15px solid #adb5bd; margin-top: 12px; margin-bottom: 12px;" />
 
-    <!-- 메인 배너 -->
+    <!-- add1 -->
+    <!-- 메인 배너 (AdminBoard 이미지로 대체) -->
     <div class="bg-white pb-2 px-3">
       <div id="mainBannerCarousel" class="carousel slide position-relative" data-bs-ride="carousel" data-bs-interval="3000">
         <div class="carousel-inner" id="carousel-inner">
-          <!-- JavaScript에서 동적으로 채워짐 -->
+          {% for post in admin_posts|slice:":3" %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+              <a href="{% url 'main:admin_board_detail' post.id %}">
+                {% if post.image %}
+                  <img src="{{ post.image.url }}" alt="{{ post.title }}" class="d-block w-100" style="height: 300px; object-fit: cover;">
+                {% else %}
+                  <img src="{% static 'img/default-banner.jpg' %}" alt="기본 배너" class="d-block w-100" style="height: 300px; object-fit: cover;">
+                {% endif %}
+              </a>
+            </div>
+          {% endfor %}
         </div>
         <div id="carousel-count" class="position-absolute bottom-0 end-0 mb-2 me-3 px-2 py-1 bg-dark bg-opacity-50 text-white rounded-3 small" style="font-size: 12px;">
         </div>
       </div>
     </div>
+    <!-- add2 -->
 
     <!-- 나머지 콘텐츠 (기존 구조 유지) -->
     <div class="bg-white px-3 py-2 my-3 rounded-3">
@@ -149,6 +161,27 @@
         <!-- 여기 JS로 카드 채움 -->        
         <div class="originals-scroll-container">
         </div>
+
+        <!-- add1 -->
+        <!-- AdminBoard 글목록 추가 -->
+        <ul class="admin-posts-list">
+          {% for post in admin_posts %}
+            <li class="admin-post-item">
+              
+              <div class="admin-post-content">
+                <a href="{% url 'main:admin_board_detail' post.id %}" class="admin-post-title">{{ post.title }}</a>
+                <p class="admin-post-excerpt">{{ post.content|truncatechars:50 }}</p>
+                <div class="admin-post-meta">
+                  {{ post.reg_dt|date:"Y.m.d" }}
+                </div>
+              </div>
+            </li>
+          {% empty %}
+            <li class="no-posts">아직 게시물이 없습니다.</li>
+          {% endfor %}
+        </ul>
+        <!-- add1 -->
+
       </div>
     </div>
 
