@@ -159,7 +159,7 @@
 
       <div class="post-card comment-box" id="comments">
         {% if request.user.is_authenticated %}
-          <form id="comment-form" data-post-id="{{ post.id }}">
+          <form method="post" action="{% url 'community:comment_create' post.id %}">
             {% csrf_token %}
             <input type="text" name="content" class="form-control mb-3" placeholder="댓글을 입력해 주세요" required>
             <button type="submit" class="btn btn-primary btn-sm">댓글 작성</button>
@@ -186,7 +186,8 @@
                   {% if comment.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
                 </span><br>
                 <span>{{ comment.content }}</span><br>
-                <small class="text-muted">{{ comment.reg_dt|timesince }} 전</small>
+                <!-- <small class="text-muted">{{ comment.reg_dt|timesince }} 전</small> -->
+                 <span class="text-muted small">{{ comment.time_ago }}</span>
               </div>
               {% if request.user.is_authenticated and request.user == comment.user %}
                 <div class="d-flex gap-2">
