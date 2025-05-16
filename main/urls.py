@@ -8,4 +8,5 @@ urlpatterns = [
     path('', views.main, name='main'),
     path('predict/', include('predict_info.urls')),
     path('api/news/', views.get_naver_news, name='get_naver_news'),
+    path('admin-board/<int:pk>/', views.admin_board_detail, name='admin_board_detail'),
 ]
