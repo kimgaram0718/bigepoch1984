@@ -349,9 +349,7 @@ def write_view(request):
             content=content,
             category=post_category,
             image=request.FILES.get('image') # 이미지 업로드 처리
-        )
-        messages.success(request, '게시물이 성공적으로 등록되었습니다.')
-        
+        )        
         if redirect_params:
             query_string = '&'.join([f"{k}={v}" for k, v in redirect_params.items()])
             return redirect(f"{reverse(redirect_url_name)}?{query_string}")
@@ -614,7 +612,6 @@ def edit_view(request, post_id):
             post.image = None
 
         post.save(update_fields=['title', 'content', 'up_dt', 'image']) 
-        messages.success(request, '게시물이 성공적으로 수정되었습니다.')
         return redirect('community:detail', post_id=post_id)
  
     return render(request, 'community_write.html', {
@@ -637,8 +634,6 @@ def delete_view(request, post_id):
     if request.method == 'POST': 
         post.is_deleted = True
         post.save(update_fields=['is_deleted'])
-        messages.success(request, '게시물이 성공적으로 삭제되었습니다.')
-
         original_category = getattr(post, 'category', '잡담')
         if original_category == '실시간뉴스':
             return redirect(f"{reverse('community:community')}?tab=news&subtab=realtime")
