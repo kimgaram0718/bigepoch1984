@@ -424,6 +424,9 @@ def community_detail_view(request, post_id):
     if post_obj.category == 'API공시':
         company_name_for_detail, dart_link_for_detail = extract_api_disclosure_info(post_obj.content)
 
+    # Replace "[사진]" with the image tag if an image exists
+    content_with_image = post_obj.content.replace("[사진]", f'<img src="{post_obj.image.url}" alt="Uploaded Image">' if post_obj.image else "")
+    
     post_data = {
         'id': post_obj.id,
         'user': post_obj.user, 
@@ -431,7 +434,7 @@ def community_detail_view(request, post_id):
         'auth_id': post_obj.user.auth_id if hasattr(post_obj.user, 'auth_id') else '',
         'profile_image_url': post_obj.user.profile_image.url if hasattr(post_obj.user, 'profile_image') and post_obj.user.profile_image else None,
         'title': post_obj.title,
-        'content': post_obj.content, 
+        'content': content_with_image,  # Updated content with image
         'image_url': post_obj.image.url if post_obj.image else None, # 이미지 URL 추가
         'time_ago': time_ago,
         'reg_dt_formatted': post_obj.reg_dt.strftime('%Y.%m.%d %H:%M'),

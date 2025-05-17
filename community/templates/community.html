@@ -134,7 +134,7 @@
         <i class="bi bi-pencil-fill" style="font-size: 12px;"></i> 글쓰기
       </a>
       <button id="filterButton" class="btn border-0 p-0 m-0" style="background: transparent; font-size: 14px; font-weight: 500; color: #212529;" onclick="openFilterPopup()">
-        {{ period }} {{ sort }} ▼
+        {{ sort }} ▼
       </button>
     </div>
 
@@ -142,16 +142,7 @@
       <div class="filter-box" onclick="event.stopPropagation()">
         <div class="filter-drag-handle" onclick="closeFilterPopup()"></div>
         <div class="filter-content">
-          <strong class="d-block mb-3">필터를 선택해주세요.</strong>
-          <div class="section-title">기간</div>
-          <div id="period-options">
-            <div class="filter-option {% if period == '하루' %}active{% endif %}" onclick="selectPeriod('하루')">하루</div>
-            <div class="filter-option {% if period == '일주일' %}active{% endif %}" onclick="selectPeriod('일주일')">일주일</div>
-            <div class="filter-option {% if period == '한달' %}active{% endif %}" onclick="selectPeriod('한달')">한달</div>
-            <div class="filter-option {% if period == '반년' %}active{% endif %}" onclick="selectPeriod('반년')">반년</div>
-          </div>
-          <hr class="my-4" />
-          <div class="section-title">정렬</div>
+          <strong class="d-block mb-3">정렬 기준을 선택해주세요.</strong>
           <div id="sort-options">
             <div class="filter-option {% if sort == '최신순' %}active{% endif %}" onclick="selectSort('최신순')">최신순</div>
             <div class="filter-option {% if sort == '조회수순' %}active{% endif %}" onclick="selectSort('조회수순')">조회수순</div>

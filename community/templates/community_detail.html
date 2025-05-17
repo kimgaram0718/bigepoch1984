@@ -133,11 +133,9 @@
         <div class="post-title">{{ post.title }}</div>
         <!-- add1 -->
         <div class="post-content">
-          {% if post.image and post.has_photo_tag %}
-            {{ post.content|safe }}
-            <img src="{{ post.image.url }}" alt="게시글 이미지" class="img-fluid">
-          {% else %}
-            {{ post.content|linebreaksbr }}
+          {{ post.content|safe|cut:"[사진]" }}
+          {% if post.image %}
+              <img src="{{ post.image.url }}" alt="Uploaded Image">
           {% endif %}
         </div>
         <!-- add2 -->
