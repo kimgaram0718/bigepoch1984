@@ -7,6 +7,13 @@ from django.views.decorators.http import require_http_methods
 from community.models import AdminBoard  # AdminBoard 모델 임포트
 
 #add1
+def main_coalition(request):
+    return render(request, 'main_coalition.html')
+def main_faq(request):
+    return render(request, 'main_faq.html')
+def main_advertise(request):
+    return render(request, 'main_advertise.html')
+
 def admin_board_detail(request, pk):
     """
     AdminBoard의 상세 페이지 뷰.
