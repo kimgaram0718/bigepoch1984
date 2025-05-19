@@ -75,6 +75,22 @@
     .post-content {
       white-space: pre-wrap;
     }
+    .alert {
+      margin-bottom: 1rem;
+    }
+    .comment-content {
+      display: block;
+    }
+    .comment-edit-form {
+      display: none;
+      width: 100%;
+    }
+    .comment.active .comment-content {
+      display: none;
+    }
+    .comment.active .comment-edit-form {
+      display: block;
+    }
   </style>
 </head>
 <body class="bg-light"
@@ -85,8 +101,6 @@
   data-block-url="{% url 'community:block_user' post.id %}"  
   data-report-url="{% url 'community:report_user' post.id %}"  
   data-like-url="{% url 'community:like_post' post.id %}"      
-  data-comment-create-url="{% url 'community:comment_create' post.id %}"  
-  data-comment-delete-url="{% url 'community:comment_delete' 0 %}"  
   data-community-url="{% url 'community:community' %}"        
 >
   <div id="app">
@@ -103,8 +117,8 @@
               <i class="bi bi-arrow-left"></i>
             </a>
             <div class="profile-preview me-2">
-              {% if post.user.profile_image %}
-                <img src="{{ post.user.profile_image.url }}" alt="프로필" class="rounded-circle">
+              {% if post.profile_image_url %}
+                <img src="{{ post.profile_image_url }}" alt="프로필" class="rounded-circle">
               {% else %}
                 <i class="bi bi-person-fill profile-icon"></i>
               {% endif %}
@@ -121,14 +135,13 @@
               <i class="bi bi-three-dots-vertical"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
-              {% if request.user.is_authenticated and request.user.nickname == post.username %}
+              {% if request.user.is_authenticated and request.user == post.user %}
                 <li><a class="dropdown-item" href="{% url 'community:edit' post.id %}"><i class="bi bi-pencil"></i> 수정하기</a></li>
                 <li><a class="dropdown-item" href="{% url 'community:delete' post.id %}"><i class="bi bi-trash"></i> 삭제하기</a></li>
               {% elif request.user.is_authenticated %}
                 <li>
                   <form action="{% url 'community:block_user' post.id %}" method="post" onsubmit="return confirm('{{ post.username }}님을 차단하시겠습니까?');">
                     {% csrf_token %}
-                    <input type="hidden" name="target_user" value="{{ post.username }}">
                     <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
                   </form>
                 </li>
@@ -138,17 +151,14 @@
         </div>
         <div class="post-title">{{ post.title }}</div>
         <div class="post-content">
-          {{ post.content|safe|cut:"[사진]" }}
-          {% if post.image %}
-              <img src="{{ post.image.url }}" alt="Uploaded Image">
-          {% endif %}
+          {{ post.content|safe }}
         </div>
         <div class="reaction-bar d-flex align-items-center">
-          {% if request.user.is_authenticated and request.user.nickname != post.username %}
-            <button class="like-btn btn p-0 border-0 bg-transparent {% if post.is_liked %}liked{% endif %}" data-post-id="{{ post.id }}" data-action="like">
-              <i class="bi bi-heart FORMAT_MESSAGE 1:22 PM 5/19/2025 KST-fill"></i><br><span>{{ post.likes_count }}</span>
+          {% if request.user.is_authenticated and request.user != post.user %}
+            <button class="like-btn btn p-0 border-0 bg-transparent {% if post.is_liked_by_user %}liked{% endif %}" data-post-id="{{ post.id }}" data-action="like">
+              <i class="bi bi-heart-fill"></i><br><span>{{ post.likes_count }}</span>
             </button>
-            <button class="worry-btn btn p-0 border-0 bg-transparent {% if post.is_worried %}worried{% endif %}" data-post-id="{{ post.id }}" data-action="worry">
+            <button class="worry-btn btn p-0 border-0 bg-transparent {% if post.is_worried_by_user %}worried{% endif %}" data-post-id="{{ post.id }}" data-action="worry">
               <i class="bi bi-exclamation-triangle-fill"></i><br><span>{{ post.worried_count }}</span>
             </button>
           {% else %}
@@ -160,14 +170,20 @@
       </div>
 
       <div class="post-card comment-box" id="comments">
+        {% if error_message %}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error_message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endif %}
         {% if request.user.is_authenticated %}
           <form method="post" action="{% url 'community:comment_create' post.id %}" id="comment-form">
             {% csrf_token %}
-            <input type="text" name="content" class="form-control mb-3" placeholder="댓글을 입력해 주세요" required>
+            <input type="text" name="content" class="form-control mb-3" placeholder="댓글을 입력해 주세요" required maxlength="500">
             <button type="submit" class="btn btn-primary btn-sm">댓글 작성</button>
           </form>
         {% else %}
-          <div class="text-muted mb-3">댓글을 작성하려면 <a href="/account/login/?next={{ request.path }}">로그인</a>해 주세요.</div>
+          <div class="text-muted mb-3">댓글을 작성하려면 <a href="{% url 'account:login' %}?next={{ request.path }}">로그인</a>해 주세요.</div>
         {% endif %}
         <div class="mt-3">
           <strong>{{ post.comments_count }}개의 댓글</strong>
@@ -175,30 +191,46 @@
         <div id="comment-list">
           {% for comment in comments %}
             <div class="comment d-flex justify-content-between align-items-start" data-comment-id="{{ comment.id }}">
-              <div>
+              <div class="d-flex flex-grow-1">
                 <div class="profile-preview me-2">
-                  {% if comment.user.profile_image %}
-                    <img src="{{ comment.user.profile_image.url }}" alt="프로필" class="rounded-circle">
+                  {% if comment.profile_image_url %}
+                    <img src="{{ comment.profile_image_url }}" alt="프로필" class="rounded-circle">
                   {% else %}
                     <i class="bi bi-person-fill profile-icon"></i>
                   {% endif %}
                 </div>
-                <strong>{{ comment.user.nickname }}</strong>
-                <span class="badge bg-primary ms-1">
-                  {% if comment.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
-                </span><br>
-                <span>{{ comment.content }}</span><br>
-                <span class="text-muted small">{{ comment.time_ago }}</span>
+                <div class="flex-grow-1">
+                  <strong>{{ comment.username }}</strong>
+                  <span class="badge bg-primary ms-1">
+                    {% if comment.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
+                  </span><br>
+                  <span class="comment-content">{{ comment.content }}</span>
+                  <form method="post" action="{% url 'community:comment_edit' comment.id %}" class="comment-edit-form">
+                    {% csrf_token %}
+                    <input type="text" name="content" class="form-control mb-2" value="{{ comment.content }}" required maxlength="500">
+                    <button type="submit" class="btn btn-primary btn-sm me-2">저장</button>
+                    <button type="button" class="btn btn-secondary btn-sm cancel-edit">취소</button>
+                  </form>
+                  <span class="text-muted small">{{ comment.time_ago }}</span>
+                </div>
               </div>
               {% if request.user.is_authenticated and request.user == comment.user %}
                 <div class="d-flex gap-2">
-                  <a href="{% url 'community:comment_edit' comment.id %}" class="btn btn-outline-secondary btn-sm">
+                  <button type="button" class="btn btn-outline-secondary btn-sm edit-comment-btn">
                     <i class="bi bi-pencil"></i>
-                  </a>
-                  <button class="btn btn-outline-secondary btn-sm delete-comment-btn" data-comment-id="{{ comment.id }}">
-                    <i class="bi bi-trash"></i>
                   </button>
+                  <form method="post" action="{% url 'community:comment_delete' comment.id %}" style="display:inline;" onsubmit="return confirm('댓글을 삭제하시겠습니까?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
                 </div>
+              {% else %}
+                <form method="post" action="{% url 'community:block_user_by_comment' comment.id %}" style="display:inline;" onsubmit="return confirm('정말로 이 사용자를 차단하시겠습니까?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger ms-2">차단하기</button>
+                </form>
               {% endif %}
             </div>
           {% empty %}
@@ -228,5 +260,20 @@
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/script.js' %}"></script>
   <script src="{% static 'js/community.js' %}"></script>
-</body>
-</html>
+  <script>
+    // 인라인 댓글 수정 폼 토글
+    document.querySelectorAll('.edit-comment-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const commentDiv = button.closest('.comment');
+        commentDiv.classList.toggle('active');
+      });
+    });
+
+    // 수정 취소 버튼
+    document.querySelectorAll('.cancel-edit').forEach(button => {
+      button.addEventListener('click', () => {
+        const commentDiv = button.closest('.comment');
+        commentDiv.classList.remove('active');
+      });
+    });
+  </script>
