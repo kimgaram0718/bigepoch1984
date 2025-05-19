@@ -127,136 +127,50 @@
       </ul>
     </div>
 
-    <div id="content-mypage" class="content-block">
-      <div class="profile-summary d-flex align-items-center justify-content-between px-3 py-3">
-        <div class="d-flex align-items-center">
-          <i class="bi bi-person-circle fs-2 me-3 profile-icon" style="color: #9376e0;"></i>
-          <div>
-            <div id="nickname" class="fw-semibold">{{ request.user.nickname|default:'닉네임' }}</div>
-            <div class="text-muted" style="font-size: 14px;">{{ request.user.greeting_message|default:'본인을 설명해주세요' }}</div>
-          </div>
+   <!-- 마이페이지 콘텐츠 -->
+  <div id="content-mypage" class="content-block">
+    <div class="profile-summary d-flex align-items-center justify-content-between px-3 py-3">
+      <div class="d-flex align-items-center">
+        <!-- 동일한 사이즈 박스 안에 아이콘 -->
+        <div class="position-relative me-3" style="width: 39px; height: 50px;">
+          <i class="bi bi-person-circle profile-icon" style="font-size: 37px; color: #9376e0;"></i>
         </div>
-        <button class="btn profile-view-btn">프로필 보기</button>
+        <div>
+          <div id="nickname" class="fw-semibold">닉네임</div>
+          <div class="text-muted" style="font-size: 11px;">본인을 설명해주세요</div>
+        </div>
+      </div>
+      <button class="btn profile-view-btn">프로필 보기</button>
+    </div>
+     <!-- 분리선 -->
+    <hr style="border-top: 1px solid #adb5bd; margin-top: 1px; margin-bottom: 30px;" />
+
+    <!-- 예측 항목 시세 -->
+    <div class="container my-3" id="prediction-list">
+      <h6 class="fw-bold mb-2">예측 종목 시세</h6>
+        <ul class="list-group" id="predictionItemsUl">
+        <!-- JS로 항목 채워짐 -->
+        </ul>
+    </div>
+    <!-- 분리선 -->
+    <hr style="border-top: 13px solid #adb5bd; margin-top: 20px; margin-bottom: 20px;" />
+    <!-- 내가 쓴 글 -->
+    <div class="container my-3">
+      <h6 class="fw-bold mb-2">내가 쓴 글</h6>
+        <ul class="list-group" id="myPostsList">
+        <!-- JS로 항목 삽입 -->
+      </ul>
+    </div>
+     <!-- 분리선 -->
+     <hr style="border-top: 13px solid #adb5bd; margin-top: 20px; margin-bottom: 20px;" />
+    <!-- 차단 목록 -->
+    <div class="container my-3">
+      <h6 class="fw-bold mb-2">차단 목록</h6>
+      <div id="blockedUsersList" class="user-list mt-3">
+        <!-- JS로 삽입 -->
       </div>
     </div>
     
-    <div id="content-profile" class="content-block" style="display: none;">
-      <div class="px-3 py-3">
-        <h5>예측 종목</h5>
-        <p>예측 종목 설정 영역입니다.</p>
-      </div>
-    </div>
-
-    <div id="content-space" class="content-block" style="display: none;">
-      <div class="px-3 py-3">
-        <h5>내가 쓴 글</h5>
-        <!-- add1 -->
-        {% if my_posts_page_obj.object_list %}
-        <ul class="list-group mb-3">
-          {% for post in my_posts_page_obj %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <a href="{% url 'community:detail' post.id %}" class="text-decoration-none text-dark">
-                <strong>{{ post.title }}</strong>
-                <span class="text-muted small ms-2">{{ post.reg_dt|date:"Y.m.d H:i" }}</span>
-              </a>
-              <span class="badge bg-secondary">{{ post.get_category_display }}</span>
-            </li>
-          {% endfor %}
-        </ul>
-        <!-- 페이지네이션 -->
-        <nav>
-          <ul class="pagination justify-content-center flex-wrap" style="gap: 2px;">
-          {% if my_posts_page_obj.number > 1 %}
-            <li class="page-item">
-              <a class="page-link" href="?tab=space&my_posts_page=1" aria-label="맨 앞으로">
-                <i class="bi bi-chevron-double-left"></i>
-              </a>
-            </li>
-          {% endif %}
-          {% if my_posts_page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?tab=space&my_posts_page={{ my_posts_page_obj.previous_page_number }}" aria-label="이전">
-                <i class="bi bi-chevron-left"></i>
-              </a>
-            </li>
-          {% endif %}
-
-          {# 1~10개만 페이지 번호 노출 #}
-          {% for num in page_range %}
-            <li class="page-item {% if my_posts_page_obj.number == num %}active{% endif %}">
-              <a class="page-link" href="?tab=space&my_posts_page={{ num }}">{{ num }}</a>
-            </li>
-          {% endfor %}
-
-          {% if my_posts_page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?tab=space&my_posts_page={{ my_posts_page_obj.next_page_number }}" aria-label="다음">
-                <i class="bi bi-chevron-right"></i>
-              </a>
-            </li>
-          {% endif %}
-          {% if my_posts_page_obj.number < my_posts_page_obj.paginator.num_pages %}
-            <li class="page-item">
-              <a class="page-link" href="?tab=space&my_posts_page={{ my_posts_page_obj.paginator.num_pages }}" aria-label="맨 뒤로">
-                <i class="bi bi-chevron-double-right"></i>
-              </a>
-            </li>
-          {% endif %}
-        </ul>
-        </nav>
-        {% else %}
-          <div class="text-muted">작성한 글이 없습니다.</div>
-        {% endif %}
-        <!-- add2 -->
-      </div>
-    </div>
-
-    <div id="content-security" class="content-block" style="display: none;">
-      <div class="px-3 py-3">
-        <h5>차단 계정</h5>
-        <div class="blocked-user-list" id="blocked">
-          <!-- add1 -->
-          {% if page_obj.object_list %}
-          {% for user in page_obj %}
-              <div class="blocked-user-card">
-                  <div class="blocked-user-info">
-                      <i class="bi bi-person-circle blocked-user-icon"></i>
-                      <div class="blocked-user-details">
-                          <div class="blocked-user-nickname">{{ user.nickname|default:'알 수 없음' }}</div>
-                          <div class="blocked-user-id">ID: {{ user.id|default:'알 수 없음' }}</div>
-                      </div>
-                  </div>
-                  <button class="unblock-btn" data-blocked-id="{{ user.id|default:'' }}" disabled>차단 해제</button>
-              </div>
-          {% endfor %}
-          <div class="pagination-container">
-              <nav aria-label="Blocked users pagination">
-                  <ul class="pagination justify-content-center">
-                      {% if page_obj.has_previous %}
-                          <li class="page-item">
-                              <a class="page-link" href="?tab=security&page={{ page_obj.previous_page_number }}">«</a>
-                          </li>
-                      {% endif %}
-                      {% for num in page_obj.paginator.page_range %}
-                          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                              <a class="page-link" href="?tab=security&page={{ num }}">{{ num }}</a>
-                          </li>
-                      {% endfor %}
-                      {% if page_obj.has_next %}
-                          <li class="page-item">
-                              <a class="page-link" href="?tab=security&page={{ page_obj.next_page_number }}">»</a>
-                          </li>
-                      {% endif %}
-                  </ul>
-              </nav>
-          </div>
-          {% else %}
-              <div class="no-blocked-users">차단한 유저가 없습니다.</div>
-          {% endif %}
-          <!-- add2 -->
-        </div>
-      </div>
-    </div>
 
     {% include 'main_footer.html' %}
 
