@@ -5,12 +5,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>커뮤니티</title>
+  <title>마이페이지</title>
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/myPage.css' %}">
-  <!-- Bootstrap Icons (아이콘용) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .blocked-user-list {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .blocked-user-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .blocked-user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .blocked-user-info {
+      display: flex;
+      align-items: center;
+    }
+    .blocked-user-icon {
+      font-size: 24px;
+      color: #9376e0;
+      margin-right: 15px;
+    }
+    .blocked-user-details {
+      font-size: 16px;
+    }
+    .blocked-user-nickname {
+      font-weight: 600;
+      color: #333;
+    }
+    .blocked-user-id {
+      font-size: 14px;
+      color: #6c757d;
+    }
+    .unblock-btn {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .unblock-btn:hover {
+      background: #c82333;
+    }
+    .no-blocked-users {
+      text-align: center;
+      color: #6c757d;
+      padding: 40px 20px;
+      font-size: 18px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    .pagination-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .pagination .page-item.active .page-link {
+      background-color: #9376e0;
+      border-color: #9376e0;
+    }
+    .pagination .page-link {
+      color: #9376e0;
+    }
+    .pagination .page-link:hover {
+      background-color: #e9ecef;
+    }
+    @media (max-width: 576px) {
+      .blocked-user-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+      }
+      .unblock-btn {
+        margin-top: 10px;
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
 <body
   data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
@@ -22,60 +111,155 @@
   <div id="app">
     {% include 'main_header.html' %}
 
-  <div class="dropdown mx-3" id="mypageDropdown" style="margin-top: 75px;">
-    <button class="btn btn-light w-100 d-flex align-items-center justify-content-between" type="button" id="dropdownMenuBtn">
-      <div>
-        <i class="bi bi-house-door-fill me-2"></i> 
-        <span id="currentMenuLabel">마이페이지</span>
-      </div>
-      <i class="bi bi-chevron-down"></i>
-    </button>
-  
-    <ul class="dropdown-menu w-100 mt-2" style="display: none; background-color: #f1f1f1;">
-      <li><a class="dropdown-item" href="#" data-label="마이페이지"><i class="bi bi-house-door-fill me-2"></i> 마이페이지</a></li>
-      <li><a class="dropdown-item" href="#" data-label="프로필"><i class="bi bi-person-fill me-2"></i> 예측 종목</a></li>
-      <li><a class="dropdown-item" href="#" data-label="내 스페이스"><i class="bi bi-chat-dots-fill me-2"></i> 내가 쓴 글</a></li>
-      <li><a class="dropdown-item" href="#" data-label="계정 및 보안"><i class="bi bi-lock-fill me-2"></i> 차단 계정</a></li>
-    </ul>
-  </div>
-  <div id="content-mypage" class="content-block">
-    <div class="profile-summary d-flex align-items-center justify-content-between px-3 py-3">
-      <div class="d-flex align-items-center">
-        <i class="bi bi-person-circle fs-2 me-3 profile-icon" style="color: #9376e0;"></i>
+    <div class="dropdown mx-3" id="mypageDropdown" style="margin-top: 75px;">
+      <button class="btn btn-light w-100 d-flex align-items-center justify-content-between" type="button" id="dropdownMenuBtn">
         <div>
-          <div id="nickname" class="fw-semibold">닉네임</div>
-          <div class="text-muted" style="font-size: 14px;">본인을 설명해주세요</div>
+          <i class="bi bi-house-door-fill me-2"></i> 
+          <span id="currentMenuLabel">마이페이지</span>
+        </div>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <ul class="dropdown-menu w-100 mt-2" style="display: none; background-color: #f1f1f1;">
+        <li><a class="dropdown-item" href="#" data-label="마이페이지"><i class="bi bi-house-door-fill me-2"></i> 마이페이지</a></li>
+        <li><a class="dropdown-item" href="#" data-label="예측 종목"><i class="bi bi-person-fill me-2"></i> 예측 종목</a></li>
+        <li><a class="dropdown-item" href="#" data-label="내가 쓴 글"><i class="bi bi-chat-dots-fill me-2"></i> 내가 쓴 글</a></li>
+        <li><a class="dropdown-item" href="#" data-label="차단 계정"><i class="bi bi-lock-fill me-2"></i> 차단 계정</a></li>
+      </ul>
+    </div>
+
+    <div id="content-mypage" class="content-block">
+      <div class="profile-summary d-flex align-items-center justify-content-between px-3 py-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-person-circle fs-2 me-3 profile-icon" style="color: #9376e0;"></i>
+          <div>
+            <div id="nickname" class="fw-semibold">{{ request.user.nickname|default:'닉네임' }}</div>
+            <div class="text-muted" style="font-size: 14px;">{{ request.user.greeting_message|default:'본인을 설명해주세요' }}</div>
+          </div>
+        </div>
+        <button class="btn profile-view-btn">프로필 보기</button>
+      </div>
+    </div>
+    
+    <div id="content-profile" class="content-block" style="display: none;">
+      <div class="px-3 py-3">
+        <h5>예측 종목</h5>
+        <p>예측 종목 설정 영역입니다.</p>
+      </div>
+    </div>
+
+    <div id="content-space" class="content-block" style="display: none;">
+      <div class="px-3 py-3">
+        <h5>내가 쓴 글</h5>
+        <!-- add1 -->
+        {% if my_posts_page_obj.object_list %}
+        <ul class="list-group mb-3">
+          {% for post in my_posts_page_obj %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{% url 'community:detail' post.id %}" class="text-decoration-none text-dark">
+                <strong>{{ post.title }}</strong>
+                <span class="text-muted small ms-2">{{ post.reg_dt|date:"Y.m.d H:i" }}</span>
+              </a>
+              <span class="badge bg-secondary">{{ post.get_category_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+        <!-- 페이지네이션 -->
+        <nav>
+          <ul class="pagination justify-content-center flex-wrap" style="gap: 2px;">
+          {% if my_posts_page_obj.number > 1 %}
+            <li class="page-item">
+              <a class="page-link" href="?tab=space&my_posts_page=1" aria-label="맨 앞으로">
+                <i class="bi bi-chevron-double-left"></i>
+              </a>
+            </li>
+          {% endif %}
+          {% if my_posts_page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?tab=space&my_posts_page={{ my_posts_page_obj.previous_page_number }}" aria-label="이전">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+          {% endif %}
+
+          {# 1~10개만 페이지 번호 노출 #}
+          {% for num in page_range %}
+            <li class="page-item {% if my_posts_page_obj.number == num %}active{% endif %}">
+              <a class="page-link" href="?tab=space&my_posts_page={{ num }}">{{ num }}</a>
+            </li>
+          {% endfor %}
+
+          {% if my_posts_page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?tab=space&my_posts_page={{ my_posts_page_obj.next_page_number }}" aria-label="다음">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          {% endif %}
+          {% if my_posts_page_obj.number < my_posts_page_obj.paginator.num_pages %}
+            <li class="page-item">
+              <a class="page-link" href="?tab=space&my_posts_page={{ my_posts_page_obj.paginator.num_pages }}" aria-label="맨 뒤로">
+                <i class="bi bi-chevron-double-right"></i>
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+        </nav>
+        {% else %}
+          <div class="text-muted">작성한 글이 없습니다.</div>
+        {% endif %}
+        <!-- add2 -->
+      </div>
+    </div>
+
+    <div id="content-security" class="content-block" style="display: none;">
+      <div class="px-3 py-3">
+        <h5>차단 계정</h5>
+        <div class="blocked-user-list" id="blocked">
+          <!-- add1 -->
+          {% if page_obj.object_list %}
+          {% for user in page_obj %}
+              <div class="blocked-user-card">
+                  <div class="blocked-user-info">
+                      <i class="bi bi-person-circle blocked-user-icon"></i>
+                      <div class="blocked-user-details">
+                          <div class="blocked-user-nickname">{{ user.nickname|default:'알 수 없음' }}</div>
+                          <div class="blocked-user-id">ID: {{ user.id|default:'알 수 없음' }}</div>
+                      </div>
+                  </div>
+                  <button class="unblock-btn" data-blocked-id="{{ user.id|default:'' }}" disabled>차단 해제</button>
+              </div>
+          {% endfor %}
+          <div class="pagination-container">
+              <nav aria-label="Blocked users pagination">
+                  <ul class="pagination justify-content-center">
+                      {% if page_obj.has_previous %}
+                          <li class="page-item">
+                              <a class="page-link" href="?tab=security&page={{ page_obj.previous_page_number }}">«</a>
+                          </li>
+                      {% endif %}
+                      {% for num in page_obj.paginator.page_range %}
+                          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                              <a class="page-link" href="?tab=security&page={{ num }}">{{ num }}</a>
+                          </li>
+                      {% endfor %}
+                      {% if page_obj.has_next %}
+                          <li class="page-item">
+                              <a class="page-link" href="?tab=security&page={{ page_obj.next_page_number }}">»</a>
+                          </li>
+                      {% endif %}
+                  </ul>
+              </nav>
+          </div>
+          {% else %}
+              <div class="no-blocked-users">차단한 유저가 없습니다.</div>
+          {% endif %}
+          <!-- add2 -->
         </div>
       </div>
-      <button class="btn profile-view-btn">프로필 보기</button>
     </div>
-  </div>
-  
-  <!-- 프로필 콘텐츠 -->
-  <div id="content-profile" class="content-block" style="display: none;">
-    <div class="px-3 py-3">
-      <h5>프로필 설정 영역입니다.</h5>
-      <!-- 프로필 내용 추가 예정 -->
-    </div>
-  </div>
 
-  <!-- 내 스페이스 콘텐츠 -->
-<div id="content-space" class="content-block" style="display: none;">
-  <div class="px-3 py-3">
-    <h5>내 스페이스 내용입니다.</h5>
-  </div>
-</div>
+    {% include 'main_footer.html' %}
 
-<!-- 계정 및 보안 콘텐츠 -->
-<div id="content-security" class="content-block" style="display: none;">
-  <div class="px-3 py-3">
-    <h5>계정 및 보안 설정입니다.</h5>
-  </div>
-</div>
-
-{% include 'main_footer.html' %}
-
-    <!-- 스크롤 최상단 이동 버튼 -->
     <button id="scrollTopBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="
       position: fixed;
       bottom: 90px;
@@ -89,7 +273,6 @@
     ">
       <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
     </button>
-
   </div>
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>

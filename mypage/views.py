@@ -14,6 +14,10 @@ from account.models import ReportedUser
 from account.models import BlockedUser
 from django.views.decorators.http import require_http_methods
 
+from account.models import BlockedUser
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+
 @login_required
 def unblock_user(request, blocked_id):
     """
@@ -40,57 +44,60 @@ def mypage(request):
 # 로거 설정
 logger = logging.getLogger(__name__)
 
-# views.py
 @login_required
 def mypage_view(request):
-    if not request.user.is_authenticated:
-        logger.warning("Unauthorized access to mypage_view - redirecting to login")
-        return HttpResponseRedirect('/account/login/?next=/mypage/')
-    user = request.user
-    # FreeBoard에서 최대 5개 게시글 가져오기
-    user_posts_qs = FreeBoard.objects.filter(user=user, is_deleted=False).select_related('user').order_by('-reg_dt')[:5]
+    #add1
+    # 내가 쓴 글 목록 (삭제되지 않은 것만)
+    my_posts_qs = FreeBoard.objects.filter(user=request.user, is_deleted=False).order_by('-reg_dt')
+    post_paginator = Paginator(my_posts_qs, 5)  # 5개씩
+    post_page_number = request.GET.get('my_posts_page', 1)
+    try:
+        my_posts_page_obj = post_paginator.page(post_page_number)
+    except (EmptyPage, PageNotAnInteger):
+        my_posts_page_obj = post_paginator.page(1)
 
-    # 시간 경과 계산
-    user_posts = []
-    for post in user_posts_qs:
-        time_diff = timezone.now() - post.reg_dt
-        if time_diff.days > 0:
-            time_ago = f"{time_diff.days}일 전"
-        elif time_diff.seconds // 3600 > 0:
-            time_ago = f"{time_diff.seconds // 3600}시간 전"
-        elif time_diff.seconds // 60 > 0:
-            time_ago = f"{time_diff.seconds // 60}분 전"
-        else:
-            time_ago = "방금 전"
-        user_posts.append({
-            'title': post.title,
-            'time_ago': time_ago,
-            'url': post.get_absolute_url(),
-        })
+    my_posts_qs = FreeBoard.objects.filter(user=request.user, is_deleted=False).order_by('-reg_dt')
+    post_paginator = Paginator(my_posts_qs, 5)
+    post_page_number = request.GET.get('my_posts_page', 1)
+    try:
+        my_posts_page_obj = post_paginator.page(post_page_number)
+    except (EmptyPage, PageNotAnInteger):
+        my_posts_page_obj = post_paginator.page(1)
 
-    # 신고/차단 목록 데이터 (최대 5개)
-    reported_users = ReportedUser.objects.filter(reporter=user).select_related('reported')[:5]
-    # 차단 목록에서 유효한 유저만 가져오기
-    blocked_users = BlockedUser.objects.filter(blocker=user).select_related('blocked').filter(blocked__isnull=False)[:5]
+    # 페이지네이션 범위 계산
+    total_pages = post_paginator.num_pages
+    current = my_posts_page_obj.number
+    start_page = max(current - 5, 1)
+    end_page = min(start_page + 9, total_pages)
+    if end_page - start_page < 9:
+        start_page = max(end_page - 9, 1)
+    #add2
+
+    # BlockedUser 모델에서 blocker가 현재 유저인 것만 조회
+    blocked_users = BlockedUser.objects.filter(blocker=request.user).select_related('blocked').order_by('-created_at')
     
-    # 디버깅: blocked_users의 user_id와 nickname 로깅
-    for block in blocked_users:
-        logger.debug(f"Blocked user - User ID: {block.blocked.user_id}, Nickname: {block.blocked.nickname}")
+    # 차단한 유저 정보 리스트 생성
+    blocked_users_data = []
+    for blocked in blocked_users:
+        blocked_user = blocked.blocked
+        if blocked_user:
+            blocked_users_data.append({
+                'id': blocked_user.user_id,
+                'nickname': getattr(blocked_user, 'nickname', None) or getattr(blocked_user, 'username', '알 수 없음'),
+                'profile_image_url': getattr(blocked_user, 'profile_image', None).url if getattr(blocked_user, 'profile_image', None) else None,
+            })
+
+    paginator = Paginator(blocked_users_data, 5)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except (EmptyPage, PageNotAnInteger):
+        page_obj = paginator.page(1)
 
     context = {
-        'user': user,
-        'prediction_items': [
-            {'name': '삼성전자', 'price': '82,000원', 'change': '+1.20%'},
-            {'name': '비트코인', 'price': '125,000,000원', 'change': '+0.80%'},
-        ],
-        'watchlist': [
-            {'name': '이더리움'},
-            {'name': '애플'},
-        ],
-        'user_posts': user_posts,
-        'reported_users': reported_users,
-        'blocked_users': blocked_users,
-        'now': timezone.now(),
+        'page_obj': page_obj,
+        'my_posts_page_obj': my_posts_page_obj,
+        'page_range': range(start_page, end_page + 1),
     }
     return render(request, 'mypage.html', context)
 
