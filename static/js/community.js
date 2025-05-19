@@ -65,21 +65,32 @@ function goShare(platform) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-  const likeBtn = document.querySelector('.like-btn');
-  const worryBtn = document.querySelector('.worry-btn');
-  
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  if (!csrfToken) {
+    console.error('CSRF token not found');
+    return;
+  }
+
   const body = document.querySelector('body');
   const likePostUrl = body.dataset.likeUrl;
-  const commentCreateUrl = body.dataset.commentCreateUrl;
   const commentDeleteUrlTemplate = body.dataset.commentDeleteUrl;
 
-  // 좋아요/걱정돼요 AJAX
+  // 좋아요/걱정 AJAX
   document.querySelectorAll('.like-btn, .worry-btn').forEach(button => {
     button.addEventListener('click', function(e) {
       e.preventDefault();
+      if (body.dataset.isAuthenticated !== 'true') {
+        window.location.href = body.dataset.loginUrl;
+        return;
+      }
+
       const postId = this.getAttribute('data-post-id');
       const action = this.getAttribute('data-action');
+
+      if (!likePostUrl) {
+        console.error('Like post URL not defined');
+        return;
+      }
 
       fetch(likePostUrl, {
         method: 'POST',
@@ -97,6 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .then(data => {
         if (data.status === 'success') {
+          const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
+          const worryBtn = document.querySelector(`.worry-btn[data-post-id="${postId}"]`);
           if (likeBtn) {
             likeBtn.querySelector('span').textContent = data.likes_count;
             likeBtn.classList.toggle('liked', data.is_liked);
@@ -106,70 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
             worryBtn.classList.toggle('worried', data.is_worried);
           }
         } else {
+          console.error('Like/Worry error:', data.error);
           alert(data.error || '요청 처리 중 오류가 발생했습니다.');
         }
       })
       .catch(error => {
-        alert('서버와의 연결에 문제가 발생했습니다.');
+        console.error('Fetch error:', error);
+        alert('서버와의 연결에 문제가 발생했습니다. 다시 시도해주세요.');
       });
-    });
-  });
-
-  // 댓글 작성 AJAX
-  document.querySelector('#comment-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const content = this.querySelector('input[name="content"]').value;
-    fetch(commentCreateUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken
-      },
-      body: JSON.stringify({ content: content })
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.status === 'success') {
-        const commentList = document.getElementById('comment-list');
-        const commentDiv = document.createElement('div');
-        commentDiv.className = 'comment d-flex justify-content-between align-items-start';
-        commentDiv.setAttribute('data-comment-id', data.comment.id);
-        commentDiv.innerHTML = `
-          <div>
-            <div class="profile-preview me-2">
-              ${data.comment.user.profile_image_url ? `<img src="${data.comment.user.profile_image_url}" alt="프로필" class="rounded-circle">` : `<i class="bi bi-person-fill profile-icon"></i>`}
-            </div>
-            <strong>${data.comment.user.nickname}</strong>
-            <span class="badge bg-primary ms-1">${data.comment.user.auth_id === 'admin' ? '운영자' : '일반회원'}</span><br>
-            <span>${data.comment.content}</span><br>
-            <small class="text-muted">${data.comment.time_ago}</small>
-          </div>
-          <div class="d-flex gap-2">
-            <a href="/community/comment/edit/${data.comment.id}/" class="btn btn-outline-secondary btn-sm">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <button class="btn btn-outline-secondary btn-sm delete-comment-btn" data-comment-id="${data.comment.id}">
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>
-        `;
-        if (commentList.querySelector('.text-muted')) {
-          commentList.querySelector('.text-muted').remove();
-        }
-        commentList.insertBefore(commentDiv, commentList.firstChild);
-        document.querySelector('.comment-box strong').textContent = `${data.comments_count}개의 댓글`;
-        this.querySelector('input[name="content"]').value = '';
-      } else {
-        alert(data.error || '댓글 작성 중 오류가 발생했습니다.');
-      }
-    })
-    .catch(error => {
-      alert('서버와의 연결에 문제가 발생했습니다.');
     });
   });
 
@@ -177,40 +134,38 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.delete-comment-btn').forEach(button => {
     button.addEventListener('click', function(e) {
       e.preventDefault();
+      if (!confirm('댓글을 삭제하시겠습니까?')) return;
+
       const commentId = this.getAttribute('data-comment-id');
-      if (confirm('이 댓글을 삭제하시겠습니까?')) {
-        const commentDeleteUrl = commentDeleteUrlTemplate.replace('0', commentId);
-        fetch(commentDeleteUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-          }
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.status === 'success') {
-            document.querySelector(`.comment[data-comment-id="${commentId}"]`).remove();
-            document.querySelector('.comment-box strong').textContent = `${data.comments_count}개의 댓글`;
-            if (document.getElementById('comment-list').children.length === 0) {
-              const noComments = document.createElement('div');
-              noComments.className = 'text-muted';
-              noComments.textContent = '아직 댓글이 없습니다.';
-              document.getElementById('comment-list').appendChild(noComments);
-            }
-          } else {
-            alert(data.error || '댓글 삭제 중 오류가 발생했습니다.');
-          }
-        })
-        .catch(error => {
-          alert('서버와의 연결에 문제가 발생했습니다.');
-        });
-      }
+      const url = commentDeleteUrlTemplate.replace('0', commentId);
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.status === 'success') {
+          const commentElement = document.querySelector(`.comment[data-comment-id="${data.comment_id}"]`);
+          if (commentElement) commentElement.remove();
+          document.querySelector('.comment-box strong').textContent = `${data.comments_count}개의 댓글`;
+        } else {
+          console.error('Comment delete error:', data.error);
+          alert(data.error || '댓글 삭제에 실패했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        alert('서버와의 연결에 문제가 발생했습니다. 다시 시도해주세요.');
+      });
     });
   });
 });
