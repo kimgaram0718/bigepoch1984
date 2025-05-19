@@ -158,7 +158,7 @@
 
     <div id="community-list" class="community-list">
       {% for post in posts %}
-        <div class="community-item d-flex p-3 border-bottom">
+        <div class="community-item d-flex p-3 border-bottom position-relative">
           <div class="flex-grow-1 d-flex flex-column">
             <div class="d-flex align-items-center mb-2">
               {% if post.user.profile_image %}
@@ -191,13 +191,30 @@
                 </div>
               {% endif %}
             </a>
-            <div class="mt-2">
-              <div class="d-flex align-items-center gap-2">
-                <!-- 기존 코드 유지 -->
-              </div>
-              <div class="d-flex align-items-center gap-4 mt-2">
-                <!-- 기존 코드 유지 -->
-              </div>
+            <!-- 내용과 아이콘 사이 간격 추가 -->
+            <div style="height: 18px;"></div>
+            <div class="d-flex align-items-center gap-3 mt-2" style="position: absolute; left: 18px; bottom: 12px;">
+              <span class="d-flex align-items-center text-secondary" style="font-size: 1rem;">
+                조회: {{ post.view_count|default:0 }}
+              </span>
+              {% if post.likes_count|default:0 > 0 %}
+              <span class="d-flex align-items-center text-danger" style="font-size: 1rem;">
+                <i class="bi bi-heart me-1"></i>
+                {{ post.likes_count }}
+              </span>
+              {% endif %}
+              {% if post.worried_count|default:0 > 0 %}
+              <span class="d-flex align-items-center text-info" style="font-size: 1rem;">
+                <i class="bi bi-emoji-frown me-1"></i>
+                {{ post.worried_count }}
+              </span>
+              {% endif %}
+              {% if post.comments_count|default:0 > 0 %}
+              <span class="d-flex align-items-center text-primary" style="font-size: 1rem;">
+                <i class="bi bi-chat-dots me-1"></i>
+                {{ post.comments_count }}
+              </span>
+              {% endif %}
             </div>
           </div>
         </div>
