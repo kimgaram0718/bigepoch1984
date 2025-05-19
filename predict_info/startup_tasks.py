@@ -10,24 +10,54 @@ import glob
 import numpy as np
 import joblib
 import tensorflow as tf
-from tensorflow.keras.models import load_model 
-from tensorflow.keras.layers import Input, LSTM, Dense 
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
+# from tensorflow.keras.models import load_model # 모델 직접 로드/학습은 여기서 제거 (views.py에서 처리)
+# from tensorflow.keras.layers import Input, LSTM, Dense
+# from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.model_selection import train_test_split # 여기서는 사용 안 함
 
-from .utils import calculate_manual_features 
+# views.py와 동일한 피처 정의 가져오기 (또는 공통 파일로 분리)
+# 여기서는 views.py의 get_feature_columns_for_market 함수를 직접 호출하기 어려우므로,
+# 기본 27개 피처 목록을 정의하고, 시장별로 동적으로 컬럼명을 조정하는 로직을 포함해야 합니다.
+# 또는, CSV 생성 시에는 모든 가능한 시장 지표 컬럼(KOSPI_Close, KOSDAQ_Close 등)을 다 넣어두고
+# 모델 학습/예측 시에 선택적으로 사용하도록 할 수도 있습니다.
+# 여기서는 views.py에서 정의한 BASE_FEATURE_COLUMNS와 유사하게 정의합니다.
+
+from .utils import calculate_all_features, get_market_macro_data # 수정된 utils 임포트
 from django.conf import settings
 
 # --- 설정값 ---
-FEATURE_COLUMNS_TRAINING = ['Open', 'High', 'Low', 'Close', 'Volume', 
-                            'ATR', 'BB_Lower', 'BB_Mid', 'BB_Upper', 
-                            'RSI', 'MACD', 'MACD_Hist', 'MACD_Signal']
-TARGET_COLUMN_TRAINING = 'Close'
-TIME_STEPS_TRAINING = 10
-FUTURE_TARGET_DAYS_TRAINING = 5
-EPOCHS_FOR_DAILY_RETRAIN = 3
-APPROX_5YR_TRADING_DAYS = 5 * 252 
+# 이 FEATURE_COLUMNS_TRAINING은 CSV 파일에 저장될 컬럼 목록이며,
+# 모델 학습 시 이 중에서 실제 사용할 27개를 선택하게 됩니다.
+# calculate_all_features 함수가 생성하는 모든 컬럼을 포함하도록 확장합니다.
+# pandas-ta가 생성하는 이름 그대로 사용합니다.
+# 시장/거시/투자자 데이터는 calculate_all_features를 호출하기 전에 원본 DataFrame에 병합되어야 합니다.
+
+# startup_tasks.py 에서는 CSV를 생성하는 역할이므로,
+# views.py의 get_feature_columns_for_market(market_name_upper) 와 유사하게
+# 해당 시장에 맞는 피처 컬럼 리스트를 사용해야 합니다.
+# 여기서는 단순화를 위해 views.py에서 가져온 BASE_FEATURE_COLUMNS를 사용하고,
+# CSV 저장 시 시장별 접두사를 가진 컬럼이 포함되도록 합니다.
+
+BASE_FEATURE_COLUMNS_FOR_CSV = [ # CSV 저장 시 포함될 수 있는 모든 컬럼 (calculate_all_features 결과 기반)
+    'Open', 'High', 'Low', 'Close', 'Volume', 'Change',
+    'ATR_14', 'BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', 'RSI_14',
+    'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9',
+    'STOCHk_14_3_3', 'STOCHd_14_3_3', 'OBV', 'ADX_14', 'DMP_14', 'DMN_14',
+    # 아래 시장/거시/투자자 컬럼은 calculate_all_features 호출 전에 원본 데이터에 병합되어야 함
+    'KOSPI_Close', 'KOSPI_Change', # KOSPI용
+    'KOSDAQ_Close', 'KOSDAQ_Change', # KOSDAQ용
+    'USD_KRW_Close', 'USD_KRW_Change',
+    'Indi', 'Foreign', 'Organ'
+]
+# 실제 저장 시에는 해당 시장에 맞는 컬럼만 선택하거나, 모든 시장 컬럼을 포함하고 학습 시 선택
+
+
+TARGET_COLUMN_TRAINING = 'Close' # 모델의 타겟은 종가
+TIME_STEPS_TRAINING = 10 # views.py와 일치
+FUTURE_TARGET_DAYS_TRAINING = 5 # views.py와 일치
+# EPOCHS_FOR_DAILY_RETRAIN = 3 # 이 파일에서는 모델 재학습 로직 제거 (management command로 분리 권장)
+APPROX_5YR_TRADING_DAYS = 5 * 252
 
 # --- Helper Functions (데이터 업데이트용) ---
 def get_trading_day_before(date_reference, days_offset=1):
@@ -40,385 +70,290 @@ def get_trading_day_before(date_reference, days_offset=1):
             current_check_date = pd.to_datetime(date_reference).date()
         except Exception as e:
             print(f"[오류] get_trading_day_before: 날짜 변환 실패 ({date_reference}): {e}. 오늘 날짜 사용.")
-            current_check_date = timezone.now().date() 
+            current_check_date = timezone.now().date()
     
     kr_holidays = holidays.KR(years=[current_check_date.year -1, current_check_date.year, current_check_date.year + 1])
     trading_days_found = 0
     temp_date = current_check_date
     while trading_days_found < days_offset:
         temp_date -= timedelta(days=1)
-        if temp_date.weekday() < 5 and temp_date not in kr_holidays: 
+        if temp_date.weekday() < 5 and temp_date not in kr_holidays:
             trading_days_found += 1
     return temp_date
 
-# --- Helper Functions (모델 학습용) ---
-def _create_lstm_sequences_for_retrain(features_np, target_np, time_steps, future_target_days):
-    X_data, y_data = [], []
-    for i in range(len(features_np) - time_steps): 
-        X_data.append(features_np[i:(i + time_steps)])
-        y_data.append(target_np[i + time_steps - 1]) 
-    if not X_data or not y_data:
-        return np.array([]).reshape(0, time_steps, features_np.shape[1] if features_np.ndim > 1 and features_np.shape[1]>0 else 0 ), \
-               np.array([]).reshape(0, future_target_days if target_np.ndim > 1 and target_np.shape[1] == future_target_days else 0)
-    return np.array(X_data), np.array(y_data)
 
-def _load_and_prepare_training_data_from_csv(data_folder_path, market_identifier, feature_cols_for_model, target_col, future_target_days):
-    all_features_list = []
-    all_targets_list = []
-    search_pattern = os.path.join(data_folder_path, f"*{market_identifier}*features_manualTA.csv")
-    file_paths = glob.glob(search_pattern)
+def update_stock_csv_with_all_features(stock_code, stock_name, market_name_upper, base_csv_folder, market_id_suffix_for_filename):
+    """
+    개별 종목의 CSV 파일을 업데이트합니다. (모든 피처 포함)
+    market_name_upper: 'KOSPI' 또는 'KOSDAQ'
+    market_id_suffix_for_filename: 파일명에 사용될 접미사 (예: "_kospi_", "_kosdaq_")
+    """
+    print(f"  - {stock_name}({stock_code}) CSV 업데이트 시도...")
+    target_csv_pattern = os.path.join(base_csv_folder, f"{stock_code}{market_id_suffix_for_filename}*features_manualTA.csv") # 기존 파일명 패턴 유지
+    found_csv_files = glob.glob(target_csv_pattern)
+    
+    df_existing_ohlcv = pd.DataFrame()
+    last_csv_date = None
+    original_csv_path_to_remove = None
 
-    if not file_paths:
-        print(f"학습 데이터 로드 경고: {data_folder_path}에서 '{market_identifier}' CSV 파일을 찾을 수 없습니다. (패턴: {search_pattern})")
-        return pd.DataFrame(), pd.DataFrame()
-
-    # print(f"'{market_identifier}' 시장 학습 데이터 로드 중... 총 {len(file_paths)}개 파일.") # 로그 빈도 조절
-    loaded_count = 0
-    for file_path in file_paths:
-        df_stock = None 
+    if found_csv_files:
         try:
-            if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
-                continue
-            try:
-                df_stock = pd.read_csv(file_path)
-            except pd.errors.EmptyDataError:
-                # print(f"[경고] _load_and_prepare: 파일이 비어있거나 파싱할 컬럼이 없습니다: {file_path}. 건너<0xEB><0><0xA9>니다.")
-                continue 
-            except Exception as e_read: 
-                # print(f"[경고] _load_and_prepare: {file_path} 파일 읽기 중 예상치 못한 오류: {e_read}. 건너<0xEB><0><0xA9>니다.")
-                continue
+            found_csv_files.sort(key=os.path.getmtime, reverse=True)
+            original_csv_path_to_remove = found_csv_files[0]
+            if os.path.exists(original_csv_path_to_remove) and os.path.getsize(original_csv_path_to_remove) > 0:
+                df_existing_ohlcv = pd.read_csv(original_csv_path_to_remove)
+                if 'Date' in df_existing_ohlcv.columns:
+                    df_existing_ohlcv['Date'] = pd.to_datetime(df_existing_ohlcv['Date']).dt.date
+                    last_csv_date = df_existing_ohlcv['Date'].max()
+                else: # Date 컬럼 없으면 처음부터 다시
+                    df_existing_ohlcv = pd.DataFrame() # 비워서 새로 받도록
+                    last_csv_date = None
+            else: # 파일이 비어있으면 새로
+                 df_existing_ohlcv = pd.DataFrame()
+                 last_csv_date = None
+        except Exception as e_read:
+            print(f"    [경고] 기존 CSV ({original_csv_path_to_remove}) 읽기 오류: {e_read}. 새로 데이터를 가져옵니다.")
+            df_existing_ohlcv = pd.DataFrame()
+            last_csv_date = None
+            # original_csv_path_to_remove는 유지하여 나중에 삭제 시도
 
-            if df_stock is None or df_stock.empty: 
-                continue
-
-            df_stock['Date'] = pd.to_datetime(df_stock['Date']) 
-            df_stock = df_stock.sort_values('Date').reset_index(drop=True) # 여기서 인덱스 초기화
-            
-            if not all(col in df_stock.columns for col in feature_cols_for_model):
-                missing = [col for col in feature_cols_for_model if col not in df_stock.columns]
-                # print(f"파일 {file_path}에 일부 모델 피처 컬럼 누락: {missing}. 건너<0xEB><0><0xA9>니다.")
-                continue
-
-            # 타겟 컬럼 생성
-            target_cols_names = [f'Target_Day_{d}' for d in range(1, future_target_days + 1)]
-            for i, col_name in enumerate(target_cols_names):
-                df_stock[col_name] = df_stock[target_col].shift(-(i+1))
-            
-            # NaN 제거: 모델 피처와 모든 타겟 컬럼에 대해 한 번에 수행
-            cols_to_dropna = feature_cols_for_model + target_cols_names
-            df_cleaned = df_stock.dropna(subset=cols_to_dropna)
-            
-            if df_cleaned.empty:
-                continue
-
-            final_features = df_cleaned[feature_cols_for_model].reset_index(drop=True)
-            final_targets = df_cleaned[target_cols_names].reset_index(drop=True)
-
-            if not final_features.empty and not final_targets.empty:
-                all_features_list.append(final_features)
-                all_targets_list.append(final_targets)
-                loaded_count +=1
-        except Exception as e: 
-            print(f"학습 데이터 파일 {file_path} 처리 중 루프 내 오류: {e}")
-            import traceback
-            traceback.print_exc()
-            continue
-    
-    # print(f"실제로 로드 및 처리된 학습 데이터 파일 수: {loaded_count}") # 로그 빈도 조절
-    if not all_features_list or not all_targets_list:
-        return pd.DataFrame(), pd.DataFrame()
-
-    return pd.concat(all_features_list, ignore_index=True), pd.concat(all_targets_list, ignore_index=True)
-
-
-def update_csv_and_retrain_market_model(market_name, market_csv_folder, market_id_original, 
-                                        market_id_file_prefix_django, 
-                                        ml_models_dir_param, is_initial_scaler_fit=False, retrain_model_enabled=False):
-    print(f"\n--- {market_name} 시장 CSV 업데이트 및 모델 재학습 (재학습 활성화: {retrain_model_enabled}) ---")
-    
-    print(f"{market_name} 시장의 학습용 CSV 파일 업데이트 중...")
-    stock_listing_raw = fdr.StockListing(market_name) 
-    
-    if 'Symbol' not in stock_listing_raw.columns and 'Code' in stock_listing_raw.columns:
-        print(f"'{market_name}' 주식 목록에 'Symbol' 컬럼이 없어 'Code' 컬럼을 'Symbol'로 변경합니다.")
-        stock_listing_raw.rename(columns={'Code': 'Symbol'}, inplace=True)
-    elif 'Symbol' not in stock_listing_raw.columns:
-        print(f"[오류] '{market_name}' 주식 목록에 'Symbol' 또는 'Code' 컬럼이 없습니다. CSV 업데이트를 건너<0xEB><0><0xA9>니다.")
-        return
-        
-    stock_listing = stock_listing_raw[stock_listing_raw['Symbol'].notna() & stock_listing_raw['Name'].notna()]
     yesterday_trading_date = get_trading_day_before(timezone.now(), 1)
-    num_updated_csv = 0
+    
+    # 데이터 가져올 시작 날짜 결정
+    if last_csv_date and last_csv_date < yesterday_trading_date:
+        start_fetch_date_ohlcv = last_csv_date + timedelta(days=1)
+    elif not last_csv_date: # 기존 데이터가 없거나 날짜를 알 수 없는 경우
+        start_fetch_date_ohlcv = yesterday_trading_date - timedelta(days=APPROX_5YR_TRADING_DAYS * 1.2) # 최근 5년치 + 여유분
+    else: # 이미 최신 데이터
+        print(f"    {stock_name}({stock_code}) CSV는 이미 최신({last_csv_date})입니다. 건너뜁니다.")
+        return False # 업데이트 안 함
 
-    for _, stock_row in stock_listing.iterrows():
-        stock_code = stock_row['Symbol']
-        target_csv_pattern = os.path.join(market_csv_folder, f"{stock_code}{market_id_original}*features_manualTA.csv")
-        found_csv_files = glob.glob(target_csv_pattern)
-
-        if not found_csv_files:
-            continue
+    # 1. 개별 종목 OHLCV (+Change) 및 투자자별 매매동향 데이터 가져오기
+    # 투자자별 매매동향은 pykrx 또는 DB에서 가져와야 함. 여기서는 FDR의 기본 데이터만 사용.
+    try:
+        df_new_ohlcv_raw = fdr.DataReader(stock_code, start=start_fetch_date_ohlcv, end=yesterday_trading_date)
+        if df_new_ohlcv_raw.empty:
+            # print(f"    {stock_name}({stock_code}) 신규 OHLCV 데이터 없음 ({start_fetch_date_ohlcv} ~ {yesterday_trading_date}).")
+            return False # 업데이트 안 함
         
-        if len(found_csv_files) > 1:
+        df_new_ohlcv_raw.index = pd.to_datetime(df_new_ohlcv_raw.index).date # 인덱스를 date 객체로
+        df_new_ohlcv_raw.rename_axis('Date', inplace=True)
+        df_new_ohlcv_raw.reset_index(inplace=True)
+
+        # 'Change' 컬럼이 없다면 추가
+        if 'Change' not in df_new_ohlcv_raw.columns:
+            df_new_ohlcv_raw['Change'] = df_new_ohlcv_raw['Close'].pct_change()
+        
+        # 투자자별 매매동향 데이터 (임시로 NaN 컬럼 추가, 실제로는 pykrx 등으로 채워야 함)
+        # 이 데이터는 일별로 수집되어 StockPrice 모델 등에 저장되어 있어야 함.
+        # 여기서는 CSV 생성 시점에 pykrx를 직접 호출하거나, DB에서 읽어와야 함.
+        # 예시: df_investor = stock.get_market_trading_value_by_date(start_date_str, end_date_str, stock_code) 등
+        # 여기서는 임시로 0으로 채움
+        for col in ['Indi', 'Foreign', 'Organ']:
+            if col not in df_new_ohlcv_raw.columns:
+                 df_new_ohlcv_raw[col] = 0.0
+
+
+        # 기존 데이터와 새 데이터 병합
+        if not df_existing_ohlcv.empty and 'Date' in df_existing_ohlcv.columns:
+            # 기존 데이터에서 OHLCV 및 투자자 컬럼만 선택 (다른 TA 컬럼은 새로 계산)
+            cols_to_keep_from_existing = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Change', 'Indi', 'Foreign', 'Organ']
+            valid_existing_cols = [col for col in cols_to_keep_from_existing if col in df_existing_ohlcv.columns]
+            df_combined_base = pd.concat([df_existing_ohlcv[valid_existing_cols], df_new_ohlcv_raw], ignore_index=True)
+        else:
+            df_combined_base = df_new_ohlcv_raw.copy()
+
+        df_combined_base = df_combined_base.drop_duplicates(subset=['Date'], keep='last')
+        df_combined_base = df_combined_base.sort_values('Date').reset_index(drop=True)
+        df_combined_base.set_index('Date', inplace=True) # 인덱스를 다시 Date로
+
+        if df_combined_base.empty:
+            print(f"    {stock_name}({stock_code}) 데이터 병합 후 비어있음.")
+            return False
+
+        # 2. 시장 지수 및 환율 데이터 가져오기 (전체 기간에 대해)
+        min_date_for_other_data = df_combined_base.index.min()
+        max_date_for_other_data = df_combined_base.index.max()
+        
+        market_fdr_code = 'KS11' if market_name_upper == 'KOSPI' else 'KQ11'
+        df_market_idx, df_macro_fx = get_market_macro_data(min_date_for_other_data, max_date_for_other_data, market_code=market_fdr_code)
+
+        # 3. 모든 데이터 병합
+        df_to_calculate_ta = df_combined_base.copy()
+        if not df_market_idx.empty:
+            df_to_calculate_ta = df_to_calculate_ta.join(df_market_idx, how='left')
+        if not df_macro_fx.empty:
+            df_to_calculate_ta = df_to_calculate_ta.join(df_macro_fx, how='left')
+        
+        # 병합 후 ffill 필수
+        df_to_calculate_ta.ffill(inplace=True)
+
+
+        # 4. 모든 기술적 지표 계산 (utils.calculate_all_features 사용)
+        df_final_features = calculate_all_features(df_to_calculate_ta, market_name=market_name_upper)
+        
+        # 최근 5년치 데이터만 유지 (선택 사항)
+        if len(df_final_features) > APPROX_5YR_TRADING_DAYS:
+            df_final_features = df_final_features.tail(APPROX_5YR_TRADING_DAYS)
+        
+        df_final_features.reset_index(inplace=True) # Date 컬럼으로 복원
+
+        if df_final_features.empty or 'Date' not in df_final_features.columns:
+            print(f"    {stock_name}({stock_code}) 최종 피처 생성 실패 또는 Date 컬럼 없음.")
+            return False
+        
+        # CSV 저장 시 포함할 컬럼 목록 (BASE_FEATURE_COLUMNS_FOR_CSV 와 유사하게, 실제 생성된 컬럼 기준)
+        # calculate_all_features가 생성한 모든 컬럼 + Date
+        cols_to_save = ['Date'] + [col for col in df_final_features.columns if col != 'Date']
+        
+        # 특정 컬럼만 선택해서 저장하고 싶다면 여기서 필터링
+        # 예: 현재 시장에 맞는 피처만 선택 (views.py의 get_feature_columns_for_market 참고)
+        # current_market_features = get_feature_columns_for_market(market_name_upper) # 이 함수를 startup_tasks에서도 사용 가능하게 만들어야 함
+        # cols_to_save = ['Date'] + [col for col in current_market_features if col in df_final_features.columns]
+
+
+        df_to_save = df_final_features[cols_to_save].copy()
+        df_to_save['Date'] = pd.to_datetime(df_to_save['Date']).dt.strftime('%Y-%m-%d') # 날짜 형식 통일
+
+        if df_to_save.empty or df_to_save.drop(columns=['Date']).isnull().all().all():
+            print(f"    {stock_name}({stock_code}) 저장할 데이터가 없거나 모든 피처가 NaN입니다.")
+            return False
+
+        # 새 파일명 생성 (날짜 범위 포함)
+        min_date_str = pd.to_datetime(df_to_save['Date']).min().strftime('%Y%m%d')
+        max_date_str = pd.to_datetime(df_to_save['Date']).max().strftime('%Y%m%d')
+        new_filename = f"{stock_code}{market_id_suffix_for_filename}daily_{min_date_str}_{max_date_str}_features_manualTA.csv"
+        new_csv_path = os.path.join(base_csv_folder, new_filename)
+
+        df_to_save.to_csv(new_csv_path, index=False, encoding='utf-8-sig')
+        print(f"    {stock_name}({stock_code}) CSV 저장 완료: {new_filename}")
+
+        # 이전 파일 삭제 (파일명이 변경된 경우)
+        if original_csv_path_to_remove and original_csv_path_to_remove != new_csv_path and os.path.exists(original_csv_path_to_remove):
             try:
-                found_csv_files.sort(key=os.path.getmtime, reverse=True)
-            except Exception as e_sort:
-                 print(f"[경고] {stock_code} CSV 파일 정렬 중 오류: {e_sort}. 첫 번째 파일 사용: {os.path.basename(found_csv_files[0])}")
-        stock_csv_path_original = found_csv_files[0] 
+                os.remove(original_csv_path_to_remove)
+                print(f"    이전 파일 삭제: {os.path.basename(original_csv_path_to_remove)}")
+            except Exception as e_del:
+                print(f"    [오류] 이전 파일 삭제 실패 ({original_csv_path_to_remove}): {e_del}")
+        return True
 
-        df_existing_csv = None 
-        try:
-            if not os.path.exists(stock_csv_path_original) or os.path.getsize(stock_csv_path_original) == 0:
-                # print(f"[경고] update_csv: 파일이 존재하지 않거나 비어있습니다(0 bytes): {stock_csv_path_original}. 이 파일 처리를 건너<0xEB><0><0xA9>니다.")
-                continue
+    except Exception as e_main:
+        print(f"    [오류] {stock_name}({stock_code}) 처리 중 심각한 오류: {e_main}")
+        traceback.print_exc()
+        return False
 
-            try:
-                df_existing_csv = pd.read_csv(stock_csv_path_original)
-            except pd.errors.EmptyDataError: 
-                # print(f"[경고] update_csv (EmptyDataError): 파일이 비어있거나 파싱할 컬럼이 없습니다: {stock_csv_path_original}. 건너<0xEB><0><0xA9>니다.")
-                continue 
-            except Exception as e_read_csv: 
-                # print(f"[경고] update_csv (Exception): {stock_csv_path_original} 파일 읽기 중 예상치 못한 오류. 타입: {type(e_read_csv)}, 메시지: {e_read_csv}. 건너<0xEB><0><0xA9>니다.")
-                continue
 
-            if df_existing_csv is None or df_existing_csv.empty: 
-                # print(f"CSV 데이터 없음 (읽기 실패 또는 행 없음): {stock_csv_path_original}. 건너<0xEB><0><0xA9>니다.")
-                continue
+def run_daily_csv_update_tasks(market_config_list):
+    """
+    지정된 시장 목록에 대해 모든 종목의 CSV 파일을 업데이트합니다.
+    market_config_list: [{'name': 'KOSPI', 'csv_folder': 'path', 'id_suffix': '_kospi_'}, ...]
+    """
+    print(f"일일 CSV 데이터 업데이트 작업 시작...")
+    total_updated_count = 0
+    
+    for market_info in market_config_list:
+        market_name_display = market_info['name'] # 예: "KOSPI"
+        market_csv_base_folder = market_info['csv_folder']
+        market_file_id_suffix = market_info['id_suffix'] # 예: "_kospi_"
 
-            df_existing_csv['Date'] = pd.to_datetime(df_existing_csv['Date']).dt.date 
-            
-            last_csv_date = df_existing_csv['Date'].max()
-            df_combined_data_for_ta = df_existing_csv.copy() 
+        os.makedirs(market_csv_base_folder, exist_ok=True)
+        print(f"\n--- {market_name_display} 시장 CSV 업데이트 시작 ---")
+        print(f"대상 폴더: {market_csv_base_folder}")
 
-            if last_csv_date < yesterday_trading_date:
-                start_fetch_date = last_csv_date + timedelta(days=1)
-                df_new_data_raw = fdr.DataReader(stock_code, start=start_fetch_date, end=yesterday_trading_date)
-                
-                if not df_new_data_raw.empty:
-                    df_new_data_raw.index = pd.to_datetime(df_new_data_raw.index).date
-                    df_new_data_raw = df_new_data_raw.reset_index().rename(columns={'index': 'Date'})
-                    
-                    cols_from_fdr = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
-                    df_new_data_ohlcv = df_new_data_raw[cols_from_fdr].copy()
-                    
-                    existing_cols_to_keep = [col for col in cols_from_fdr if col in df_existing_csv.columns]
-                    df_existing_base = df_existing_csv[existing_cols_to_keep].copy()
-                    
-                    df_combined_data_for_ta = pd.concat([df_existing_base, df_new_data_ohlcv], ignore_index=True)
-                    df_combined_data_for_ta = df_combined_data_for_ta.drop_duplicates(subset=['Date'], keep='last')
-                    df_combined_data_for_ta = df_combined_data_for_ta.sort_values('Date').reset_index(drop=True)
-            
-            if len(df_combined_data_for_ta) > APPROX_5YR_TRADING_DAYS:
-                df_combined_data_rolled = df_combined_data_for_ta.tail(APPROX_5YR_TRADING_DAYS).reset_index(drop=True)
-            else:
-                df_combined_data_rolled = df_combined_data_for_ta.copy()
-
-            if df_combined_data_rolled.empty:
-                # print(f"[경고] 데이터 처리 후 DataFrame이 비어있습니다 (롤링 후): {stock_code}. 이 파일 처리를 건너<0xEB><0><0xA9>니다.")
-                continue
-
-            df_updated_ta = calculate_manual_features(df_combined_data_rolled.copy()) 
-            
-            if df_updated_ta.empty: 
-                # print(f"[경고] 기술적 지표 계산 후 DataFrame이 비어있습니다: {stock_code}. 이 파일 처리를 건너<0xEB><0><0xA9>니다.")
-                continue
-
-            if 'Date' not in df_updated_ta.columns:
-                print(f"[오류] CSV 저장: {stock_code} - 기술적 지표 계산 후 df_updated_ta에 'Date' 컬럼이 없습니다. 이 파일 처리를 건너<0xEB><0><0xA9>니다.")
-                continue 
-            
-            df_to_process_for_save = df_updated_ta.copy()
-            df_to_process_for_save['Date_str_formatted'] = pd.to_datetime(df_to_process_for_save['Date']).dt.strftime('%Y-%m-%d')
-            
-            df_to_save_final = pd.DataFrame()
-            df_to_save_final['Date'] = df_to_process_for_save['Date_str_formatted']
-
-            for col in FEATURE_COLUMNS_TRAINING: 
-                if col in df_to_process_for_save.columns:
-                    df_to_save_final[col] = df_to_process_for_save[col]
-                else:
-                    df_to_save_final[col] = np.nan 
-            
-            df_to_save_final = df_to_save_final[['Date'] + FEATURE_COLUMNS_TRAINING]
-
-            if df_to_save_final.empty or df_to_save_final[FEATURE_COLUMNS_TRAINING].dropna(how='all').empty : 
-                # print(f"[경고] 최종 저장할 DataFrame(df_to_save_final)이 비어있거나 모든 피처가 NaN입니다: {stock_code}. CSV 파일을 저장하지 않습니다.")
-                continue
-
-            temp_date_col_for_filename = pd.to_datetime(df_to_save_final['Date']) 
-            if temp_date_col_for_filename.empty:
-                # print(f"[경고] 파일명 생성: {stock_code} - 'Date' 컬럼이 비어있어 날짜 범위를 결정할 수 없습니다. 기존 파일명 사용.")
-                new_stock_csv_path = stock_csv_path_original 
-            else:
-                min_date_in_df_str = temp_date_col_for_filename.min().strftime('%Y%m%d')
-                max_date_in_df_str = temp_date_col_for_filename.max().strftime('%Y%m%d')
-                
-                new_filename_parts = [
-                    stock_code, market_id_original, "daily_",
-                    min_date_in_df_str, "_", max_date_in_df_str,
-                    "_features_manualTA.csv"
-                ]
-                new_filename = "".join(new_filename_parts)
-                new_stock_csv_path = os.path.join(market_csv_folder, new_filename)
-
-            df_to_save_final.to_csv(new_stock_csv_path, index=False)
-
-            if stock_csv_path_original != new_stock_csv_path and os.path.exists(stock_csv_path_original):
-                try:
-                    os.remove(stock_csv_path_original)
-                except Exception as e_del:
-                    print(f"[오류] 이전 CSV 파일 삭제 실패 ({stock_csv_path_original}): {e_del}")
-            
-            num_updated_csv += 1
-            if num_updated_csv > 0 and num_updated_csv % 100 == 0: 
-                 print(f"{market_name} CSV 업데이트 진행: {num_updated_csv}개 완료...")
-
-        except Exception as e_csv_outer: 
-            print(f"CSV 파일 {stock_csv_path_original} 처리 중 외부 루프 오류: {e_csv_outer}")
-            import traceback
-            traceback.print_exc()
+        stock_listing_raw = fdr.StockListing(market_name_display)
+        if 'Symbol' not in stock_listing_raw.columns and 'Code' in stock_listing_raw.columns:
+            stock_listing_raw.rename(columns={'Code': 'Symbol'}, inplace=True)
+        
+        if 'Symbol' not in stock_listing_raw.columns or 'Name' not in stock_listing_raw.columns:
+            print(f"[오류] {market_name_display} 주식 목록에 'Symbol' 또는 'Name' 컬럼 없음. 건너<0xEB><0><0xA9>니다.")
             continue
             
-    print(f"{market_name} 시장 총 {num_updated_csv}개 CSV 파일 업데이트 완료.")
+        stock_listing = stock_listing_raw[stock_listing_raw['Symbol'].notna() & stock_listing_raw['Name'].notna()]
+        num_stocks_in_market = len(stock_listing)
+        market_updated_count = 0
 
-    if not retrain_model_enabled: 
-        print(f"{market_name} 모델 재학습 비활성화됨. CSV 업데이트만 수행 완료.")
-        return 
+        for i, stock_row in stock_listing.iterrows():
+            stock_code_val = stock_row['Symbol']
+            stock_name_val = stock_row['Name']
+            
+            print(f"[{market_name_display} {i+1}/{num_stocks_in_market}] {stock_name_val}({stock_code_val}) 처리 중...")
+            if update_stock_csv_with_all_features(stock_code_val, stock_name_val, market_name_display.upper(), market_csv_base_folder, market_file_id_suffix):
+                market_updated_count +=1
+            
+            if (i+1) % 20 == 0: # 20개 종목마다 진행 상황 간단히 표시
+                print(f"  [{market_name_display}] {i+1}개 종목 확인 완료. 현재까지 {market_updated_count}개 업데이트됨.")
+            time.sleep(0.1) # FDR 호출 부하 감소
 
-    print(f"{market_name} 모델 재학습 시작...") 
-    if market_id_file_prefix_django == "kosdaq_technical":
-        model_file_path = os.path.join(ml_models_dir_param, 'kosdaq_technical_model.keras')
-        scaler_X_file_path = os.path.join(ml_models_dir_param, 'kosdaq_technical_scaler_X.joblib') 
-        scaler_y_file_path = os.path.join(ml_models_dir_param, 'kosdaq_technical_scaler_y.joblib') 
-    elif market_id_file_prefix_django == "kospi_technical":
-        model_file_path = os.path.join(ml_models_dir_param, 'kospi_technical_model.keras') 
-        scaler_X_file_path = os.path.join(ml_models_dir_param, 'kospi_technical_scaler_X.joblib') 
-        scaler_y_file_path = os.path.join(ml_models_dir_param, 'kospi_technical_scaler_y.joblib') 
-    else:
-        print(f"[오류] 알 수 없는 market_id_file_prefix_django: {market_id_file_prefix_django}. 모델/스케일러 경로를 설정할 수 없습니다.")
-        return
+        print(f"--- {market_name_display} 시장 업데이트 완료: 총 {num_stocks_in_market}개 중 {market_updated_count}개 종목 CSV 업데이트/생성 ---")
+        total_updated_count += market_updated_count
 
-    # print(f"모델 파일 경로 (재학습용): {model_file_path}") # 로그 빈도 조절
-    # print(f"X 스케일러 파일 경로 (재학습용): {scaler_X_file_path}")
-    # print(f"Y 스케일러 파일 경로 (재학습용): {scaler_y_file_path}")
+    print(f"\n일일 CSV 데이터 업데이트 작업 완료. 총 {total_updated_count}개 CSV 파일 업데이트/생성.")
 
-    X_market_all_df, y_market_all_df = _load_and_prepare_training_data_from_csv(
-        market_csv_folder, market_id_original, 
-        FEATURE_COLUMNS_TRAINING, TARGET_COLUMN_TRAINING, FUTURE_TARGET_DAYS_TRAINING
-    )
-    if X_market_all_df.empty or y_market_all_df.empty:
-        print(f"{market_name} 재학습용 데이터 없음. 건너<0xEB><0><0xA9>니다.")
-        return
 
-    if X_market_all_df.shape[1] != len(FEATURE_COLUMNS_TRAINING):
-        print(f"[오류] 스케일러 적용 전 피처 개수 불일치. 예상: {len(FEATURE_COLUMNS_TRAINING)}, 실제: {X_market_all_df.shape[1]}")
-        print(f"사용된 피처 컬럼: {X_market_all_df.columns.tolist()}")
-        return
-
-    if is_initial_scaler_fit or not (os.path.exists(scaler_X_file_path) and os.path.exists(scaler_y_file_path)):
-        print(f"{market_name}: 새로운 스케일러 생성 및 저장 (또는 초기 학습으로 간주)...")
-        scaler_X = MinMaxScaler()
-        X_train_scaled_np = scaler_X.fit_transform(X_market_all_df.values) 
-        joblib.dump(scaler_X, scaler_X_file_path)
-        
-        scaler_y = MinMaxScaler()
-        y_train_scaled_np = scaler_y.fit_transform(y_market_all_df.values) 
-        joblib.dump(scaler_y, scaler_y_file_path)
-        print(f"{market_name} 스케일러 저장 완료: {scaler_X_file_path}, {scaler_y_file_path}")
-    else:
-        # print(f"{market_name}: 기존 스케일러 로드 중...") # 로그 빈도 조절
-        scaler_X = joblib.load(scaler_X_file_path)
-        scaler_y = joblib.load(scaler_y_file_path)
-        X_train_scaled_np = scaler_X.transform(X_market_all_df.values)
-        y_train_scaled_np = scaler_y.transform(y_market_all_df.values)
-
-    X_train_seq, y_train_seq = _create_lstm_sequences_for_retrain(
-        X_train_scaled_np, y_train_scaled_np, TIME_STEPS_TRAINING, FUTURE_TARGET_DAYS_TRAINING
-    )
-    if X_train_seq.size == 0:
-        print(f"{market_name} 재학습용 시퀀스 데이터 없음.")
-        return
+# Django 앱 시작 시 또는 Management Command로 호출될 메인 함수
+def run_daily_startup_tasks_main(enable_model_retraining=False): # 모델 재학습 로직은 제거됨
+    print(f"일일 데이터 업데이트 작업 (startup_tasks.py) 시작... (모델 재학습 비활성화)")
     
-    current_model = None
-    if os.path.exists(model_file_path):
-        # print(f"{market_name}: 기존 모델 로드: {model_file_path}") # 로그 빈도 조절
-        current_model = load_model(model_file_path)
-    else:
-        print(f"{market_name}: 새로운 모델 생성 (경로: {model_file_path})")
-        current_model = tf.keras.models.Sequential([
-            Input(shape=(TIME_STEPS_TRAINING, len(FEATURE_COLUMNS_TRAINING))),
-            LSTM(50, return_sequences=False),
-            Dense(FUTURE_TARGET_DAYS_TRAINING)
-        ])
-        current_model.compile(optimizer='adam', loss='mean_squared_error')
-    
-    if current_model is None:
-        print(f"[오류] {market_name} 모델을 로드하거나 생성하지 못했습니다.")
-        return
-
-    print(f"{market_name} 모델 추가 학습 ({EPOCHS_FOR_DAILY_RETRAIN} 에포크)...")
-    checkpoint_cb = ModelCheckpoint(filepath=model_file_path, save_best_only=True, monitor='val_loss', verbose=0)
-    early_stopping_cb = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True, verbose=0) 
-    
-    history = current_model.fit(X_train_seq, y_train_seq,
-                        epochs=EPOCHS_FOR_DAILY_RETRAIN,
-                        batch_size=32,
-                        validation_split=0.1, 
-                        callbacks=[checkpoint_cb, early_stopping_cb],
-                        verbose=1)
-    
-    print(f"{market_name} 모델 추가 학습 완료 및 저장됨: {model_file_path}")
-
-
-def run_daily_startup_tasks_main(enable_model_retraining=False): 
-    print(f"일일 데이터 업데이트 및 모델 학습 작업 (startup_tasks.py) 시작... 모델 재학습 활성화: {enable_model_retraining}")
-    
-    ml_models_dir_main = os.path.join(settings.BASE_DIR, 'predict_info', 'ml_models') 
-    os.makedirs(ml_models_dir_main, exist_ok=True)
-    # print(f"모델 및 스케일러 저장/로드 기본 경로: {ml_models_dir_main}") # 로그 빈도 조절
+    # 모델 및 스케일러 저장/로드 기본 경로는 Django settings에서 가져옴
+    # ml_models_dir_main = os.path.join(settings.BASE_DIR, 'predict_info', 'ml_models')
+    # os.makedirs(ml_models_dir_main, exist_ok=True)
 
     try:
-        kosdaq_csv_folder = settings.KOSDAQ_TRAINING_DATA_DIR 
-        kospi_csv_folder = settings.KOSPI_TRAINING_DATA_DIR   
+        kosdaq_csv_folder_path = settings.KOSDAQ_TRAINING_DATA_DIR
+        kospi_csv_folder_path = settings.KOSPI_TRAINING_DATA_DIR
         
-        if not os.path.isdir(kosdaq_csv_folder):
-            print(f"[오류] KOSDAQ CSV 폴더 경로가 잘못되었거나 존재하지 않습니다: {kosdaq_csv_folder}")
-            os.makedirs(kosdaq_csv_folder, exist_ok=True) 
-            print(f"폴더 생성 시도: {kosdaq_csv_folder}")
-        if not os.path.isdir(kospi_csv_folder):
-            print(f"[오류] KOSPI CSV 폴더 경로가 잘못되었거나 존재하지 않습니다: {kospi_csv_folder}")
-            os.makedirs(kospi_csv_folder, exist_ok=True) 
-            print(f"폴더 생성 시도: {kospi_csv_folder}")
+        if not os.path.isdir(kosdaq_csv_folder_path):
+            print(f"[경고] KOSDAQ CSV 폴더 경로가 잘못되었거나 존재하지 않습니다: {kosdaq_csv_folder_path}")
+            os.makedirs(kosdaq_csv_folder_path, exist_ok=True)
+            print(f"폴더 생성 시도: {kosdaq_csv_folder_path}")
+        if not os.path.isdir(kospi_csv_folder_path):
+            print(f"[경고] KOSPI CSV 폴더 경로가 잘못되었거나 존재하지 않습니다: {kospi_csv_folder_path}")
+            os.makedirs(kospi_csv_folder_path, exist_ok=True)
+            print(f"폴더 생성 시도: {kospi_csv_folder_path}")
 
-        # print(f"KOSDAQ CSV 폴더: {kosdaq_csv_folder}") # 로그 빈도 조절
-        # print(f"KOSPI CSV 폴더: {kospi_csv_folder}")
     except AttributeError:
         print("[오류] settings.py에 KOSDAQ_TRAINING_DATA_DIR 또는 KOSPI_TRAINING_DATA_DIR가 정의되지 않았습니다.")
-        print("이 작업은 CSV 폴더 경로 설정이 필요합니다. settings.py를 확인하세요.")
         return
 
-    update_csv_and_retrain_market_model(
-        market_name="KOSDAQ",
-        market_csv_folder=kosdaq_csv_folder, 
-        market_id_original="_kosdaq_", 
-        market_id_file_prefix_django="kosdaq_technical", 
-        ml_models_dir_param=ml_models_dir_main, 
-        is_initial_scaler_fit=not os.path.exists(os.path.join(ml_models_dir_main, "kosdaq_technical_scaler_X.joblib")), 
-        retrain_model_enabled=enable_model_retraining 
-    )
-
-    update_csv_and_retrain_market_model(
-        market_name="KOSPI",
-        market_csv_folder=kospi_csv_folder, 
-        market_id_original="_kospi_",   
-        market_id_file_prefix_django="kospi_technical", 
-        ml_models_dir_param=ml_models_dir_main, 
-        is_initial_scaler_fit=not os.path.exists(os.path.join(ml_models_dir_main, "kospi_technical_scaler_X.joblib")), 
-        retrain_model_enabled=enable_model_retraining 
-    )
+    markets_to_process = [
+        {'name': 'KOSDAQ', 'csv_folder': kosdaq_csv_folder_path, 'id_suffix': '_kosdaq_'},
+        {'name': 'KOSPI', 'csv_folder': kospi_csv_folder_path, 'id_suffix': '_kospi_'}
+    ]
     
-    print("일일 데이터 업데이트 및 모델 학습 작업 (startup_tasks.py) 완료.")
+    run_daily_csv_update_tasks(markets_to_process)
+    
+    if enable_model_retraining:
+        print("모델 재학습은 별도의 스크립트 또는 Management Command (예: run_daily_updates --retrain-models)로 실행해야 합니다.")
+        print("이 startup_tasks.py에서는 CSV 업데이트만 수행합니다.")
+        # 여기에 모델 재학습 로직을 직접 넣는 것보다 분리하는 것이 좋음.
+        # 만약 넣는다면, 이전 `update_csv_and_retrain_market_model` 함수와 유사한 로직 필요.
+        # 단, 해당 함수는 13개 피처 기준이었으므로, 27개 피처에 맞게 수정 필요.
+        # 또한, 스케일러(scaler_X, scaler_y)도 27개 피처로 다시 학습하고 저장해야 함.
+        # 예: from .model_trainer_module import retrain_market_models
+        # retrain_market_models(markets_to_process, ml_models_dir_main, ...)
+    
+    print("일일 데이터 업데이트 작업 (startup_tasks.py) 완료.")
 
 if __name__ == '__main__':
-    print("startup_tasks.py를 직접 실행하려면 Django 환경 설정이 필요합니다.")
-    print("또는 Django management command로 만들어 실행하는 것을 권장합니다.")
+    # 이 스크립트를 직접 실행하는 경우는 보통 Django 환경 외부에서의 테스트 목적입니다.
+    # Django settings를 로드할 수 있도록 설정하거나, 필요한 경로를 직접 지정해야 합니다.
+    print("startup_tasks.py를 직접 실행합니다. (Django settings 없이 실행)")
+    
+    # 임시 경로 설정 (직접 실행 테스트용)
+    current_script_dir = os.path.dirname(os.path.abspath(__file__))
+    mock_base_dir = os.path.join(current_script_dir, '..', '..') # 프로젝트 루트 추정
 
+    class MockSettings:
+        BASE_DIR = mock_base_dir
+        KOSDAQ_TRAINING_DATA_DIR = os.path.join(mock_base_dir, 'data_kosdaq_csv')
+        KOSPI_TRAINING_DATA_DIR = os.path.join(mock_base_dir, 'data_kospi_csv')
+
+    # 실제 Django settings 대신 MockSettings 사용
+    global settings
+    settings = MockSettings()
+    
+    print(f"Mock BASE_DIR: {settings.BASE_DIR}")
+    print(f"Mock KOSDAQ_TRAINING_DATA_DIR: {settings.KOSDAQ_TRAINING_DATA_DIR}")
+    print(f"Mock KOSPI_TRAINING_DATA_DIR: {settings.KOSPI_TRAINING_DATA_DIR}")
+
+    run_daily_startup_tasks_main(enable_model_retraining=False)
