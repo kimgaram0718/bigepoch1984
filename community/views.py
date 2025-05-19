@@ -18,6 +18,21 @@ from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
+#add1
+@login_required
+@require_POST
+def unblock_user(request):
+    blocked_id = request.POST.get('blocked_id')
+    if not blocked_id:
+        return JsonResponse({'error': '차단 해제할 유저 정보가 없습니다.'}, status=400)
+    try:
+        blocked_user_obj = BlockedUser.objects.get(blocker=request.user, blocked_id=blocked_id)
+        blocked_user_obj.delete()
+        return JsonResponse({'status': 'success'})
+    except BlockedUser.DoesNotExist:
+        return JsonResponse({'error': '이미 차단 해제된 유저입니다.'}, status=404)
+#add2
+
 @login_required
 def report_user(request, post_id):
     # 현재는 기본 템플릿을 렌더링하지만, 실제 신고 로직 구현 필요
@@ -26,25 +41,34 @@ def report_user(request, post_id):
     messages.info(request, f"'{post.title}' 게시글에 대한 신고가 접수되었습니다. (실제 처리 로직 필요)")
     return redirect('community:detail', post_id=post_id)
 
-
 @login_required
 def block_user(request, post_id):
+    if request.method != 'POST':
+        messages.error(request, '잘못된 요청입니다.')
+        return redirect('community:detail', post_id=post_id)
+
     if not request.user.is_authenticated:
-        return JsonResponse({'error': '로그인이 필요합니다.'}, status=401)
+        messages.error(request, '로그인이 필요합니다.')
+        return redirect('account:login')
 
     post = get_object_or_404(FreeBoard, id=post_id, is_deleted=False)
     target_user = post.user
 
     if request.user == target_user:
-        return JsonResponse({'error': '자기 자신을 차단할 수 없습니다.'}, status=400)
+        messages.error(request, '자기 자신을 차단할 수 없습니다.')
+        return redirect('community:detail', post_id=post_id)
 
-    blocked_user_obj, created = BlockedUser.objects.get_or_create(blocker=request.user, blocked=target_user)
+    blocked_user_obj, created = BlockedUser.objects.get_or_create(
+        blocker=request.user,
+        blocked=target_user
+    )
 
     if created:
-        message = f'{target_user.nickname if hasattr(target_user, "nickname") and target_user.nickname else target_user.username}님을 차단했습니다.'
+        messages.success(request, f'{target_user.nickname if hasattr(target_user, "nickname") and target_user.nickname else target_user.username}님을 차단했습니다.')
     else:
-        message = f'{target_user.nickname if hasattr(target_user, "nickname") and target_user.nickname else target_user.username}님은 이미 차단된 상태입니다.'
-    return JsonResponse({'status': 'success', 'message': message})
+        messages.info(request, f'{target_user.nickname if hasattr(target_user, "nickname") and target_user.nickname else target_user.username}님은 이미 차단된 상태입니다.')
+
+    return redirect('community:community')
 
 
 def notifications_view(request):
@@ -97,6 +121,7 @@ def extract_api_disclosure_info(content_str):
             report_link = link_match.group(1).strip()
     return company_name, report_link
 
+# 나머지 뷰는 이전과 동일
 def community_view(request):
     tab = request.GET.get('tab', 'community')
     subtab = request.GET.get('subtab', '')

@@ -125,24 +125,28 @@
                 <li><a class="dropdown-item" href="{% url 'community:edit' post.id %}"><i class="bi bi-pencil"></i> 수정하기</a></li>
                 <li><a class="dropdown-item" href="{% url 'community:delete' post.id %}"><i class="bi bi-trash"></i> 삭제하기</a></li>
               {% elif request.user.is_authenticated %}
-                <li><a class="dropdown-item" href="#" data-action="block" data-user="{{ post.username }}" data-post-id="{{ post.id }}"><i class="bi bi-person-x"></i> 차단하기</a></li>
+                <li>
+                  <form action="{% url 'community:block_user' post.id %}" method="post" onsubmit="return confirm('{{ post.username }}님을 차단하시겠습니까?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="target_user" value="{{ post.username }}">
+                    <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
+                  </form>
+                </li>
               {% endif %}
             </ul>
           </div>
         </div>
         <div class="post-title">{{ post.title }}</div>
-        <!-- add1 -->
         <div class="post-content">
           {{ post.content|safe|cut:"[사진]" }}
           {% if post.image %}
               <img src="{{ post.image.url }}" alt="Uploaded Image">
           {% endif %}
         </div>
-        <!-- add2 -->
         <div class="reaction-bar d-flex align-items-center">
           {% if request.user.is_authenticated and request.user.nickname != post.username %}
             <button class="like-btn btn p-0 border-0 bg-transparent {% if post.is_liked %}liked{% endif %}" data-post-id="{{ post.id }}" data-action="like">
-              <i class="bi bi-heart-fill"></i><br><span>{{ post.likes_count }}</span>
+              <i class="bi bi-heart FORMAT_MESSAGE 1:22 PM 5/19/2025 KST-fill"></i><br><span>{{ post.likes_count }}</span>
             </button>
             <button class="worry-btn btn p-0 border-0 bg-transparent {% if post.is_worried %}worried{% endif %}" data-post-id="{{ post.id }}" data-action="worry">
               <i class="bi bi-exclamation-triangle-fill"></i><br><span>{{ post.worried_count }}</span>
@@ -157,7 +161,7 @@
 
       <div class="post-card comment-box" id="comments">
         {% if request.user.is_authenticated %}
-          <form method="post" action="{% url 'community:comment_create' post.id %}">
+          <form method="post" action="{% url 'community:comment_create' post.id %}" id="comment-form">
             {% csrf_token %}
             <input type="text" name="content" class="form-control mb-3" placeholder="댓글을 입력해 주세요" required>
             <button type="submit" class="btn btn-primary btn-sm">댓글 작성</button>
@@ -184,8 +188,7 @@
                   {% if comment.user.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
                 </span><br>
                 <span>{{ comment.content }}</span><br>
-                <!-- <small class="text-muted">{{ comment.reg_dt|timesince }} 전</small> -->
-                 <span class="text-muted small">{{ comment.time_ago }}</span>
+                <span class="text-muted small">{{ comment.time_ago }}</span>
               </div>
               {% if request.user.is_authenticated and request.user == comment.user %}
                 <div class="d-flex gap-2">
@@ -220,23 +223,6 @@
     ">
       <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
     </button>
-  </div>
-
-  <div class="modal fade" id="blockModal" tabindex="-1" aria-labelledby="blockModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="blockModalLabel">차단 완료</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p id="blockMessage"></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="confirmBlock">확인</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>

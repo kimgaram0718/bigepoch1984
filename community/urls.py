@@ -18,4 +18,6 @@ urlpatterns = [
     path('notifications/', views.notifications_view, name='notifications'),  # 알림 뷰 추가
     path('block/<int:post_id>/', views.block_user, name='block_user'),
     path('report/<int:post_id>/', views.report_user, name='report_user'),
+    path('unblock_user/', views.unblock_user, name='unblock_user'),
+
 ]
