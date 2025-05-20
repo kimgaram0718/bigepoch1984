@@ -184,11 +184,11 @@
       </h6>
       <div class="pretty-chart-box position-relative">
         {% if candle_dates and open_prices and high_prices and low_prices and close_prices %}
-            <div id="stock-chart" style="width: 100%; height: 450px;"></div>
+            <div id="stock-chart" style="width: 100%; height: 500px;"></div>
         {% else %}
             <div class="data-placeholder">차트 데이터를 불러올 수 없습니다. 종목을 검색해주세요.</div>
         {% endif %}
-        </div>
+      </div>
     </div>
 
     <div class="container my-3">
@@ -286,7 +286,6 @@
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 차트 데이터 (기존과 동일)
         const candleDates = JSON.parse('{{ candle_dates|safe|default:"[]" }}');
         const openPrices = JSON.parse('{{ open_prices|safe|default:"[]" }}');
         const highPrices = JSON.parse('{{ high_prices|safe|default:"[]" }}');
@@ -297,45 +296,44 @@
         const volume = JSON.parse('{{ volume|safe|default:"[]" }}');
 
         if (candleDates.length > 0 && closePrices.length > 0) {
+            // 캔들+이평선+거래량을 하나의 차트에 표시
             const candlestickTrace = {
                 x: candleDates, open: openPrices, high: highPrices, low: lowPrices, close: closePrices,
                 type: 'candlestick', name: '종가',
                 increasing: {line: {color: '#F92A2A'}}, 
-                decreasing: {line: {color: '#2A79F9'}}
+                decreasing: {line: {color: '#2A79F9'}},
+                yaxis: 'y1'
             };
             const ma5Trace = {
                 x: candleDates, y: ma5, name: '5일선', type: 'scatter', mode: 'lines',
-                line: {color: '#FFD700', width: 1}
+                line: {color: '#FFD700', width: 1},
+                yaxis: 'y1'
             };
             const ma20Trace = {
                 x: candleDates, y: ma20, name: '20일선', type: 'scatter', mode: 'lines',
-                line: {color: '#ADFF2F', width: 1}
+                line: {color: '#ADFF2F', width: 1},
+                yaxis: 'y1'
             };
             const volumeTrace = {
                 x: candleDates, y: volume, name: '거래량', type: 'bar',
                 marker: {
-                    color: closePrices.map((c, i) => i > 0 && c > closePrices[i-1] ? 'rgba(249,42,42,0.5)' : 'rgba(42,121,249,0.5)')
+                    color: closePrices.map((c, i) => i > 0 && c > closePrices[i-1] ? '#F92A2A' : '#2A79F9')
                 },
-                yaxis: 'y2'
+                yaxis: 'y2',
+                opacity: 0.4
             };
-            const chartData = [candlestickTrace, ma5Trace, ma20Trace, volumeTrace];
             const layout = {
-                paper_bgcolor: '#ffffff', plot_bgcolor: '#ffffff', font: { color: '#333333' },
-                xaxis: {
-                    tickangle: 0, tickformat: '%y-%m-%d', showgrid: true, gridcolor: '#e0e0e0',
-                    autorange: true, rangeslider: { visible: false }, type: 'date', fixedrange: false
-                },
-                yaxis: {
-                    title: '가격 (원)', showgrid: true, gridcolor: '#e0e0e0', tickformat: ',.0f', fixedrange: false
-                },
-                yaxis2: {
-                    title: '거래량', overlaying: 'y', side: 'right', showgrid: false, tickformat: ',.0s', fixedrange: false
-                },
-                legend: { orientation: 'h', yanchor: 'bottom', y: 1.02, xanchor: 'right', x: 1 },
-                margin: { l: 60, r: 60, b: 50, t: 30, pad: 4 }, dragmode: 'pan', hovermode: 'x unified'
+                margin: {t: 20, r: 20, b: 30, l: 40},
+                xaxis: {rangeslider: {visible: false}, color: '#f5f5f5', gridcolor: '#444'},
+                yaxis: {title: '가격(원)', color: '#f5f5f5', gridcolor: '#444', domain: [0.25, 1]},
+                yaxis2: {title: '거래량', color: '#f5f5f5', gridcolor: '#444', domain: [0, 0.22], anchor: 'x'},
+                legend: {orientation: 'h', x: 0.5, xanchor: 'center', y: 1.1, font: {color: '#f5f5f5'}},
+                height: 500,
+                paper_bgcolor: '#23272f',
+                plot_bgcolor: '#23272f',
+                font: { color: '#f5f5f5' }
             };
-            const config = { displaylogo: false, responsive: true, scrollZoom: true };
-            Plotly.newPlot('stock-chart', chartData, layout, config);
+            Plotly.newPlot('stock-chart', [candlestickTrace, ma5Trace, ma20Trace, volumeTrace], layout, {responsive: true});
         }
 
         // 자동완성 로직 (기존과 동일)

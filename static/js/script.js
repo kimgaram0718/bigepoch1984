@@ -247,7 +247,7 @@ function initializeScrollToTopButton() {
     });
 }
 
-const banners = [
+window.banners = window.banners || [
     { link: "https://example.com/banner1", img: "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "금융 차트 배너" },
     { link: "https://example.com/banner2", img: "https://images.pexels.com/photos/6771894/pexels-photo-6771894.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "디지털 코인 배너" },
     { link: "https://example.com/banner3", img: "https://images.pexels.com/photos/6694543/pexels-photo-6694543.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&dpr=1", alt: "투자 분석 배너" }

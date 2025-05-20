@@ -5,6 +5,7 @@ import requests
 import json
 from django.views.decorators.http import require_http_methods
 from community.models import AdminBoard  # AdminBoard 모델 임포트
+from datetime import datetime, timezone, timedelta
 
 #add1
 def main_coalition(request):
@@ -37,11 +38,7 @@ def main(request):
 def get_naver_news(request):
     client_id = "OCRZok3QLNl9VF2e0Uo_"
     client_secret = "djBL9xrZIM"
-    
-    # 증시 관련 검색어
-    query = "증시 OR 주식 OR 코스피 OR 코스닥"
-    
-    # 네이버 뉴스 검색 API 호출
+    query = "경제"
     url = "https://openapi.naver.com/v1/search/news.json"
     headers = {
         "X-Naver-Client-Id": client_id,
@@ -49,25 +46,41 @@ def get_naver_news(request):
     }
     params = {
         "query": query,
-        "display": 5,  # 5개로 변경
-        "sort": "date"  # 최신순 정렬 (상=>하)
+        "display": 30,  # 더 많이 받아오기
+        "sort": "date"
     }
-    
     try:
         response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()  # 에러 발생시 예외 발생
+        response.raise_for_status()
         news_data = response.json()
-        
-        # 뉴스 데이터 가공
         news_list = []
         for item in news_data.get('items', []):
+            title = item['title'].replace('<b>', '').replace('</b>', '')
+            description = item['description'].replace('<b>', '').replace('</b>', '')
+            pub_date_str = item['pubDate']
+            pub_date = datetime.strptime(pub_date_str, "%a, %d %b %Y %H:%M:%S %z")
             news_list.append({
-                'title': item['title'].replace('<b>', '').replace('</b>', ''),
+                'title': title,
                 'link': item['link'],
-                'description': item['description'].replace('<b>', '').replace('</b>', ''),
-                'pubDate': item['pubDate']
+                'description': description,
+                'pubDate': pub_date_str,
+                'pubDateObj': pub_date
             })
-        
-        return JsonResponse({'news': news_list})
+        # 오늘 날짜만 필터링
+        if news_list:
+            today = datetime.now(timezone.utc).astimezone(news_list[0]['pubDateObj'].tzinfo).date()
+        else:
+            today = datetime.now().date()
+        today_news = [n for n in news_list if n['pubDateObj'].date() == today]
+        # 오늘 뉴스가 5개 미만이면, 최신순으로 5개까지 채움
+        today_news.sort(key=lambda x: x['pubDateObj'], reverse=True)
+        if len(today_news) < 5:
+            news_list.sort(key=lambda x: x['pubDateObj'], reverse=True)
+            extra = [n for n in news_list if n not in today_news]
+            today_news += extra[:5-len(today_news)]
+        # pubDateObj 제거
+        for news in today_news:
+            del news['pubDateObj']
+        return JsonResponse({'news': today_news[:5]})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

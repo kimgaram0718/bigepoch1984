@@ -27,6 +27,10 @@
     padding: 12px 18px;
   }
 
+  .dropdown-item:hover {
+    background-color: #cc0000; /* 호버 시 더 어두운 빨간색 */
+  }
+
   .profile-img {
     width: 48px;
     height: 48px;

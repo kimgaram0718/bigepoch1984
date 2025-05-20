@@ -54,7 +54,7 @@
 }
 /* add2 */
 body {
-  background-color: #f5f5f5;
+  background-color: #9376e0; /* 보라색으로 변경 */
   font-family: 'Noto Sans KR', sans-serif;
   margin: 0;
   padding-top: 60px; /* 헤더 높이만큼 패딩 */
@@ -71,14 +71,14 @@ body {
   min-height: calc(100vh - 120px); /* 화면 높이에서 헤더와 푸터 높이를 뺀 값 */
   display: flex;
   flex-direction: column;
-  background-color: #ffffff; /* 앱 전체도 흰색 */
+  background-color: rgba(255, 255, 255, 0.9); /* 콘텐츠 영역은 약간 투명한 흰색 */
 }
 
 .bottom-nav {
   position: fixed;
   bottom: 0;
   width: 100%;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9); /* 약간 투명한 흰색 */
   border-top: 1px solid #ddd;
   display: flex;
   justify-content: space-around;
@@ -100,7 +100,8 @@ body {
 }
 
 .navbar {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 그림자 살짝 진하게 */
+  background-color: rgba(255, 255, 255, 0.9) !important; /* 약간 투명한 흰색 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .dropdown-toggle::after {
@@ -188,13 +189,13 @@ body {
 
 .collapsed-box {
   height: 48px;
-  background-color: #f5f5f5;
+  background-color: rgba(255, 255, 255, 0.9); /* 약간 투명한 흰색 */
   cursor: pointer;
 }
 
 .dropdown-box {
   z-index: 100;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.9); /* 약간 투명한 흰색 */
 }
 
 .dropdown-box a {
