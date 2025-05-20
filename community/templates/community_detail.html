@@ -130,6 +130,7 @@
               </span>
             </div>
           </div>
+          {% if user.is_authenticated and user != post.user and post.user.auth_id != 'admin' %}
           <div class="dropdown">
             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="postOptions" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-three-dots-vertical"></i>
@@ -148,6 +149,7 @@
               {% endif %}
             </ul>
           </div>
+          {% endif %}
         </div>
         <div class="post-title">{{ post.title }}</div>
         <div class="post-content">
@@ -227,10 +229,21 @@
                   </form>
                 </div>
               {% else %}
-                <form method="post" action="{% url 'community:block_user_by_comment' comment.id %}" style="display:inline;" onsubmit="return confirm('정말로 이 사용자를 차단하시겠습니까?');">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger ms-2">차단하기</button>
-                </form>
+                <!-- add1 -->
+                <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="commentOptions{{ comment.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentOptions{{ comment.id }}">
+                  <li>
+                    <form action="{% url 'community:block_user_by_comment' comment.id %}" method="post" onsubmit="return confirm('{{ comment.username }}님을 차단하시겠습니까?');">
+                      {% csrf_token %}
+                      <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+                <!-- add2 -->
               {% endif %}
             </div>
           {% empty %}

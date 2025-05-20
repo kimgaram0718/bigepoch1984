@@ -69,7 +69,7 @@
           <div id="preview" class="rounded-circle mx-auto">
             <!-- 기본 아이콘 또는 기존 프로필 이미지 -->
             {% if user.profile_image %}
-              <img id="preview-img" src="{{ user.profile_image.url }}?t={{ now|date:'U' }}" alt="프로필 미리보기">
+              <img id="preview-img" src="{{ user.profile_image.url }}?t={{ now }}" alt="프로필 미리보기">
               <i id="preview-icon" class="bi bi-person-fill" style="display: none;"></i>
             {% else %}
               <i id="preview-icon" class="bi bi-person-fill"></i>
@@ -177,7 +177,7 @@
         {% if user.profile_image %}
           previewIcon.style.display = 'none';
           previewImg.style.display = 'block';
-          previewImg.src = "{{ user.profile_image.url }}?t={{ now|date:'U' }}";
+          previewImg.src = "{{ user.profile_image.url }}";
         {% else %}
           previewIcon.style.display = 'block';
           previewImg.style.display = 'none';
