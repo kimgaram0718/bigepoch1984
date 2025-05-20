@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollToWithOffset('myPostsList', 80);
             break;
           case '차단 계정':
-            scrollToWithOffset('blockedUsersList', 80);
+            scrollToWithOffset('blockuser', 80);
             break;
         }
       });
@@ -197,66 +197,6 @@ function renderMyPosts(targetId) {
   });
 }
 
-//차단 목록
-function renderBlockedUsers(targetId) {
-  const blockedUsers = [
-    { nickname: '김하이11', userId: 101 },
-    { nickname: '김하이22', userId: 102 },
-    { nickname: '김하이33', userId: 103 },
-    { nickname: '김하이44', userId: 104 },
-    { nickname: '김하이55', userId: 105 },
-    { nickname: '김하이66', userId: 106 },
-    { nickname: '김하이77', userId: 107 },
-    { nickname: '김하이88', userId: 108 },
-    { nickname: '김하이99', userId: 109 },
-    { nickname: '김하이111', userId: 110 },
-  ];
-
-  const container = document.getElementById(targetId);
-  container.innerHTML = '';
-
-  if (blockedUsers.length === 0) {
-    container.innerHTML = `<div class="user-item text-muted">차단한 유저가 없습니다.</div>`;
-    return;
-  }
-
-  blockedUsers.forEach((user, index) => {
-    const div = document.createElement('div');
-    div.className = 'user-item d-flex justify-content-between align-items-center py-1 px-3 mb-2 border rounded';
-    div.style.backgroundColor = '#fff';
-    div.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)';
-    div.style.border = '1px solid #e0e0e0';
-    div.style.borderRadius = '10px';
-
-    const nickname = user.nickname || '알 수 없는 사용자';
-
-    div.innerHTML = `
-      <div class="d-flex align-items-center">
-        <div class="me-3" style="width: 39px; height: 50px;">
-          <i class="bi bi-person-circle" style="font-size: 33px; color: #74b9ff;"></i>
-        </div>
-        <span class="user-name" style="font-size: 15px;">${nickname}</span>
-      </div>
-      <button class="btn btn-sm btn-outline-secondary unblock-btn" style="font-size: 13px;">차단 해제</button>
-    `;
-
-    // 👉 차단 해제 버튼 클릭 시 항목 삭제
-    div.querySelector('.unblock-btn').addEventListener('click', () => {
-      const confirmed = confirm('차단을 해제하시겠습니까?');
-      if (confirmed) {
-        // 리스트에서 삭제
-        div.remove();
-
-        // 남은 항목 없는 경우 처리
-        if (container.children.length === 0) {
-          container.innerHTML = `<div class="user-item text-muted">차단한 유저가 없습니다.</div>`;
-        }
-      }
-    });
-
-    container.appendChild(div);
-  });
-}
 
   // 스크롤 최상단 이동 버튼 기능
   const scrollTopBtn = document.getElementById('scrollTopBtn');

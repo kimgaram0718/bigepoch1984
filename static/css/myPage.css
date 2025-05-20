@@ -9,8 +9,15 @@
   }
 
   .dropdown {
-    position: relative; /* 기준 요소로 설정 */
-  }
+  position: fixed !important;  /* 뷰포트에 고정 */
+  top: 60px;                   /* 상단 헤더 높이만큼 내려서 배치 */
+  left: 0;                     /* 좌우 꽉 채우기 */
+  width: 100%;
+  z-index: 1050;               /* 다른 요소 위에 올라오도록 */
+  margin: 0;                   /* inline margin-top 제거 */
+  padding: 0 1rem;             /* 기존 mx-3 여백 대체 */
+  background: #fff;            /* 스크롤 시 배경 투명해짐 방지 */
+}
   
   /* 드롭다운 메뉴 */
   .dropdown .dropdown-menu {
@@ -50,3 +57,19 @@
     border-radius: 8px;
     color: #333;
   }
+
+#content-mypage .profile-summary {
+  position: fixed;
+  top: 110px;      /* 헤더 60px + 드롭다운 50px */
+  left: 0;
+  width: 100%;
+  z-index: 1040;
+  background: #fff; /* 스크롤 시 배경 투명해지지 않도록 */
+  padding: 0 1rem;  /* 좌우 여백 유지 */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 3) 콘텐츠 본문이 프로필 요약 아래에서 시작하도록 마진 추가 */
+#content-mypage {
+  margin-top: 160px; /* header(60) + dropdown(50) + profile-summary(50) */
+} 
