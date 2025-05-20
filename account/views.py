@@ -38,6 +38,7 @@ def signup_view(request):
         nickname = request.POST['nickname']
         email = request.POST['email']
         profile_image = request.FILES.get('profile_image')
+        name = request.POST.get('name', '')  # 이름 받기
 
         if password != pwd_confirm:
             return render(request, 'signup.html', {'error': '비밀번호가 일치하지 않습니다.'})
@@ -53,7 +54,8 @@ def signup_view(request):
             login_id=login_id,
             email=email,
             nickname=nickname,
-            password=password
+            password=password,
+            name=name
         )
         if profile_image:
             user.profile_image = profile_image

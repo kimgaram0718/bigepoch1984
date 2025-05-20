@@ -79,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)  # 생성 시간
     is_active = models.BooleanField(default=True)  # 계정 활성화 여부
     is_staff = models.BooleanField(default=False)  # 관리자 페이지 접근 권한
-
+    name = models.CharField(max_length=30, blank=True, default="")  # 이름 필드 추가
     # UserManager 설정
     objects = UserManager()
 

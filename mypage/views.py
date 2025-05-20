@@ -141,6 +141,9 @@ def update_greeting_message(request):
     return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'}, status=400)
 
 def edit_profile_view(request):
+    storage = messages.get_messages(request)
+    list(storage)  # 메시지 소모(읽기)
+
     if not request.user.is_authenticated:
         logger.warning("Unauthorized access to edit_profile_view - redirecting to login")
         return HttpResponseRedirect('/account/login/?next=/mypage/edit/')
@@ -151,11 +154,19 @@ def edit_profile_view(request):
         logger.debug(f"Received POST data: {request.POST}")
         logger.debug(f"Received FILES data: {request.FILES}")
 
+        name = request.POST.get('name')
         nickname = request.POST.get('nickname')
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
         profile_image = request.FILES.get('profile_image')
 
+        # 이름 유효성 검사
+        name = request.POST.get('name', '').strip()
+        if not name or len(name) < 2:
+            logger.warning(f"Invalid name: {name}")
+            messages.error(request, '이름은 최소 2자 이상이어야 합니다.')
+            return render(request, 'edit_profile.html', {'user': user, 'now': timezone.now()})
+        
         # 닉네임 유효성 검사
         if not nickname or len(nickname) < 2:
             logger.warning(f"Invalid nickname: {nickname}")
@@ -179,6 +190,7 @@ def edit_profile_view(request):
                 return render(request, 'edit_profile.html', {'user': user, 'now': timezone.now()})
 
         # 사용자 정보 업데이트
+        user.name = name
         user.nickname = nickname
         password_changed = False
         if password:
@@ -204,7 +216,7 @@ def edit_profile_view(request):
 
         try:
             user.save()
-            logger.info(f"User {user.login_id} updated profile: nickname={user.nickname}, profile_image={user.profile_image.url if user.profile_image else 'default'}")
+            logger.info(f"User {user.login_id} updated profile: name={user.name}, nickname={user.nickname}, profile_image={user.profile_image.url if user.profile_image else 'default'}")
         except Exception as e:
             logger.error(f"Failed to save user profile: {str(e)}")
             messages.error(request, '프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -212,7 +224,6 @@ def edit_profile_view(request):
 
         if password_changed:
             login(request, user)  # 비밀번호 변경 시 세션 갱신
-        messages.success(request, '프로필이 성공적으로 수정되었습니다.')
         return redirect('mypage:mypage')
 
     return render(request, 'edit_profile.html', {'user': user, 'now': timezone.now()})

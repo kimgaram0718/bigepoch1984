@@ -639,9 +639,9 @@ def comment_create(request, post_id):
             post_for_update.save(update_fields=['comments_count'])
 
             if post.user != request.user:
-                notification_message = f"{request.user.nickname or request.user.username}님이 회원님의 게시글에 댓글을 남겼습니다: \"{content[:20]}...\""
+                notification_message = f"\"{content[:20]}...\""
                 if len(content) <= 20:
-                    notification_message = f"{request.user.nickname or request.user.username}님이 회원님의 게시글에 댓글을 남겼습니다: \"{content}\""
+                    notification_message = f"\"{content}\""
                 Notification.objects.create(
                     recipient=post.user,
                     sender=request.user,

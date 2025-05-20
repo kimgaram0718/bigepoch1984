@@ -51,7 +51,7 @@
         <div class="profile-header d-flex justify-content-between align-items-center p-2" style="border-bottom: 1px solid #dee2e6; background: #f8f9fa; border-top-left-radius: 8px; border-top-right-radius: 8px;">
             <div class="d-flex align-items-center">
                 <i class="bi bi-person-circle me-2" style="font-size: 20px; color: #9376e0;"></i>
-                <span class="fw-normal text-dark" style="font-weight: 500;">{{ request.user.username|default:'사용자' }}</span>
+                <span class="fw-normal text-dark" style="font-weight: 500;">{{ request.user.nickname|default:'사용자' }}</span>
             </div>
         </div>
         <div class="profile-body p-2">

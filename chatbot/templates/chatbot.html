@@ -139,9 +139,16 @@
       if (message) {
         // 사용자 질문 추가
         const messagesDiv = document.getElementById('chatMessages');
+
+        // 사용자 메시지(파란색) 추가 전 빈 줄 추가
+        const spacer = document.createElement('div');
+        spacer.style.height = '10px';
+        messagesDiv.appendChild(spacer);
+
+        // 사용자 메시지(파란색) 추가
         const userMsg = document.createElement('div');
         userMsg.className = 'user-message';
-        userMsg.textContent = message;
+        userMsg.innerHTML = message;
         messagesDiv.appendChild(userMsg);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 

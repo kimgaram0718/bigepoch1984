@@ -68,6 +68,13 @@
           <input type="text" class="form-control" id="login_id" name="login_id" placeholder="아이디" required minlength="4">
           <div id="idError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">아이디는 최소 4자 이상이어야 합니다.</div>
         </div>
+        <!-- add1 -->
+        <!-- 이름 입력란 추가 -->
+        <div class="mb-3">
+          <input type="text" class="form-control" id="name" name="name" placeholder="이름" required minlength="2">
+          <div id="nameError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">이름은 최소 2자 이상이어야 합니다.</div>
+        </div>
+        <!-- add2 -->
         <div class="mb-3">
           <input type="text" class="form-control" id="nickname" name="nickname" placeholder="닉네임" required minlength="2">
           <div id="nicknameError" class="text-danger" style="font-size: 12px; margin-top: 5px; display: none;">닉네임은 최소 2자 이상이어야 합니다.</div>
@@ -94,6 +101,7 @@
 
   <script>
     const idInput = document.getElementById('login_id');
+    const nameInput = document.getElementById('name');
     const nicknameInput = document.getElementById('nickname');
     const pwdInput = document.getElementById('pwd');
     const pwdConfirmInput = document.getElementById('pwd_confirm');
@@ -138,19 +146,22 @@
 
     function checkForm() {
       const id = idInput.value;
+      const name = nameInput.value;
       const nickname = nicknameInput.value;
       const pwd = pwdInput.value;
       const pwdConfirm = pwdConfirmInput.value;
 
       idError.style.display = id.length < 4 ? 'block' : 'none';
+      nameError.style.display = id.length < 2 ? 'block' : 'none';
       nicknameError.style.display = nickname.length < 2 ? 'block' : 'none';
       pwdLengthError.style.display = pwd.length < 8 ? 'block' : 'none';
       pwdError.style.display = (pwd && pwdConfirm && pwd !== pwdConfirm) ? 'block' : 'none';
 
-      signupBtn.disabled = !(id.length >= 4 && nickname.length >= 2 && pwd.length >= 8 && pwd === pwdConfirm);
+      signupBtn.disabled = !(id.length >= 4 && name.length >= 2 && nickname.length >= 2 && pwd.length >= 8 && pwd === pwdConfirm);
     }
 
     idInput.addEventListener('input', checkForm);
+    nameInput.addEventListener('input', checkForm);
     nicknameInput.addEventListener('input', checkForm);
     pwdInput.addEventListener('input', checkForm);
     pwdConfirmInput.addEventListener('input', checkForm);
