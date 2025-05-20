@@ -12,111 +12,40 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     
-    <link rel="stylesheet" href="{% static 'css/style.css' %}"> {# 메인 스타일 있다면 유지 #}
-    {# <link rel="stylesheet" href="{% static 'css/invest.css' %}"> #}
-    {# <link rel="stylesheet" href="{% static 'css/community.css' %}"> #}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f0f2f5; /* 약간 부드러운 배경색 */
-            padding-top: 70px; /* 헤더 높이만큼 패딩 */
+            background-color: #f0f2f5;
+            padding-top: 70px; 
         }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .prediction-container { max-width: 800px; margin: 2rem auto; padding: 1.5rem; }
+        .prediction-card { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
+        .prediction-card h3 { color: #333; font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
+        .form-control-lg { border-radius: 8px; box-shadow: none; }
+        .form-control-lg:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+        .btn-custom-primary { background-color: #0d6efd; border-color: #0d6efd; border-radius: 8px; padding: 0.6rem 1.2rem; font-weight: 500; transition: all 0.3s ease; }
+        .btn-custom-primary:hover { background-color: #0b5ed7; border-color: #0a58ca; }
+        .btn-custom-success { background-color: #198754; border-color: #198754; border-radius: 8px; padding: 0.6rem 1.2rem; font-weight: 500; transition: all 0.3s ease; }
+        .btn-custom-success:hover { background-color: #157347; border-color: #146c43; }
 
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .prediction-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1.5rem;
-        }
-
-        .prediction-card {
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .prediction-card h3 {
-            color: #333;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .form-control-lg {
-            border-radius: 8px;
-            box-shadow: none;
-        }
-        .form-control-lg:focus {
-            border-color: #0d6efd; /* Bootstrap primary color */
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        .btn-custom-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-            border-radius: 8px;
-            padding: 0.6rem 1.2rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        .btn-custom-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
-        }
-        .btn-custom-success {
-            background-color: #198754; /* Bootstrap success color */
-            border-color: #198754;
-            border_radius: 8px;
-            padding: 0.6rem 1.2rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        .btn-custom-success:hover {
-            background-color: #157347;
-            border-color: #146c43;
-        }
-
-
-        #autocompleteResults {
-            position: absolute; top: 100%; left: 0; right: 0; z-index: 1050; /* 헤더보다 높게 */
-            background-color: white; border: 1px solid #dee2e6; border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 300px; overflow-y: auto; display: none;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-        #autocompleteResults .list-group-item {
-            padding: 0.75rem 1rem; font-size: 0.95rem; cursor: pointer;
-            border: none; /* 내부 아이템 테두리 제거 */
-            border-bottom: 1px solid #f0f0f0; /* 구분선 */
-        }
-        #autocompleteResults .list-group-item:last-child {
-            border-bottom: none;
-        }
-        #autocompleteResults .list-group-item:hover {
-            background-color: #e9ecef;
-        }
+        #autocompleteResults { position: absolute; top: 100%; left: 0; right: 0; z-index: 1050; background-color: white; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; display: none; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        #autocompleteResults .list-group-item { padding: 0.75rem 1rem; font-size: 0.95rem; cursor: pointer; border: none; border-bottom: 1px solid #f0f0f0; }
+        #autocompleteResults .list-group-item:last-child { border-bottom: none; }
+        #autocompleteResults .list-group-item:hover { background-color: #e9ecef; }
         #autocompleteResults .stock-name { font-weight: 500; }
         #autocompleteResults .stock-code-market { font-size: 0.85em; color: #6c757d; }
 
+        .prediction-result-area { margin-top: 2rem; padding: 1.5rem; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }
+        .prediction-result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; } /* 예측 결과 헤더 flexbox */
+        .prediction-result-header h4 { font-weight: 500; color: #212529; margin-bottom: 0; } /* h4 마진 제거 */
 
-        .prediction-result-area {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-        .prediction-result-area h4 {
-            font-weight: 500; color: #212529; margin-bottom: 1rem;
-        }
         .data-placeholder { color: #6c757d; font-style: italic; text-align: center; padding: 2rem 0; }
-        .error-message { color: #dc3545; font-weight: 500; text-align: center; padding: 1rem; background-color: #f8d7da; border-color: #f5c2c7; border-radius: 8px;}
+        .error-message, .info-message { font-weight: 500; text-align: center; padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.9rem; }
+        .error-message { color: #dc3545; background-color: #f8d7da; border-color: #f5c2c7;}
+        .info-message { color: #084298; background-color: #cfe2ff; border-color: #b6d4fe;}
         .loading-indicator { text-align: center; padding: 2rem 0; }
         .loading-indicator .spinner-border { width: 3rem; height: 3rem; }
 
@@ -124,26 +53,29 @@
         .prediction-table th { background-color: #6c757d; color: white; font-weight: 500; }
         .prediction-table td { vertical-align: middle; }
 
-        #predictionChartContainer {
-            width: 100%;
-            margin: 1.5rem auto 0 auto;
-            padding: 1rem;
-            border-radius: 8px;
-            background-color: #fff;
-            border: 1px solid #e9ecef;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        canvas#predictionChart {
-             max-height: 400px; /* 차트 최대 높이 제한 */
-        }
+        #predictionChartContainer { width: 100%; margin: 1.5rem auto 0 auto; padding: 1rem; border-radius: 8px; background-color: #fff; border: 1px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        canvas#predictionChart { max-height: 400px; }
         
-        .footer {
-            background-color: #343a40;
-            color: white;
-            padding: 2rem 0;
-            margin-top: 3rem;
-        }
+        .footer { background-color: #343a40; color: white; padding: 2rem 0; margin-top: 3rem; }
         .footer a { color: #0dcaf0; }
+
+        .favorite-icon { 
+            cursor: pointer; 
+            font-size: 1.6rem; /* 아이콘 크기 살짝 키움 */
+            color: #adb5bd; 
+            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out; 
+            vertical-align: middle; /* 텍스트와 수직 정렬 */
+            margin-left: 0.5rem; /* 종목명과의 간격 */
+        }
+        .favorite-icon.active { color: #dc3545; transform: scale(1.1); }
+        .favorite-icon:hover { color: #ffc107; }
+        .favorite-icon.active:hover { color: #c82333; }
+
+        #feedbackMessageArea { 
+            min-height: 40px; /* 메시지 영역 높이 확보 */
+            margin-top: 0.5rem; /* 아이콘과의 간격 조정 */
+            text-align: center; 
+        }
 
     </style>
 </head>
@@ -152,7 +84,7 @@
       data-logout-url="{% url 'account:logout' %}"
       data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}">
 
-    {% include 'main_header.html' %} {# main_header.html이 Bootstrap 5와 호환되는지 확인 필요 #}
+    {% include 'main_header.html' %}
 
     <div class="container prediction-container">
         <div class="prediction-card">
@@ -176,15 +108,16 @@
             </form>
 
             <div id="predictionDisplayArea" class="prediction-result-area">
-                {% if error_message %}
-                    <div class="alert alert-warning error-message">{{ error_message }}</div>
-                {% endif %}
-
-                <h4 class="text-center">
-                    <span id="predictedStockName">{% if stock_name_for_display %}{{ stock_name_for_display }}{% else %}종목 검색 후 예측 버튼을 클릭하세요{% endif %}</span>
-                    <span id="predictedStockCode" class="text-muted">{% if ticker %}({{ ticker }}){% endif %}</span>
-                    - <span id="predictionTypeDisplay" class="fw-bold"></span> 5 영업일 예측
-                </h4>
+                <div class="prediction-result-header">
+                    <h4>
+                        <span id="predictedStockName">{% if stock_name_for_display %}{{ stock_name_for_display }}{% else %}종목 검색 후 예측 버튼을 클릭하세요{% endif %}</span>
+                        <span id="predictedStockCode" class="text-muted">{% if ticker %}({{ ticker }}){% endif %}</span>
+                        - <span id="predictionTypeDisplay" class="fw-bold"></span> 5 영업일 예측
+                    </h4>
+                    <i id="favoriteStockIcon" class="bi bi-heart favorite-icon" title="관심 종목 추가/삭제" style="display: none;"></i>
+                </div>
+                
+                <div id="feedbackMessageArea"></div>
 
                 <div id="ajaxLoadingIndicator" class="loading-indicator" style="display: none;">
                     <div class="spinner-border text-primary" role="status">
@@ -194,7 +127,9 @@
                 </div>
 
                 <div id="predictionResultData">
-                    {% if not error_message %}
+                    {% if error_message %}
+                        <div class="alert alert-warning error-message">{{ error_message }}</div>
+                    {% else %}
                     <p class="data-placeholder">
                         <i class="bi bi-info-circle me-1"></i> 위에서 종목을 검색하고 분석 유형 버튼을 클릭하면 예측 결과를 볼 수 있습니다.
                     </p>
@@ -207,10 +142,10 @@
         </div>
     </div>
 
-    {% include 'main_footer.html' %} {# main_footer.html이 Bootstrap 5와 호환되는지 확인 필요 #}
+    {% include 'main_footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/script.js' %}"></script> {# 공통 script.js가 있다면 유지 #}
+    <script src="{% static 'js/script.js' %}"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -231,18 +166,39 @@
             const autocompleteResultsDiv = document.getElementById('autocompleteResults');
             let autocompleteRequestTimeout;
 
-            // 초기 화면에서 예측 결과 영역 제목 기본값 설정
+            const favoriteStockIcon = document.getElementById('favoriteStockIcon');
+            const feedbackMessageArea = document.getElementById('feedbackMessageArea');
+
+            let currentPredictedStockInfo = { code: null, name: null, market: null };
+
             if (!predictedStockNameSpan.textContent.includes('검색 후')) {
-                 predictionTypeDisplaySpan.textContent = "기술적 분석"; // 기본값
+                 predictionTypeDisplaySpan.textContent = "기술적 분석";
             }
 
+            function showFeedbackMessage(message, type = 'info', duration = 3000) {
+                feedbackMessageArea.innerHTML = `<div class="alert ${type === 'error' ? 'alert-danger error-message' : 'alert-primary info-message'} alert-dismissible fade show" role="alert">
+                                                    ${message}
+                                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                 </div>`;
+                if (duration > 0) {
+                    setTimeout(() => {
+                        const alertElement = feedbackMessageArea.querySelector('.alert');
+                        if (alertElement) {
+                            // Bootstrap 5 alert dismiss
+                            const bsAlert = new bootstrap.Alert(alertElement);
+                            bsAlert.close();
+                        }
+                    }, duration);
+                }
+            }
 
             if (stockQueryInput && autocompleteResultsDiv) {
                 stockQueryInput.addEventListener('input', function() {
                     const query = this.value.trim();
                     clearTimeout(autocompleteRequestTimeout);
+                    favoriteStockIcon.style.display = 'none'; 
 
-                    if (query.length < 1) { // 최소 1글자 이상 입력 시 검색
+                    if (query.length < 1) {
                         autocompleteResultsDiv.innerHTML = '';
                         autocompleteResultsDiv.style.display = 'none';
                         return;
@@ -265,10 +221,11 @@
                                         div.innerHTML = `<span class="stock-name">${item.value}</span> <small class="stock-code-market">${item.code} | ${item.market}</small>`;
                                         div.addEventListener('click', function(e) {
                                             e.preventDefault();
-                                            stockQueryInput.value = item.value; // 종목명으로 채우기
+                                            stockQueryInput.value = item.value; 
+                                            currentPredictedStockInfo.code = item.code;
+                                            currentPredictedStockInfo.name = item.value;
+                                            currentPredictedStockInfo.market = item.market;
                                             autocompleteResultsDiv.style.display = 'none';
-                                            // 선택 시 바로 기술적 분석 실행 (선택사항)
-                                            // document.getElementById('technicalPredictButton').click();
                                         });
                                         autocompleteResultsDiv.appendChild(div);
                                     });
@@ -282,10 +239,9 @@
                                 autocompleteResultsDiv.innerHTML = '<div class="list-group-item text-danger small p-2">검색 중 오류 발생</div>';
                                 autocompleteResultsDiv.style.display = 'block';
                             });
-                    }, 250); // 디바운스 시간 줄임
+                    }, 250);
                 });
 
-                // 다른 곳 클릭 시 자동완성 숨기기
                 document.addEventListener('click', function(event) {
                     if (!stockQueryInput.contains(event.target) && !autocompleteResultsDiv.contains(event.target)) {
                         autocompleteResultsDiv.style.display = 'none';
@@ -293,15 +249,80 @@
                 });
             }
 
+            if (favoriteStockIcon) {
+                favoriteStockIcon.addEventListener('click', function() {
+                    const isAuthenticated = document.body.dataset.isAuthenticated === 'true';
+                    if (!isAuthenticated) {
+                        const loginUrl = document.body.dataset.loginUrl;
+                        const nextUrl = window.location.pathname + window.location.search;
+                        showFeedbackMessage(`관심 종목 기능은 로그인 후 이용 가능합니다. <a href="${loginUrl}?next=${encodeURIComponent(nextUrl)}" class="alert-link">로그인</a>`, 'error', 5000);
+                        return;
+                    }
+
+                    if (!currentPredictedStockInfo.code || !currentPredictedStockInfo.name) {
+                        showFeedbackMessage('먼저 종목을 검색하고 예측을 실행해주세요.', 'error');
+                        return;
+                    }
+
+                    const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+                    if (!csrfToken) {
+                        showFeedbackMessage('오류: CSRF 토큰이 없습니다. 페이지를 새로고침해주세요.', 'error');
+                        return;
+                    }
+
+                    fetch("{% url 'predict_info:toggle_favorite_stock_ajax' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            'stock_code': currentPredictedStockInfo.code,
+                            'stock_name': currentPredictedStockInfo.name,
+                            'market_name': currentPredictedStockInfo.market
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            updateFavoriteIcon(data.is_favorite);
+                            showFeedbackMessage(data.message, 'info');
+                        } else {
+                            showFeedbackMessage(data.message || '관심 종목 처리 중 오류가 발생했습니다.', 'error');
+                            if (typeof data.is_favorite !== 'undefined') {
+                                updateFavoriteIcon(data.is_favorite);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Favorite toggle error:", error);
+                        showFeedbackMessage('관심 종목 처리 중 네트워크 오류가 발생했습니다.', 'error');
+                    });
+                });
+            }
+
+            function updateFavoriteIcon(isFavorite) {
+                if (isFavorite) {
+                    favoriteStockIcon.classList.remove('bi-heart');
+                    favoriteStockIcon.classList.add('bi-heart-fill', 'active');
+                    favoriteStockIcon.title = '관심 종목에서 삭제';
+                } else {
+                    favoriteStockIcon.classList.remove('bi-heart-fill', 'active');
+                    favoriteStockIcon.classList.add('bi-heart');
+                    favoriteStockIcon.title = '관심 종목으로 추가';
+                }
+                // 아이콘은 항상 표시되도록 하되, 로그인 여부에 따라 클릭 이벤트에서 제어
+                 favoriteStockIcon.style.display = document.body.dataset.isAuthenticated === 'true' && currentPredictedStockInfo.code ? 'inline-block' : 'none';
+            }
+
             predictButtons.forEach(button => {
                 button.addEventListener('click', function(event) {
                     event.preventDefault();
                     if (autocompleteResultsDiv) autocompleteResultsDiv.style.display = 'none';
 
-                    const stockInputToPredict = stockQueryInput.value.trim(); // input 값 사용
+                    const stockInputToPredict = stockQueryInput.value.trim();
                     const analysisType = this.dataset.analysisType;
                     const analysisTypeText = this.textContent.trim().replace(/<i[^>]*><\/i>|\s+/g, ' ').replace(' 예측', '').trim();
-
 
                     if (!csrfTokenInput) {
                         resultDiv.innerHTML = `<p class="error-message mt-3">오류: CSRF 토큰이 없습니다. 페이지를 새로고침해주세요.</p>`;
@@ -311,22 +332,22 @@
 
                     if (!stockInputToPredict) {
                         resultDiv.innerHTML = `<p class="error-message mt-3">종목명 또는 코드를 입력해주세요.</p>`;
+                        favoriteStockIcon.style.display = 'none';
                         return;
                     }
 
-                    // 이전 결과 초기화
                     resultDiv.innerHTML = '<p class="data-placeholder"><i class="bi bi-info-circle me-1"></i>예측 결과를 기다리고 있습니다...</p>';
                     if (predictionChartInstance) {
                         predictionChartInstance.destroy();
                         predictionChartInstance = null;
                     }
                     chartContainer.style.display = 'none';
-                    loadingDiv.style.display = 'block'; // 로딩 인디케이터 표시
+                    loadingDiv.style.display = 'block';
+                    favoriteStockIcon.style.display = 'none'; 
                     
-                    predictedStockNameSpan.textContent = "처리 중..."; // 예측 시작 시 "처리 중"으로 변경
+                    predictedStockNameSpan.textContent = "처리 중...";
                     predictedStockCodeSpan.textContent = "";
                     predictionTypeDisplaySpan.textContent = analysisTypeText;
-
 
                     fetch("{% url 'predict_info:predict_stock_price_ajax' %}", {
                         method: 'POST',
@@ -335,16 +356,15 @@
                             'X-CSRFToken': csrfToken
                         },
                         body: new URLSearchParams({
-                            'stock_input': stockInputToPredict, // 사용자가 입력한 값 전달
+                            'stock_input': stockInputToPredict,
                             'analysis_type': analysisType
                         })
                     })
                     .then(response => {
-                        if (!response.ok) { // HTTP 상태 코드가 200-299 범위가 아닐 때
+                        if (!response.ok) {
                             return response.json().then(errData => {
-                                // 서버에서 보낸 JSON 오류 메시지가 있다면 사용, 없다면 일반 HTTP 오류 메시지
                                 throw new Error(errData.error || `서버 응답 오류: ${response.status} ${response.statusText}`);
-                            }).catch(() => { // JSON 파싱 실패 시 (서버가 JSON 오류를 안 보낸 경우)
+                            }).catch(() => {
                                 throw new Error(`서버 응답 오류: ${response.status} ${response.statusText}`);
                             });
                         }
@@ -355,10 +375,25 @@
                         if (data.error) {
                             resultDiv.innerHTML = `<p class="error-message mt-3">${data.error}</p>`;
                             predictedStockNameSpan.textContent = stockInputToPredict; // 오류 시에도 입력값 유지
+                            // 오류 시에도 currentPredictedStockInfo 업데이트 시도 (이름만이라도)
+                            currentPredictedStockInfo.name = stockInputToPredict;
+                            currentPredictedStockInfo.code = data.stock_code || null; // 서버에서 받은 코드가 있다면 사용
+                            currentPredictedStockInfo.market = data.market_name || null;
+                            favoriteStockIcon.style.display = 'none';
                         } else if (data.predictions && data.predictions.length > 0) {
                             predictedStockNameSpan.textContent = data.stock_name || stockInputToPredict;
                             predictedStockCodeSpan.textContent = data.stock_code ? `(${data.stock_code})` : "";
                             predictionTypeDisplaySpan.textContent = analysisTypeText;
+
+                            currentPredictedStockInfo.code = data.stock_code;
+                            currentPredictedStockInfo.name = data.stock_name;
+                            currentPredictedStockInfo.market = data.market_name;
+
+                            if (data.is_authenticated) {
+                                updateFavoriteIcon(data.is_favorite);
+                            } else {
+                                favoriteStockIcon.style.display = 'none';
+                            }
 
                             let tableHtml = `
                                 <p class="small text-muted mb-2 text-end">
@@ -388,11 +423,10 @@
                             tableHtml += '</tbody></table></div>';
                             resultDiv.innerHTML = tableHtml;
 
-                            // 차트 생성/업데이트
                             chartContainer.style.display = 'block';
                             const ctx = chartCanvas.getContext('2d');
                             if (predictionChartInstance) {
-                                predictionChartInstance.destroy(); // 기존 차트 파괴
+                                predictionChartInstance.destroy();
                             }
                             predictionChartInstance = new Chart(ctx, {
                                 type: 'line',
@@ -404,7 +438,7 @@
                                         borderColor: '#0d6efd',
                                         backgroundColor: 'rgba(13, 110, 253, 0.1)',
                                         fill: true,
-                                        tension: 0.2, // 곡선 부드러움
+                                        tension: 0.2,
                                         pointBackgroundColor: '#0d6efd',
                                         pointBorderColor: '#ffffff',
                                         pointHoverBackgroundColor: '#ffffff',
@@ -415,10 +449,10 @@
                                 },
                                 options: {
                                     responsive: true,
-                                    maintainAspectRatio: false, // 컨테이너 크기에 맞춤
+                                    maintainAspectRatio: false,
                                     scales: {
                                         y: {
-                                            beginAtZero: false, // Y축 0부터 시작 안 함
+                                            beginAtZero: false,
                                             ticks: {
                                                 callback: function(value) { return value.toLocaleString() + ' 원'; },
                                                 font: { size: 10 }
@@ -451,29 +485,28 @@
                                     hover: { mode: 'nearest', intersect: true }
                                 }
                             });
-                        } else { // 예측 결과는 성공적으로 받았으나, predictions 배열이 비어있는 경우
+                        } else {
                             resultDiv.innerHTML = '<p class="text-center mt-3">예측 결과를 생성할 수 없습니다. 입력값을 확인하거나 잠시 후 다시 시도해주세요.</p>';
                             predictedStockNameSpan.textContent = stockInputToPredict;
+                            favoriteStockIcon.style.display = 'none';
                         }
                     })
                     .catch(error => {
                         loadingDiv.style.display = 'none';
                         resultDiv.innerHTML = `<p class="error-message mt-3">오류 발생: ${error.message}</p>`;
-                        predictedStockNameSpan.textContent = stockInputToPredict; // 오류 시에도 입력값 유지
+                        predictedStockNameSpan.textContent = stockInputToPredict;
+                        favoriteStockIcon.style.display = 'none';
                         console.error("Prediction Fetch Error:", error);
                     });
                 });
             });
 
-            // 페이지 로드 시 URL 파라미터에 stock_query가 있으면 해당 종목으로 자동 예측 실행
             const urlParams = new URLSearchParams(window.location.search);
             const initialStockQueryFromUrl = urlParams.get('stock_query');
             if (initialStockQueryFromUrl && initialStockQueryFromUrl.trim() !== "") {
                 stockQueryInput.value = initialStockQueryFromUrl.trim();
-                // 기본적으로 기술적 분석 버튼 클릭
                 document.getElementById('technicalPredictButton').click();
             }
-
         });
     </script>
 </body>

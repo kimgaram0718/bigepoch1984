@@ -11,4 +11,6 @@ urlpatterns = [
     path('predict_stock_ajax/', views.predict_stock_price_ajax, name='predict_stock_price_ajax'),
     # 자동완성 검색을 위한 API 엔드포인트 (예측 페이지용)
     path('search_stocks_ajax/', views.search_stocks_ajax, name='search_stocks_ajax'),
+    # 관심 종목 추가/삭제를 위한 API 엔드포인트 (이 부분이 추가되어야 합니다)
+    path('toggle_favorite_ajax/', views.toggle_favorite_stock_ajax, name='toggle_favorite_stock_ajax'),
 ]

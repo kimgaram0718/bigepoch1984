@@ -92,3 +92,44 @@ class StockPrice(models.Model):
     def save(self, *args, **kwargs):
         self.calculate_changes() # 저장 전에 항상 등락률 계산
         super().save(*args, **kwargs)
+
+class PredictedStockPrice(models.Model):
+    """
+    일별로 예측된 개별 종목의 미래 가격 정보를 저장하는 모델
+    """
+    ANALYSIS_CHOICES = [
+        ('technical', '기술적 분석'),
+        ('comprehensive', '종합 분석'), # 종합 분석 모델이 있다면 추가
+    ]
+    stock_code = models.CharField(max_length=20, verbose_name="종목 코드", db_index=True)
+    stock_name = models.CharField(max_length=100, verbose_name="종목명", blank=True) # 편의를 위해 추가
+    market_name = models.CharField(max_length=10, verbose_name="시장 구분", blank=True) # 편의를 위해 추가
+
+    prediction_base_date = models.DateField(verbose_name="예측 기준일", db_index=True, help_text="이 날짜의 종가까지를 기반으로 예측이 수행됨")
+    predicted_date = models.DateField(verbose_name="예측 대상일", help_text="실제 주가가 예측된 미래의 날짜")
+    predicted_price = models.FloatField(verbose_name="예측 종가")
+    
+    analysis_type = models.CharField(
+        max_length=20, 
+        choices=ANALYSIS_CHOICES, 
+        default='technical', 
+        verbose_name="분석 유형"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="수정 시각")
+
+    class Meta:
+        verbose_name = "종목별 예측 가격"
+        verbose_name_plural = "종목별 예측 가격 목록"
+        # 특정 종목, 특정 기준일, 특정 예측 대상일, 특정 분석 유형에 대한 예측은 유일해야 함
+        unique_together = ('stock_code', 'prediction_base_date', 'predicted_date', 'analysis_type')
+        ordering = ['-prediction_base_date', 'stock_code', 'predicted_date']
+        indexes = [
+            models.Index(fields=['stock_code', 'prediction_base_date', 'analysis_type', 'predicted_date'], name='pred_price_lookup_idx'),
+            models.Index(fields=['prediction_base_date']), # 오래된 예측 삭제 시 사용
+        ]
+
+    def __str__(self):
+        return f"{self.stock_name}({self.stock_code}) - 기준일:{self.prediction_base_date} -> 예측일:{self.predicted_date} = {self.predicted_price} ({self.get_analysis_type_display()})"
+
