@@ -46,58 +46,71 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def mypage_view(request):
-    #add1
-    # 내가 쓴 글 목록 (삭제되지 않은 것만)
+    """
+    마이페이지 뷰: 사용자 정보, 작성 글, 차단 목록 표시
+    """
+    #<내가 쓴글>
+    # 작성 글 페이지네이션
     my_posts_qs = FreeBoard.objects.filter(user=request.user, is_deleted=False).order_by('-reg_dt')
-    post_paginator = Paginator(my_posts_qs, 5)  # 5개씩
-    post_page_number = request.GET.get('my_posts_page', 1)
-    try:
-        my_posts_page_obj = post_paginator.page(post_page_number)
-    except (EmptyPage, PageNotAnInteger):
-        my_posts_page_obj = post_paginator.page(1)
-
-    my_posts_qs = FreeBoard.objects.filter(user=request.user, is_deleted=False).order_by('-reg_dt')
-    post_paginator = Paginator(my_posts_qs, 5)
-    post_page_number = request.GET.get('my_posts_page', 1)
-    try:
-        my_posts_page_obj = post_paginator.page(post_page_number)
-    except (EmptyPage, PageNotAnInteger):
-        my_posts_page_obj = post_paginator.page(1)
-
-    # 페이지네이션 범위 계산
-    total_pages = post_paginator.num_pages
-    current = my_posts_page_obj.number
-    start_page = max(current - 5, 1)
-    end_page = min(start_page + 9, total_pages)
-    if end_page - start_page < 9:
-        start_page = max(end_page - 9, 1)
-    #add2
-
-    # BlockedUser 모델에서 blocker가 현재 유저인 것만 조회
-    blocked_users = BlockedUser.objects.filter(blocker=request.user).select_related('blocked').order_by('-created_at')
-    
-    # 차단한 유저 정보 리스트 생성
-    blocked_users_data = []
-    for blocked in blocked_users:
-        blocked_user = blocked.blocked
-        if blocked_user:
-            blocked_users_data.append({
-                'id': blocked_user.user_id,
-                'nickname': getattr(blocked_user, 'nickname', None) or getattr(blocked_user, 'username', '알 수 없음'),
-                'profile_image_url': getattr(blocked_user, 'profile_image', None).url if getattr(blocked_user, 'profile_image', None) else None,
-            })
-
-    paginator = Paginator(blocked_users_data, 5)
+    posts_paginator = Paginator(my_posts_qs, 10)  # 페이지당 10개
     page_number = request.GET.get('page', 1)
     try:
-        page_obj = paginator.page(page_number)
-    except (EmptyPage, PageNotAnInteger):
-        page_obj = paginator.page(1)
+        page_number = int(page_number)
+        if page_number < 1:
+            logger.warning(f"Invalid page number: {page_number}, resetting to 1")
+            page_number = 1
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid page number format: {page_number}, resetting to 1")
+        page_number = 1
 
+    try:
+        my_posts_page_obj = posts_paginator.page(page_number)
+    except EmptyPage:
+        logger.warning(f"Empty page requested: {page_number}, redirecting to last page")
+        my_posts_page_obj = posts_paginator.page(posts_paginator.num_pages or 1)
+    except PageNotAnInteger:
+        logger.warning(f"Non-integer page requested: {page_number}, redirecting to page 1")
+        my_posts_page_obj = posts_paginator.page(1)
+
+    # 페이지네이션 범위
+    total_pages = posts_paginator.num_pages
+    current = my_posts_page_obj.number
+    start_page = ((current - 1) // 10) * 10 + 1
+    end_page = min(start_page + 9, total_pages)
+    page_range = range(start_page, end_page + 1)
+    #</내가 쓴글>
+
+    #<차단 목록>
+    blocked_users_qs = BlockedUser.objects.filter(blocker=request.user).select_related('blocked').order_by('-created_at')
+    blocked_paginator = Paginator(blocked_users_qs, 5)  # 5명씩
+    blocked_page_number = request.GET.get('blocked_page', 1)
+    try:
+        blocked_page_number = int(blocked_page_number)
+        if blocked_page_number < 1:
+            blocked_page_number = 1
+    except (ValueError, TypeError):
+        blocked_page_number = 1
+
+    try:
+        blocked_page_obj = blocked_paginator.page(blocked_page_number)
+    except (EmptyPage, PageNotAnInteger):
+        blocked_page_obj = blocked_paginator.page(1)
+
+    # 페이지네이션 범위 계산
+    blocked_total_pages = blocked_paginator.num_pages
+    blocked_start_page = ((blocked_page_obj.number - 1) // 10) * 10 + 1
+    blocked_end_page = min(blocked_start_page + 9, blocked_total_pages)
+    blocked_page_range = range(blocked_start_page, blocked_end_page + 1)
+    #</차단 목록>
     context = {
-        'page_obj': page_obj,
         'my_posts_page_obj': my_posts_page_obj,
-        'page_range': range(start_page, end_page + 1),
+        'page_range': page_range,
+        'total_pages': total_pages,
+        'user': request.user,  # 사용자 정보 전달
+        #=====
+        'blocked_page_obj': blocked_page_obj,
+        'blocked_page_range': blocked_page_range,
+        'blocked_total_pages': blocked_total_pages,
     }
     return render(request, 'mypage.html', context)
 

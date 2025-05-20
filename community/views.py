@@ -22,6 +22,10 @@ def block_user_by_comment(request, comment_id):
     comment = get_object_or_404(FreeBoardComment, id=comment_id, is_deleted=False)
     target_user = comment.user
 
+    # 운영자는 차단 불가
+    if target_user.auth_id == 'admin':
+        return redirect(comment.free_board.get_absolute_url())
+    
     if request.user == target_user:
         return redirect(comment.free_board.get_absolute_url())
 

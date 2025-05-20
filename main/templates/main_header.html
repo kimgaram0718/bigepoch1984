@@ -20,7 +20,7 @@
             
             <div class="profile-preview" id="profileIcon">
                 {% if request.user.profile_image %}
-                    <img src="{{ request.user.profile_image.url }}?t={{ now|date:'U' }}" alt="프로필 이미지" class="rounded-circle">
+                    <img src="{{ request.user.profile_image.url }}" alt="프로필 이미지" class="rounded-circle">
                 {% else %}
                     <i class="bi bi-person-fill profile-icon"></i>
                 {% endif %}

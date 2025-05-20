@@ -1,4 +1,5 @@
 {% load static %}
+{% now "U" as now %}
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -157,18 +158,120 @@
     <!-- 내가 쓴 글 -->
     <div class="container my-3">
       <h6 class="fw-bold mb-2">내가 쓴 글</h6>
-        <ul class="list-group" id="myPostsList">
-        <!-- JS로 항목 삽입 -->
+        <!-- add1 -->
+        <ul class="list-group">
+        {% for post in my_posts_page_obj %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'community:detail' post.id %}" class="fw-semibold text-dark text-decoration-none">
+              {{ post.title|truncatechars:40 }}
+            </a>
+            <span class="text-muted small ms-2">
+              {% with diff=post.reg_dt|timesince %}
+                {% if diff == "0 minutes" or diff == "0 분" %}방금 전
+                {% else %}{{ diff }} 전
+                {% endif %}
+              {% endwith %}
+            </span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted">작성한 글이 없습니다.</li>
+        {% endfor %}
       </ul>
+
+      {% if my_posts_page_obj.paginator.num_pages > 1 %}
+          <nav class="mt-3">
+            <ul class="pagination justify-content-center flex-wrap" style="gap:2px;">
+              <!-- 맨 앞으로 -->
+              <li class="page-item {% if my_posts_page_obj.number == 1 %}disabled{% endif %}">
+                <a class="page-link" href="?page=1" aria-label="맨 앞으로">««</a>
+              </li>
+              <!-- 이전 -->
+              {% if my_posts_page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ my_posts_page_obj.previous_page_number }}" aria-label="이전">«</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">«</span>
+                </li>
+              {% endif %}
+              <!-- 페이지 번호 -->
+              {% for num in page_range %}
+                <li class="page-item {% if my_posts_page_obj.number == num %}active{% endif %}">
+                  <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+              {% endfor %}
+              <!-- 다음 -->
+              {% if my_posts_page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ my_posts_page_obj.next_page_number }}" aria-label="다음">»</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">»</span>
+                </li>
+              {% endif %}
+              <!-- 맨 뒤로 -->
+              <li class="page-item {% if my_posts_page_obj.number == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ total_pages }}" aria-label="맨 뒤로">»»</a>
+              </li>
+            </ul>
+          </nav>
+        {% endif %}
+        <!-- add2 -->
     </div>
      <!-- 분리선 -->
      <hr style="border-top: 13px solid #adb5bd; margin-top: 20px; margin-bottom: 20px;" />
     <!-- 차단 목록 -->
     <div class="container my-3">
       <h6 class="fw-bold mb-2">차단 목록</h6>
-      <div id="blockedUsersList" class="user-list mt-3">
-        <!-- JS로 삽입 -->
-      </div>
+      <!-- add1 -->
+      <ul class="list-group">
+      {% for blocked in blocked_page_obj %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <span class="fw-semibold">{{ blocked.blocked.nickname|default:blocked.blocked.login_id }}</span>
+            <span class="text-muted small ms-2">({{ blocked.blocked.email }})</span>
+          </div>
+          <form method="post" action="{% url 'mypage:unblock_user' blocked.blocked.user_id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">차단해제</button>
+          </form>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">차단한 유저가 없습니다.</li>
+      {% endfor %}
+    </ul>
+
+    {% if blocked_page_obj.paginator.num_pages > 1 %}
+      <nav class="mt-3">
+        <ul class="pagination justify-content-center flex-wrap" style="gap:2px;">
+          <!-- 맨 앞으로 -->
+          <li class="page-item {% if blocked_page_obj.number == 1 %}disabled{% endif %}">
+            <a class="page-link" href="?blocked_page=1" aria-label="맨 앞으로">&laquo;&laquo;</a>
+          </li>
+          <!-- 이전 -->
+          <li class="page-item {% if not blocked_page_obj.has_previous %}disabled{% endif %}">
+            <a class="page-link" href="?blocked_page={{ blocked_page_obj.previous_page_number }}" aria-label="이전">&laquo;</a>
+          </li>
+          <!-- 페이지 번호 -->
+          {% for num in blocked_page_range %}
+            <li class="page-item {% if blocked_page_obj.number == num %}active{% endif %}">
+              <a class="page-link" href="?blocked_page={{ num }}">{{ num }}</a>
+            </li>
+          {% endfor %}
+          <!-- 다음 -->
+          <li class="page-item {% if not blocked_page_obj.has_next %}disabled{% endif %}">
+            <a class="page-link" href="?blocked_page={{ blocked_page_obj.next_page_number }}" aria-label="다음">&raquo;</a>
+          </li>
+          <!-- 맨 뒤로 -->
+          <li class="page-item {% if blocked_page_obj.number == blocked_total_pages %}disabled{% endif %}">
+            <a class="page-link" href="?blocked_page={{ blocked_total_pages }}" aria-label="맨 뒤로">&raquo;&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+      <!-- add2 -->
     </div>
     
 
