@@ -125,10 +125,14 @@ class Command(BaseCommand):
                         skipped_count += 1
                         if (skipped_count + processed_count) % 200 == 0: # 일정 간격으로 스킵/처리 현황 표시
                              self.stdout.write(f"[{market}] Progress: {(skipped_count + processed_count)}/{total_stocks} (Skipped: {skipped_count}, Processed: {processed_count})")
-                        continue # 이미 데이터가 있으면 다음 종목으로
+                        continue
 
-                    # 100개 처리마다 로그 대신, 실제 처리된 종목 기준으로 로그 남기도록 변경
-                    if processed_count > 0 and processed_count % 50 == 0: # 실제 API 호출한 종목 기준
+                    # 진행률(%) 로그: 5% 단위로 출력
+                    percent = int(((skipped_count + processed_count) / total_stocks) * 100)
+                    if percent % 5 == 0 and (skipped_count + processed_count) % max(1, total_stocks // 20) == 0:
+                        self.stdout.write(f"[{market}] 진행률: {percent}% ({skipped_count + processed_count}/{total_stocks})")
+
+                    if processed_count > 0 and processed_count % 50 == 0:
                          self.stdout.write(f"[{market}] Processed {processed_count} new stocks so far (Current: {stock_name} ({stock_code})). Total checked: {(skipped_count + processed_count)}/{total_stocks}")
 
                     try:
