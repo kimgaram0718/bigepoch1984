@@ -159,7 +159,7 @@
     <div class="container my-3">
       <h6 class="fw-bold mb-2">내가 쓴 글</h6>
         <!-- add1 -->
-        <ul class="list-group">
+        <ul class="list-group" id="myPostsList">
         {% for post in my_posts_page_obj %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
             <a href="{% url 'community:detail' post.id %}" class="fw-semibold text-dark text-decoration-none">
@@ -226,7 +226,7 @@
     <div class="container my-3">
       <h6 class="fw-bold mb-2">차단 목록</h6>
       <!-- add1 -->
-      <ul class="list-group">
+      <ul class="list-group" id="blockedUsersList">
       {% for blocked in blocked_page_obj %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>
