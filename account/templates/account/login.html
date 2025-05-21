@@ -78,8 +78,8 @@ data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
         </div>
         <button type="submit" class="btn btn-dark w-100 rounded-pill mb-4">로그인</button>
         <div class="d-flex justify-content-between mb-4">
-          <a href="#" class="btn btn-outline-secondary btn-sm">아이디 찾기</a>
-          <a href="#" class="btn btn-outline-secondary btn-sm">비밀번호 찾기</a>
+          <a href="{% url 'account:find_id' %}" class="btn btn-outline-secondary btn-sm">아이디 찾기</a>
+          <a href="{% url 'account:find_pw' %}" class="btn btn-outline-secondary btn-sm">비밀번호 찾기</a>
         </div>
       </form>
     </div>
