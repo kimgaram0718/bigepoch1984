@@ -6,74 +6,113 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>챗봇</title>
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Bootstrap CSS -->
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!-- Bootstrap Icons (아이콘용) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <link rel="stylesheet" href="{% static 'css/community.css' %}">
   <style>
-    #app {
-      padding: 20px;
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
     }
-    .chat-messages {
-      position: relative; /* X 버튼을 절대 위치로 배치하기 위해 */
-      height: 400px;
-      overflow-y: auto;
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+    #app {
+      padding: 0;
+      max-width: 500px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: 70px;
+      padding-bottom: 70px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    .chatbot-close-outer {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 5px;
+      position: relative;
+      z-index: 20;
     }
     .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
       background-color: #e9ecef;
       border: none;
       border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      margin-right: 2px;
+      margin-top: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      transition: background 0.15s;
     }
     .close-btn:hover {
       background-color: #ced4da;
     }
     .close-btn i {
-      font-size: 20px;
+      font-size: 22px;
       color: #495057;
     }
-    .user-message {
-      background-color: #0d6efd;
-      color: white;
-      padding: 10px 15px;
+    .chat-messages {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 300px;
+      max-height: calc(60vh + 80px);
+      overflow-y: auto;
+      background-color: #fff;
+      padding: 30px 10px 20px 10px; /* 상단 패딩 줄임 */
       border-radius: 15px;
-      margin: 5px 0;
-      max-width: 70%;
-      align-self: flex-end;
-      text-align: right;
-      display: inline-block;
+      margin: 10px 0 20px 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+      border: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
     }
-    .bot-message {
-      background-color: #e9ecef;
-      color: black;
-      padding: 10px 15px;
-      border-radius: 15px;
-      margin: 5px 0;
-      max-width: 70%;
+    .chat-bubble-row {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 8px;
+    }
+    .chat-bubble.user {
+      background: #e9ecef;
+      color: #212529;
       align-self: flex-start;
-      text-align: left;
-      display: inline-block;
+      border-radius: 18px 18px 18px 4px;
+      padding: 12px 18px;
+      max-width: 70%;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      margin-right: auto;
+      margin-left: 0;
+      word-break: break-word;
+    }
+    .chat-bubble.bot {
+      background: #0d6efd;
+      color: #fff;
+      align-self: flex-end;
+      border-radius: 18px 18px 4px 18px;
+      padding: 12px 18px;
+      max-width: 70%;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      margin-left: auto;
+      margin-right: 0;
+      word-break: break-word;
     }
     .chat-input {
       display: flex;
       gap: 10px;
+      margin-top: auto;
+      margin-bottom: 20px;
     }
     #chatInput {
       flex-grow: 1;
@@ -92,8 +131,23 @@
     #sendBtn:hover {
       background-color: #0056b3;
     }
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
+    @media (max-width: 600px) {
+      #app {
+        max-width: 100vw;
+        padding: 0 0 60px 0;
+        padding-top: 60px;
+      }
+      .chat-messages {
+        margin: 10px 0 10px 0;
+        padding: 20px 5px 10px 5px;
+        max-height: calc(55vh + 60px);
+      }
+      .chatbot-close-outer {
+        margin-bottom: 2px;
+      }
+      .chat-input {
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
@@ -103,105 +157,78 @@
   data-logout-url="{% url 'account:logout' %}"
   data-user-nickname="{{ request.user.nickname|default:'사용자'|escapejs }}"
 >
-
-  <!-- 헤더 삽입 -->
   {% include 'main_header.html' %}
 
-  <!-- 본문 감싸는 div 추가 -->
   <div id="app">
-    <!-- 챗봇 메시지 영역 -->
-    <div class="chat-messages" id="chatMessages">
-      <!-- 닫기 버튼 -->
+    <!-- 바깥 상단에 닫기 버튼 -->
+    <div class="chatbot-close-outer">
       <button class="close-btn" onclick="history.back()">
         <i class="bi bi-x"></i>
       </button>
-      <!-- 메시지는 JS로 동적으로 추가 -->
     </div>
-
-    <!-- 챗봇 입력 영역 -->
+    <div class="chat-messages" id="chatMessages">
+      <!-- 대화 내용이 여기에 동적으로 추가됨 -->
+    </div>
     <div class="chat-input">
       <input type="text" id="chatInput" placeholder="질문을 입력하세요...">
       <button id="sendBtn">전송</button>
     </div>
   </div>
 
-  <!-- 푸터 삽입 -->
   {% include 'main_footer.html' %}
 
-  <!-- Bootstrap JS -->
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <!-- Custom JS -->
-  <script src="{% static 'js/script.js' %}"></script>
   <script>
-    document.getElementById('sendBtn').addEventListener('click', async function() {
-      const input = document.getElementById('chatInput');
-      const message = input.value.trim();
-      if (message) {
-        // 사용자 질문 추가
-        const messagesDiv = document.getElementById('chatMessages');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
 
-        // 사용자 메시지(파란색) 추가 전 빈 줄 추가
-        const spacer = document.createElement('div');
-        spacer.style.height = '10px';
-        messagesDiv.appendChild(spacer);
+    function appendBubble(message, sender) {
+      const row = document.createElement('div');
+      row.className = 'chat-bubble-row';
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble ' + sender;
+      bubble.innerHTML = message.replace(/\n/g, '<br>');
+      row.appendChild(bubble);
+      chatMessages.appendChild(row);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        // 사용자 메시지(파란색) 추가
-        const userMsg = document.createElement('div');
-        userMsg.className = 'user-message';
-        userMsg.innerHTML = message;
-        messagesDiv.appendChild(userMsg);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    sendBtn.addEventListener('click', async function() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      appendBubble(message, 'user');
+      chatInput.value = '';
 
-        // 입력 필드 초기화
-        input.value = '';
+      // 로딩 메시지(봇)
+      const loadingRow = document.createElement('div');
+      loadingRow.className = 'chat-bubble-row';
+      const loadingBubble = document.createElement('div');
+      loadingBubble.className = 'chat-bubble bot';
+      loadingBubble.textContent = '답변을 생성중입니다...';
+      loadingRow.appendChild(loadingBubble);
+      chatMessages.appendChild(loadingRow);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // 로딩 메시지(회색) 표시
-        const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'bot-message';
-        loadingMsg.textContent = '답변을 생성중입니다...';
-        messagesDiv.appendChild(loadingMsg);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        try {
-          // API 호출
-          const response = await fetch('/chatbot/chat/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message: message })
-          });
-
-          const data = await response.json();
-
-          // 로딩 메시지 제거
-          messagesDiv.removeChild(loadingMsg);
-
-          // 챗봇 답변(회색) 추가
-          const botMsg = document.createElement('div');
-          botMsg.className = 'bot-message';
-          botMsg.innerHTML = data.message.replace(/\n/g, '<br>');
-          messagesDiv.appendChild(botMsg);
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        } catch (error) {
-          // 로딩 메시지 제거
-          messagesDiv.removeChild(loadingMsg);
-          
-          // 에러 메시지 표시
-          const errorMsg = document.createElement('div');
-          errorMsg.className = 'bot-message';
-          errorMsg.textContent = '서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.';
-          messagesDiv.appendChild(errorMsg);
-        }
-
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      try {
+        const response = await fetch('/chatbot/chat/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message })
+        });
+        const data = await response.json();
+        chatMessages.removeChild(loadingRow);
+        appendBubble(data.message, 'bot');
+      } catch (error) {
+        chatMessages.removeChild(loadingRow);
+        appendBubble('서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.', 'bot');
       }
     });
 
     // Enter 키로 전송
-    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+    chatInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
-        document.getElementById('sendBtn').click();
+        sendBtn.click();
       }
     });
   </script>
