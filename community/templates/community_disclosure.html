@@ -96,8 +96,12 @@
   </div>
 {% endif %}
 
+<!-- add1_250521_10_50 -->
+{% if request.user.is_authenticated and request.user.auth_id == 'admin' %}
 <div class="text-end mt-3">
     <a href="{% url 'community:write' %}?board_type=disclosure_manual" class="btn btn-secondary rounded-pill px-3">
         <i class="bi bi-pencil-square me-1"></i> 공시 직접 작성
     </a>
 </div>
+{% endif %}
+<!-- add2 -->
