@@ -54,10 +54,12 @@
       padding: 10px 20px;
       border-radius: 5px;
       font-weight: bold;
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s ease, color 0.2s;
     }
-    .back-button:hover {
+    .back-button:hover, .back-button:focus {
       background-color: #0056b3;
+      color: #fff; /* hover 시에도 흰색 글자 유지 */
+      text-decoration: none;
     }
   </style>
 </head>
