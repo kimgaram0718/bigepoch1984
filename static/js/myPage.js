@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
           case '마이페이지':
             window.scrollTo({ top: 0, behavior: 'smooth' });
             break;
-          case '예측 종목':
+          case '관심종목':
             scrollToWithOffset('predictionItemsUl', 80); // ← 이걸로 변경!
             break;
           case '내가 쓴 글':
