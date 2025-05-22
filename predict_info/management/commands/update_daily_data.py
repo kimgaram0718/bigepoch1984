@@ -1,40 +1,36 @@
+# predict_info/management/commands/update_daily_data.py
 import pandas as pd
 import FinanceDataReader as fdr
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta, datetime, date # 'date'를 명시적으로 임포트
-from predict_info.models import MarketIndex, StockPrice # 앱 이름 및 모델 이름 확인
-from pandas.tseries.offsets import BDay # Business Day
-import holidays # 한국 공휴일 처리
+from predict_info.models import MarketIndex, StockPrice 
+from pandas.tseries.offsets import BDay 
+import holidays 
 import time
+import traceback
 
 class Command(BaseCommand):
-    help = 'Fetches and stores the previous trading day\'s market and stock data from FinanceDataReader.'
+    help = 'Fetches and stores the previous trading day\'s market, stock data (including investor data and fundamentals like Marcap, PER, PBR) from FinanceDataReader.'
 
     def get_previous_trading_day(self, date_reference, days_offset=1):
-        """
-        주어진 기준일로부터 이전 N번째 거래일을 찾습니다. (주말 및 한국 공휴일 제외)
-        date_reference는 datetime.datetime 또는 datetime.date 객체일 수 있습니다.
-        항상 datetime.date 객체를 반환합니다.
-        """
         if isinstance(date_reference, datetime):
             current_check_date = date_reference.date()
         elif isinstance(date_reference, date):
             current_check_date = date_reference
         else:
             raise TypeError("date_reference must be a datetime.datetime or datetime.date object.")
-
-        kr_holidays = holidays.KR(years=[current_check_date.year -1, current_check_date.year, current_check_date.year + 1])
+        kr_holidays = holidays.KR(years=list(set([current_check_date.year -1, current_check_date.year, current_check_date.year + 1])))
         trading_days_found = 0
-
+        temp_date = current_check_date
         while trading_days_found < days_offset:
-            current_check_date -= timedelta(days=1)
-            if current_check_date.weekday() < 5 and current_check_date not in kr_holidays:
+            temp_date -= timedelta(days=1)
+            if temp_date.weekday() < 5 and temp_date not in kr_holidays:
                 trading_days_found += 1
-        return current_check_date
+        return temp_date
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Starting daily market data update...'))
+        self.stdout.write(self.style.SUCCESS('Starting daily market, stock, and fundamental data update...'))
 
         today_dt = timezone.now()
         target_date = self.get_previous_trading_day(today_dt, 1)
@@ -43,141 +39,132 @@ class Command(BaseCommand):
         self.stdout.write(f"Target date for data fetching: {target_date}")
         self.stdout.write(f"Day before target date (for change calculation): {day_before_target_date}")
 
-        # 1. 시장 지수 업데이트 (KOSPI, KOSDAQ)
-        # 이미 해당 날짜의 데이터가 있으면 건너뛰도록 수정
-        indices_to_fetch = {
-            'KOSPI': 'KS11',
-            'KOSDAQ': 'KQ11'
-        }
-
+        # 1. 시장 지수 업데이트 (KOSPI, KOSDAQ) - 기존 로직 유지
+        indices_to_fetch = {'KOSPI': 'KS11', 'KOSDAQ': 'KQ11'}
         for market_readable_name, fdr_ticker in indices_to_fetch.items():
             if MarketIndex.objects.filter(market_name=market_readable_name, date=target_date).exists():
                 self.stdout.write(self.style.SUCCESS(f"{market_readable_name} index data for {target_date} already exists. Skipping."))
-                continue # 이미 데이터가 있으면 다음 지수로 넘어감
-
+                continue
             self.stdout.write(f"Fetching data for {market_readable_name} index ({fdr_ticker})...")
             try:
                 df_index = fdr.DataReader(fdr_ticker, start=day_before_target_date, end=target_date)
-                
                 if df_index.empty:
                     self.stdout.write(self.style.WARNING(f"No data returned for {market_readable_name} for dates {day_before_target_date} to {target_date}."))
                     continue
-
                 df_index.index = pd.to_datetime(df_index.index).date
-
                 data_target_date_rows = df_index[df_index.index == target_date]
                 data_day_before_rows = df_index[df_index.index == day_before_target_date]
-
                 if data_target_date_rows.empty:
                     self.stdout.write(self.style.WARNING(f"No data for {market_readable_name} on target date {target_date} in the fetched range."))
                     continue
-                
                 current_data = data_target_date_rows.iloc[0]
-                
-                prev_close_val = None
-                if not data_day_before_rows.empty:
-                    prev_close_val = data_day_before_rows.iloc[0]['Close']
-                else:
-                    self.stdout.write(self.style.WARNING(f"No data for {market_readable_name} on {day_before_target_date}, previous_day_close_price will be None."))
-
-                # update_or_create 대신 create 사용 (위에서 이미 존재 여부 확인)
+                prev_close_val = data_day_before_rows.iloc[0]['Close'] if not data_day_before_rows.empty else None
                 MarketIndex.objects.create(
-                    market_name=market_readable_name,
-                    date=target_date,
-                    close_price=current_data['Close'],
-                    previous_day_close_price=prev_close_val,
-                    volume=current_data.get('Volume'),
+                    market_name=market_readable_name, date=target_date, close_price=current_data['Close'],
+                    previous_day_close_price=prev_close_val, volume=current_data.get('Volume'),
                     trade_value=current_data.get('Amount'),
                 )
                 self.stdout.write(self.style.SUCCESS(f"Successfully created {market_readable_name} index data for {target_date}."))
-
             except Exception as e:
                 self.stderr.write(self.style.ERROR(f"Error fetching {market_readable_name} index: {e}"))
-            time.sleep(1) # API 호출 간격
+                self.stderr.write(traceback.format_exc())
+            time.sleep(0.5) # API 호출 간격
 
-        # 2. 개별 종목 가격 업데이트
+        # 2. 전체 상장 종목의 최신 펀더멘털 정보 가져오기 (StockListing 활용)
+        self.stdout.write("Fetching latest fundamental data for all KRX stocks (Marcap, PER, PBR)...")
+        df_all_fundamentals = pd.DataFrame()
+        try:
+            # KRX-DESC는 시가총액 내림차순, 다른 정보도 포함
+            # KRX, KOSPI, KOSDAQ, KONEX 등 원하는 시장 지정 가능
+            df_all_fundamentals = fdr.StockListing('KRX-DESC') # 또는 'KRX' 사용 가능
+            if 'Code' in df_all_fundamentals.columns: # 컬럼명 통일
+                 df_all_fundamentals.rename(columns={'Code': 'Symbol'}, inplace=True)
+            df_all_fundamentals.set_index('Symbol', inplace=True) # 종목코드를 인덱스로
+            self.stdout.write(self.style.SUCCESS(f"Successfully fetched fundamental data for {len(df_all_fundamentals)} stocks."))
+        except Exception as e_fund:
+            self.stderr.write(self.style.ERROR(f"Error fetching KRX fundamental data: {e_fund}"))
+            self.stderr.write(traceback.format_exc())
+            # 펀더멘털 데이터 가져오기 실패 시, 이후 로직에서 해당 값들은 None으로 처리됨
+
+        # 3. 개별 종목 가격, 투자자 정보, 펀더멘털 정보 업데이트
         markets_to_list = ['KOSPI', 'KOSDAQ']
         for market in markets_to_list:
-            self.stdout.write(f"Fetching stock list for {market}...")
+            self.stdout.write(f"Processing {market} stocks for {target_date}...")
             try:
-                stocks_df = fdr.StockListing(market)
-                if 'Code' in stocks_df.columns and 'Symbol' not in stocks_df.columns:
-                    stocks_df.rename(columns={'Code': 'Symbol'}, inplace=True)
-                
-                if 'Symbol' not in stocks_df.columns or 'Name' not in stocks_df.columns:
+                stocks_df_listing = fdr.StockListing(market)
+                if 'Code' in stocks_df_listing.columns: stocks_df_listing.rename(columns={'Code': 'Symbol'}, inplace=True)
+                if 'Symbol' not in stocks_df_listing.columns or 'Name' not in stocks_df_listing.columns:
                     self.stderr.write(self.style.ERROR(f"Stock listing for {market} is missing 'Symbol' or 'Name' column."))
                     continue
                 
-                stocks_df = stocks_df[stocks_df['Symbol'].notna() & stocks_df['Name'].notna()]
-                total_stocks = len(stocks_df)
-                self.stdout.write(f"Found {total_stocks} stocks in {market}. Processing prices if not exist for {target_date}...")
+                stocks_df_listing = stocks_df_listing[stocks_df_listing['Symbol'].notna() & stocks_df_listing['Name'].notna()]
+                total_stocks = len(stocks_df_listing)
+                self.stdout.write(f"Found {total_stocks} stocks in {market}. Processing prices, investor data, and fundamentals...")
 
-                processed_count = 0
-                skipped_count = 0
-
-                for index, row in stocks_df.iterrows():
-                    stock_code = row['Symbol']
-                    stock_name = row['Name']
+                processed_count, skipped_count, error_count = 0, 0, 0
+                for index, row_listing in stocks_df_listing.iterrows():
+                    stock_code = row_listing['Symbol']
+                    stock_name = row_listing['Name']
                     
-                    # DB에서 해당 종목, 해당 날짜의 데이터가 이미 있는지 확인
                     if StockPrice.objects.filter(stock_code=stock_code, date=target_date).exists():
-                        # self.stdout.write(f"Data for {stock_name} ({stock_code}) on {target_date} already exists. Skipping.")
                         skipped_count += 1
-                        if (skipped_count + processed_count) % 200 == 0: # 일정 간격으로 스킵/처리 현황 표시
-                             self.stdout.write(f"[{market}] Progress: {(skipped_count + processed_count)}/{total_stocks} (Skipped: {skipped_count}, Processed: {processed_count})")
+                        if (skipped_count + processed_count + error_count) % 200 == 0:
+                             self.stdout.write(f"[{market}] Progress: {(skipped_count + processed_count + error_count)}/{total_stocks} (S:{skipped_count}, P:{processed_count}, E:{error_count})")
                         continue
-
-                    # 진행률(%) 로그: 5% 단위로 출력
-                    percent = int(((skipped_count + processed_count) / total_stocks) * 100)
-                    if percent % 5 == 0 and (skipped_count + processed_count) % max(1, total_stocks // 20) == 0:
-                        self.stdout.write(f"[{market}] 진행률: {percent}% ({skipped_count + processed_count}/{total_stocks})")
-
-                    if processed_count > 0 and processed_count % 50 == 0:
-                         self.stdout.write(f"[{market}] Processed {processed_count} new stocks so far (Current: {stock_name} ({stock_code})). Total checked: {(skipped_count + processed_count)}/{total_stocks}")
+                    
+                    current_progress = skipped_count + processed_count + error_count
+                    if current_progress > 0 and current_progress % (max(1, total_stocks // 20)) == 0:
+                        percent = int((current_progress / total_stocks) * 100)
+                        self.stdout.write(f"[{market}] Progress: {percent}% ({current_progress}/{total_stocks})")
 
                     try:
-                        df_stock_price = fdr.DataReader(stock_code, start=day_before_target_date, end=target_date)
+                        df_stock_price_investor = fdr.DataReader(stock_code, start=day_before_target_date, end=target_date, data_source='naver')
+                        if df_stock_price_investor.empty: continue
                         
-                        if df_stock_price.empty:
-                            # self.stdout.write(self.style.WARNING(f"No data for {stock_name} ({stock_code}) from FDR."))
-                            continue
-                        
-                        df_stock_price.index = pd.to_datetime(df_stock_price.index).date
+                        df_stock_price_investor.index = pd.to_datetime(df_stock_price_investor.index).date
+                        data_target_date_stock_rows = df_stock_price_investor[df_stock_price_investor.index == target_date]
+                        data_day_before_stock_rows = df_stock_price_investor[df_stock_price_investor.index == day_before_target_date]
 
-                        data_target_date_stock_rows = df_stock_price[df_stock_price.index == target_date]
-                        data_day_before_stock_rows = df_stock_price[df_stock_price.index == day_before_target_date]
-
-                        if data_target_date_stock_rows.empty:
-                            # self.stdout.write(self.style.WARNING(f"No data for {stock_name} ({stock_code}) on target_date {target_date} in FDR response."))
-                            continue
+                        if data_target_date_stock_rows.empty: continue
                         
                         current_stock_data = data_target_date_stock_rows.iloc[0]
-                        prev_close_val_stock = None
-                        if not data_day_before_stock_rows.empty:
-                            prev_close_val_stock = data_day_before_stock_rows.iloc[0]['Close']
+                        prev_close_val_stock = data_day_before_stock_rows.iloc[0]['Close'] if not data_day_before_stock_rows.empty else None
 
-                        # update_or_create 대신 create 사용 (이미 존재 여부 확인)
+                        indi_vol = current_stock_data.get('개인'); foreign_vol = current_stock_data.get('외국인'); organ_vol = current_stock_data.get('기관')
+                        
+                        # 펀더멘털 정보 가져오기 (df_all_fundamentals 에서)
+                        market_cap_val, per_val, pbr_val = None, None, None
+                        if not df_all_fundamentals.empty and stock_code in df_all_fundamentals.index:
+                            fund_data_row = df_all_fundamentals.loc[stock_code]
+                            market_cap_val = fund_data_row.get('Marcap')
+                            per_val = fund_data_row.get('PER')
+                            pbr_val = fund_data_row.get('PBR')
+                        
                         StockPrice.objects.create(
-                            stock_code=stock_code,
-                            date=target_date,
-                            stock_name=stock_name,
-                            market_name=market,
-                            open_price=current_stock_data.get('Open'),
-                            high_price=current_stock_data.get('High'),
-                            low_price=current_stock_data.get('Low'),
-                            close_price=current_stock_data['Close'],
-                            previous_day_close_price=prev_close_val_stock,
-                            volume=current_stock_data.get('Volume'),
-                            trade_value=current_stock_data.get('Amount'),
+                            stock_code=stock_code, date=target_date, stock_name=stock_name, market_name=market,
+                            open_price=current_stock_data.get('Open'), high_price=current_stock_data.get('High'),
+                            low_price=current_stock_data.get('Low'), close_price=current_stock_data['Close'],
+                            previous_day_close_price=prev_close_val_stock, volume=current_stock_data.get('Volume'),
+                            trade_value=current_stock_data.get('거래대금'),
+                            indi_volume=indi_vol if pd.notna(indi_vol) else None,
+                            foreign_volume=foreign_vol if pd.notna(foreign_vol) else None,
+                            organ_volume=organ_vol if pd.notna(organ_vol) else None,
+                            market_cap=market_cap_val if pd.notna(market_cap_val) else None,
+                            per=per_val if pd.notna(per_val) else None,
+                            pbr=pbr_val if pd.notna(pbr_val) else None,
                         )
                         processed_count += 1
                     except Exception as e_stock:
-                        self.stderr.write(self.style.ERROR(f"  Error processing new data for {stock_name} ({stock_code}): {e_stock}"))
-                    time.sleep(0.1) # API 호출 간격은 유지
+                        self.stderr.write(self.style.ERROR(f"  Error processing {stock_name} ({stock_code}): {e_stock}"))
+                        error_count += 1
+                    
+                    if (processed_count + skipped_count + error_count) % 50 == 0:
+                         self.stdout.write(f"[{market}] Checked {processed_count + skipped_count + error_count}/{total_stocks}. (New: {processed_count}, Skip: {skipped_count}, Err: {error_count})")
+                    time.sleep(0.1) # API 호출 간격
                 
-                self.stdout.write(self.style.SUCCESS(f"Finished processing {market} stocks. Total: {total_stocks}, Processed new: {processed_count}, Skipped existing: {skipped_count}"))
-
+                self.stdout.write(self.style.SUCCESS(f"Finished {market}. Total: {total_stocks}, New: {processed_count}, Skip: {skipped_count}, Err: {error_count}"))
             except Exception as e_market_list:
                 self.stderr.write(self.style.ERROR(f"Error fetching stock list for {market}: {e_market_list}"))
+                self.stderr.write(traceback.format_exc())
         
-        self.stdout.write(self.style.SUCCESS('Daily market data update finished.'))
+        self.stdout.write(self.style.SUCCESS('Daily data update (including fundamentals) finished.'))
