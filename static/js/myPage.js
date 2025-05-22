@@ -127,13 +127,13 @@ function renderPredictionItems(targetId) {
   listContainer.innerHTML = ''; // 초기화
 
   if (predictionItems.length === 0) {
-    listContainer.innerHTML = `<li class="list-group-item text-muted">예측 항목이 없습니다.</li>`;
+    listContainer.innerHTML = `<li class="text-muted">예측 항목이 없습니다.</li>`;
   } else {
     predictionItems.forEach(item => {
       const li = document.createElement('li');   
-      li.className = 'list-group-item d-flex justify-content-between align-items-center mb-2';
-      li.style.border = '1px solid #e0e0e0';
-      li.style.borderRadius = '10px';
+      li.className = ' d-flex justify-content-between align-items-center mb-2';
+      // li.style.border = '1px solid #e0e0e0'; border delete
+      // li.style.borderRadius = '10px';
       li.style.padding = '12px 16px';
       li.style.fontSize = '15px';
       li.style.backgroundColor = '#fff';

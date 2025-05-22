@@ -112,7 +112,7 @@
   <div id="app">
     {% include 'main_header.html' %}
 
-    <div class="dropdown mx-3" id="mypageDropdown" style="margin-top: 75px;">
+    <div class="dropdown" id="mypageDropdown">
       <button class="btn btn-light w-100 d-flex align-items-center justify-content-between" type="button" id="dropdownMenuBtn">
         <div>
           <i class="bi bi-house-door-fill me-2"></i> 
@@ -129,7 +129,7 @@
     </div>
 
    <!-- 마이페이지 콘텐츠 -->
-  <div id="content-mypage" class="content-block">
+    <div id="content-mypage" class="content-block">
     <div class="profile-summary d-flex align-items-center justify-content-between px-3 py-3">
       <div class="d-flex align-items-center">
         <!-- 동일한 사이즈 박스 안에 아이콘 -->
@@ -229,7 +229,7 @@
     <div class="container my-3">
       <h6 class="fw-bold mb-2">차단 목록</h6>
       <!-- add1 -->
-      <ul class="list-group" id="block">
+      <ul class="list-group" id="blockuser">
       {% for blocked in blocked_page_obj %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>
@@ -293,6 +293,8 @@
     ">
       <i class="bi bi-chevron-up" style="font-size: 20px;"></i>
     </button>
+  </div>
+  </div>
   </div>
 
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
