@@ -27,7 +27,6 @@ def get_market_macro_data(start_date, end_date, market_fdr_code='KS11', currency
                            "KOSDAQ" if market_fdr_code == 'KQ11' else \
                            market_fdr_code 
 
-    # print(f"[DEBUG][utils.get_market_macro_data] 시장 데이터 조회 시작: {actual_market_prefix} ({market_fdr_code}), 기간: {start_date} ~ {end_date}")
     try:
         # 시장 지수 데이터
         df_market_raw = fdr.DataReader(market_fdr_code, start_date, end_date)
@@ -35,7 +34,6 @@ def get_market_macro_data(start_date, end_date, market_fdr_code='KS11', currency
             df_market_processed[f'{actual_market_prefix}_Close'] = df_market_raw['Close']
             df_market_processed[f'{actual_market_prefix}_Change'] = df_market_raw['Change'] 
             df_market_processed.index = pd.to_datetime(df_market_raw.index)
-            # print(f"[DEBUG][utils.get_market_macro_data] {actual_market_prefix} 지수 데이터 {len(df_market_processed)}건 로드 완료.")
         else:
             print(f"[WARNING][utils.get_market_macro_data] {actual_market_prefix} 지수 데이터를 찾을 수 없습니다. ({start_date} ~ {end_date})")
 
@@ -43,10 +41,8 @@ def get_market_macro_data(start_date, end_date, market_fdr_code='KS11', currency
         df_macro_raw = fdr.DataReader(currency_pair, start_date, end_date)
         if not df_macro_raw.empty:
             df_macro_processed['USD_KRW_Close'] = df_macro_raw['Close']
-            # FutureWarning 방지 및 NaN 처리 방식 명시
             df_macro_processed['USD_KRW_Change'] = df_macro_raw['Close'].pct_change(fill_method=None)
             df_macro_processed.index = pd.to_datetime(df_macro_raw.index) # 인덱스 통일
-            # print(f"[DEBUG][utils.get_market_macro_data] 환율 데이터({currency_pair}) {len(df_macro_processed)}건 로드 완료.")
         else:
             print(f"[WARNING][utils.get_market_macro_data] 환율 데이터({currency_pair})를 찾을 수 없습니다. ({start_date} ~ {end_date})")
 
@@ -60,6 +56,10 @@ def get_market_macro_data(start_date, end_date, market_fdr_code='KS11', currency
 def calculate_all_features(df_input_with_ohlcv_extras, market_name_upper="KOSPI"):
     """
     주어진 DataFrame (OHLCV + 외부 데이터)에 pandas-ta를 사용하여 모든 기술적 지표를 계산합니다.
+    새로운 피처셋에 맞게 기술적 지표 목록을 검토하고, 필요시 추가/수정합니다.
+    사용자의 새로운 데이터셋에 포함된 모든 기술적 지표가 여기서 계산되거나,
+    또는 이미 계산된 값이 df_input_with_ohlcv_extras에 포함되어 있어야 합니다.
+    여기서는 기존과 같이 pandas_ta를 활용하여 주요 지표들을 계산합니다.
     """
     if not PANDAS_TA_AVAILABLE:
         print("[CRITICAL ERROR][utils.calculate_all_features] pandas_ta 라이브러리가 없어 기술적 지표를 계산할 수 없습니다. 피처가 누락됩니다.")
@@ -81,47 +81,41 @@ def calculate_all_features(df_input_with_ohlcv_extras, market_name_upper="KOSPI"
     missing_ohlcv = [col for col in required_ohlcv if col not in df.columns]
     if missing_ohlcv:
         print(f"[ERROR][utils.calculate_all_features] TA 계산에 필요한 기본 OHLCV 컬럼 누락: {missing_ohlcv}. TA 계산 불가.")
-        # 누락된 컬럼을 NaN으로 추가하여 최소한의 실행은 가능하도록 할 수 있으나, 결과는 부정확해짐
-        for col in missing_ohlcv: df[col] = np.nan
-        # return df # 또는 여기서 에러를 발생시키거나, 빈 TA 컬럼을 가진 df를 반환할 수 있음
+        for col in missing_ohlcv: df[col] = np.nan # 누락 컬럼 NaN으로 추가
 
-    # OHLCV 컬럼 숫자형 변환 및 NaN 값 일차 처리 (ffill -> bfill)
     for col in required_ohlcv:
-        if col in df.columns: # 컬럼 존재 여부 확인
+        if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # 존재하는 OHLCV 컬럼에 대해서만 ffill, bfill 수행
     existing_ohlcv_for_fill = [col for col in required_ohlcv if col in df.columns]
     if existing_ohlcv_for_fill:
         df[existing_ohlcv_for_fill] = df[existing_ohlcv_for_fill].ffill().bfill()
 
-    # 필수 'Close' 컬럼이 없거나, 전체 NaN이면 TA 계산 불가
     if 'Close' not in df.columns or df['Close'].isnull().all():
-        print(f"[WARNING][utils.calculate_all_features] 'Close' 컬럼이 없거나 ffill/bfill 후에도 전체 NaN입니다. TA 계산을 건너<0xEB><0><0xA9>니다.")
-        # 모든 TA 컬럼을 NaN으로 초기화하고 반환 (모델 입력 형태 유지를 위해)
-        ta_cols_to_add_nan = [
+        print(f"[WARNING][utils.calculate_all_features] 'Close' 컬럼이 없거나 ffill/bfill 후에도 전체 NaN입니다. TA 계산을 건너뜁니다.")
+        # 모델 입력 형태 유지를 위해 모든 TA 컬럼을 NaN으로 초기화
+        # (실제 사용하는 피처 목록에 따라 이 부분은 달라질 수 있음)
+        ta_cols_to_add_nan = [ 
             'ATR_14', 'BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', 'RSI_14',
             'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9',
             'STOCHk_14_3_3', 'STOCHd_14_3_3', 'OBV', 
-            'ADX_14', 'DMP_14', 'DMN_14'
+            'ADX_14', 'DMP_14', 'DMN_14',
+            # 사용자의 새로운 피처셋에 포함된 다른 기술적 지표들도 여기에 추가
         ]
         for ta_col in ta_cols_to_add_nan: df[ta_col] = np.nan
         return df
 
-    # print(f"[DEBUG][utils.calculate_all_features] TA 계산 시작. 입력 df shape: {df.shape}, 'Close' NaN 수: {df['Close'].isnull().sum()}")
-    
-    # 기술적 지표 계산에 필요한 최소 데이터 길이 정의
-    MIN_LENGTH_DEFAULT = 1 # 기본값 (OBV 등)
-    MIN_LENGTH_ATR = 15 # ATR은 length + 1 정도 필요 (length=14)
-    MIN_LENGTH_BBANDS = 20 # length=20
-    MIN_LENGTH_RSI = 15 # RSI는 length + 1 정도 필요 (length=14)
-    MIN_LENGTH_MACD = 35  # Slow EMA(26) + Signal EMA(9) 고려 시 안정적인 계산을 위한 최소 길이 (경험적)
-    MIN_LENGTH_STOCH = 18 # K=14, D=3, SmoothK=3. (14+3-1) + 3-1 = 18? pandas-ta 내부 로직 따라 다를 수 있음. 넉넉하게.
-    MIN_LENGTH_ADX = 27 # ADX는 length(14) * 2 -1 정도 필요 (실제로는 length + (length-1) + (length-1) 정도)
+    # 기술적 지표 계산 최소 데이터 길이 정의
+    MIN_LENGTH_DEFAULT = 1 
+    MIN_LENGTH_ATR = 15 
+    MIN_LENGTH_BBANDS = 20
+    MIN_LENGTH_RSI = 15 
+    MIN_LENGTH_MACD = 35 
+    MIN_LENGTH_STOCH = 18
+    MIN_LENGTH_ADX = 27 
+    # 새로운 피처에 대한 최소 길이도 필요시 정의
 
-    # 각 지표 계산 함수를 안전하게 호출하는 래퍼
     def safe_ta_call(df_ref, method_name, min_len, ta_output_cols, **kwargs):
-        # print(f"  [DEBUG_TA] Calling {method_name} for {len(df_ref)} rows, min_len: {min_len}")
         if len(df_ref) >= min_len:
             try:
                 getattr(df_ref.ta, method_name)(**kwargs)
@@ -138,10 +132,10 @@ def calculate_all_features(df_input_with_ohlcv_extras, market_name_upper="KOSPI"
                 traceback.print_exc()
                 for col in ta_output_cols: df_ref[col] = np.nan
         else:
-            # print(f"  [INFO_TA] DataFrame 길이({len(df_ref)})가 {method_name.upper()} 계산 최소 길이({min_len})보다 짧습니다. 컬럼을 NaN으로 설정.")
             for col in ta_output_cols: df_ref[col] = np.nan
 
     try:
+        # 기존 기술적 지표 계산 (컬럼명은 views.py/generate_daily_predictions.py의 피처 목록과 일치해야 함)
         safe_ta_call(df, 'atr', MIN_LENGTH_ATR, ['ATR_14'], length=14, append=True)
         safe_ta_call(df, 'bbands', MIN_LENGTH_BBANDS, ['BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0'], length=20, std=2, append=True)
         safe_ta_call(df, 'rsi', MIN_LENGTH_RSI, ['RSI_14'], length=14, append=True)
@@ -149,8 +143,9 @@ def calculate_all_features(df_input_with_ohlcv_extras, market_name_upper="KOSPI"
         
         stoch_cols_expected = ['STOCHk_14_3_3', 'STOCHd_14_3_3']
         if len(df) >= MIN_LENGTH_STOCH:
-            stoch_df_result = df.ta.stoch(k=14, d=3, smooth_k=3, append=False)
+            stoch_df_result = df.ta.stoch(k=14, d=3, smooth_k=3, append=False) # append=False로 하고 직접 할당
             if stoch_df_result is not None and not stoch_df_result.empty:
+                # pandas-ta 버전에 따라 컬럼명이 STOCHk_14_3_3 또는 STOCHk_14_3_3_3_3 등으로 나올 수 있음. 유연하게 대처.
                 actual_k_col = next((col for col in stoch_df_result.columns if col.startswith('STOCHk_')), None)
                 actual_d_col = next((col for col in stoch_df_result.columns if col.startswith('STOCHd_')), None)
                 
@@ -159,45 +154,47 @@ def calculate_all_features(df_input_with_ohlcv_extras, market_name_upper="KOSPI"
                 
                 if actual_d_col: df[stoch_cols_expected[1]] = stoch_df_result[actual_d_col]
                 else: print(f"    [WARNING] Stochastic D 컬럼({stoch_cols_expected[1]})을 찾을 수 없음. 결과: {stoch_df_result.columns.tolist()}"); df[stoch_cols_expected[1]] = np.nan
-            else:
+            else: # stoch_df_result가 None이거나 비어있는 경우
                 for col in stoch_cols_expected: df[col] = np.nan
-        else:
-            # print(f"  [INFO_TA] DataFrame 길이({len(df)})가 STOCH 계산 최소 길이({MIN_LENGTH_STOCH})보다 짧습니다. 컬럼을 NaN으로 설정.")
+        else: # 데이터 길이 부족
             for col in stoch_cols_expected: df[col] = np.nan
 
         safe_ta_call(df, 'obv', MIN_LENGTH_DEFAULT, ['OBV'], append=True)
-        if 'OBV' not in df.columns and any(col.startswith('OBV_') for col in df.columns):
-            obv_col_found = [col for col in df.columns if col.startswith('OBV_')][0]
+        # OBV 컬럼명 일관성 유지 (가끔 OBVe_ 등으로 생성될 수 있음)
+        if 'OBV' not in df.columns and any(col.startswith('OBV') for col in df.columns):
+            obv_col_found = [col for col in df.columns if col.startswith('OBV')][0]
             df.rename(columns={obv_col_found: 'OBV'}, inplace=True)
-        elif 'OBV' not in df.columns: df['OBV'] = np.nan
+        elif 'OBV' not in df.columns: # OBV 계산 실패 또는 누락 시
+            df['OBV'] = np.nan
+
 
         adx_cols_expected = ['ADX_14', 'DMP_14', 'DMN_14']
         if len(df) >= MIN_LENGTH_ADX:
-            adx_df_result = df.ta.adx(length=14, append=False)
+            adx_df_result = df.ta.adx(length=14, append=False) # append=False로 하고 직접 할당
             if adx_df_result is not None and not adx_df_result.empty:
                 for col_name_expected in adx_cols_expected:
-                    # ADX_14, DMP_14, DMN_14 이름 그대로 찾기
                     if col_name_expected in adx_df_result.columns:
                         df[col_name_expected] = adx_df_result[col_name_expected]
                     else: 
-                        # 가끔 DMP_14 -> PDI_14, DMN_14 -> MDI_14 로 생성되는 경우 대비 (pandas-ta 구버전 호환성)
                         alt_col_name = None
-                        if col_name_expected == 'DMP_14': alt_col_name = 'PDI_14'
+                        if col_name_expected == 'DMP_14': alt_col_name = 'PDI_14' # pandas-ta 구버전 호환성
                         elif col_name_expected == 'DMN_14': alt_col_name = 'MDI_14'
                         
                         if alt_col_name and alt_col_name in adx_df_result.columns:
-                             print(f"    [INFO_TA] ADX: Found alternative column '{alt_col_name}' for '{col_name_expected}'.")
                              df[col_name_expected] = adx_df_result[alt_col_name]
                         else:
                             print(f"    [WARNING] ADX 관련 예상 컬럼 '{col_name_expected}' 누락. 결과: {adx_df_result.columns.tolist()}. NaN으로 설정.")
                             df[col_name_expected] = np.nan
-            else:
+            else: # adx_df_result가 None이거나 비어있는 경우
                 for col in adx_cols_expected: df[col] = np.nan
-        else:
-            # print(f"  [INFO_TA] DataFrame 길이({len(df)})가 ADX 계산 최소 길이({MIN_LENGTH_ADX})보다 짧습니다. 컬럼을 NaN으로 설정.")
+        else: # 데이터 길이 부족
             for col in adx_cols_expected: df[col] = np.nan
-
-        # print(f"[INFO][utils.calculate_all_features] pandas_ta 기술적 지표 계산 완료. df shape: {df.shape}")
+        
+        # --- 여기에 사용자의 새로운 데이터셋에 포함된 추가 기술적 지표 계산 로직 추가 ---
+        # 예시: 만약 'EMA_50' 이라는 피처가 필요하다면
+        # safe_ta_call(df, 'ema', 50, ['EMA_50'], length=50, append=True)
+        # 사용자의 코랩 코드에서 사용된 모든 피처가 여기서 생성되도록 해야 합니다.
+        # 또는, 이미 계산된 피처가 df_input_with_ohlcv_extras에 포함되어 있다면 이 함수에서는 추가 계산이 필요 없을 수 있습니다.
 
     except Exception as e_outer: 
         print(f"[ERROR][utils.calculate_all_features] pandas_ta 지표 계산 중 외부 루프에서 예외 발생: {e_outer}")
