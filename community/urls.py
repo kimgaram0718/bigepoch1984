@@ -20,4 +20,5 @@ urlpatterns = [
     path('report/<int:post_id>/', views.report_user, name='report_user'),
     path('unblock_user/', views.unblock_user, name='unblock_user'),
     path('block_user_by_comment/<int:comment_id>/', views.block_user_by_comment, name='block_user_by_comment'),
+    path('check_curse/', views.check_curse_view, name='check_curse'),
 ]

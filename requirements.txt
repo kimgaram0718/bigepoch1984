@@ -70,3 +70,4 @@ django-apscheduler==0.7.0
 openai==1.79.0
 python-dotenv==1.0.0
 pandas_ta==0.3.14b0
+torch== 2.7.0

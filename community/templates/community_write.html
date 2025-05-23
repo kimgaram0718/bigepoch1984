@@ -50,9 +50,9 @@
         <div class="mb-3">
           <input type="text" class="form-control" id="title" name="title" placeholder="제목" value="{{ title|default_if_none:'' }}" required>
         </div>
-        <div class="mb-3">
+        <!-- <div class="mb-3">
           <input type="text" class="form-control" id="tags" name="tags" placeholder="태그">
-        </div>
+        </div> -->
         <div class="form-group mt-3">
           <label for="contentEditor">내용</label>
           <div id="contentEditor" contenteditable="true" class="form-control" style="min-height: 200px; overflow-y: auto; border: 1px solid #ced4da; padding: 10px;">{% if content %}{{ content }}{% endif %}</div>
@@ -77,6 +77,26 @@
           <button type="submit" class="btn btn-primary flex-fill btn-rounded" id="submit-btn">{% if is_edit %}수정{% else %}등록{% endif %}</button>
         </div>
       </form>
+
+      <!-- add1 -->
+      <!-- 욕설 경고 모달 -->
+      <div class="modal fade" id="curseWarningModal" tabindex="-1" aria-labelledby="curseWarningModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="curseWarningModalLabel">게시글 작성 불가</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="curseWarningMessage">
+              게시글에 부적절한 표현이 포함되어 있습니다.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">확인</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- add2 -->
     </div>
   </div>
 
@@ -171,6 +191,60 @@
           alert('잘못 입력했습니다.');
           generateCaptcha();
       }});
+      //add2
+
+      //add1
+      // 폼 제출 시 욕설 체크
+      document.getElementById('postForm').addEventListener('submit', (e) => {
+        e.preventDefault(); // 기본 제출 방지
+
+        const title = document.getElementById('title').value.trim();
+        const contentEditor = document.getElementById('contentEditor');
+        const contentInput = document.getElementById('contentInput');
+        let content = contentEditor.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/?div[^>]*>/gi, '\n')
+          .replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, '[사진]');
+        contentInput.value = content.trim();
+
+        const userAnswer = document.getElementById('captcha-input').value;
+        const correctAnswer = document.getElementById('captcha-value').value;
+        if (userAnswer !== correctAnswer.toString()) {
+          alert('자동 입력 방지 문자를 올바르게 입력해주세요.');
+          generateCaptcha();
+          return;
+        }
+
+        // 욕설 체크 AJAX 요청
+        const csrftoken = getCookie('csrftoken');
+        fetch('/community/check_curse/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken
+          },
+          body: new URLSearchParams({
+            'title': title,
+            'content': content
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.is_curse) {
+            // 욕설 감지 시 모달 표시
+            document.getElementById('curseWarningMessage').textContent = data.message;
+            const modal = new bootstrap.Modal(document.getElementById('curseWarningModal'));
+            modal.show();
+          } else {
+            // 욕설 없으면 폼 제출
+            document.getElementById('postForm').submit();
+          }
+        })
+        .catch(error => {
+          console.error('욕설 체크 오류:', error);
+          alert('오류가 발생했습니다. 다시 시도해주세요.');
+        });
+      });
       //add2
 
     });

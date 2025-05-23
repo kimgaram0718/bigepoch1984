@@ -172,9 +172,21 @@
         </div> -->
         <!-- org2 -->
         <!-- edit1 -->
-        <div class="post-title">{{ post.title|filter_curse }}</div>
+        <!-- 제목 -->
+        <div class="post-title">
+          {% if post.auth_id == 'admin' %}
+            {{ post.title|safe }}
+          {% else %}
+            {{ post.title|filter_curse|safe }}
+          {% endif %}
+        </div>
+        <!-- 내용 -->
         <div class="post-content">
-          {{ post.content|filter_curse|safe }}
+          {% if post.auth_id == 'admin' %}
+            {{ post.content|safe }}
+          {% else %}
+            {{ post.content|filter_curse|safe }}
+          {% endif %}
         </div>
         <!-- edit2 -->
         <div class="reaction-bar d-flex align-items-center">
@@ -228,7 +240,8 @@
                   <span class="badge bg-primary ms-1">
                     {% if comment.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
                   </span><br>
-                  <span class="comment-content">{{ comment.content }}</span>
+                  <!-- <span class="comment-content">{{ comment.content }}</span> -->
+                  <span class="comment-content">{{ comment.content|filter_curse|safe }}</span>
                   <form method="post" action="{% url 'community:comment_edit' comment.id %}" class="comment-edit-form">
                     {% csrf_token %}
                     <input type="text" name="content" class="form-control mb-2" value="{{ comment.content }}" required maxlength="500">
@@ -250,7 +263,7 @@
                     </button>
                   </form>
                 </div>
-              {% else %}
+              {% elif comment.auth_id != 'admin' %}
                 <!-- add1 -->
                 <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="commentOptions{{ comment.id }}" data-bs-toggle="dropdown" aria-expanded="false">
