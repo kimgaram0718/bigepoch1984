@@ -3,6 +3,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from openai import OpenAI
+from community.templatetags.community_filters import filter_curse
+
 
 # OpenAI 클라이언트 초기화
 client = OpenAI(api_key="")
@@ -59,4 +61,34 @@ def chat_response(request):
                 'message': f"서버 오류가 발생했습니다: {str(e)}"
             }, status=500)
 
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt # CSRF 보호 해제 - 실제 서비스 시에는 보안 대책 필요
+def filter_message(request):
+    """
+    사용자 메시지를 받아서 욕설을 필터링한 결과를 JSON으로 반환하는 뷰
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '')
+
+            print(f"Filtering message: {user_message}") # 디버깅용 로그
+
+            # filter_curse 함수를 사용하여 메시지 필터링
+            filtered_message = filter_curse(user_message)
+
+            print(f"Filtered result: {filtered_message}") # 디버깅용 로그
+
+            return JsonResponse({
+                'status': 'success',
+                'message': filtered_message
+            })
+        except Exception as e:
+            print(f"Filter Error: {str(e)}") # 디버깅용 로그
+            return JsonResponse({
+                'status': 'error',
+                'message': f"필터링 오류: {str(e)}"
+            }, status=500)
+    print("Invalid request method for filter") # 디버깅용 로그
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
