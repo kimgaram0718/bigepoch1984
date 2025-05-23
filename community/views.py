@@ -801,21 +801,267 @@ def comment_edit(request, pk):
     if request.method == "POST":
         content = request.POST.get('content', '').strip()
         if content:
+            # 운영자가 아닐 때만 욕설 필터링
+            if request.user.auth_id != 'admin':
+                filtered_content = filter_curse(content)
+                if content != filtered_content:
+                    # ↓↓↓ 아래 부분을 직접 데이터 구성으로 교체
+                    post = comment.free_board
+                    blocked_user_ids = BlockedUser.objects.filter(blocker=request.user).values_list('blocked_id', flat=True) if request.user.is_authenticated else []
+                    comments_qs = FreeBoardComment.objects.filter(
+                        free_board=post,
+                        is_deleted=False
+                    ).exclude(user_id__in=blocked_user_ids).select_related('user').order_by('reg_dt')
+
+                    comments_data = []
+                    for c in comments_qs:
+                        comment_time_diff = django_timezone.now() - c.reg_dt
+                        comment_time_ago = "방금 전"
+                        if comment_time_diff.days > 0:
+                            comment_time_ago = f"{comment_time_diff.days}일 전"
+                        elif comment_time_diff.seconds // 3600 > 0:
+                            comment_time_ago = f"{comment_time_diff.seconds // 3600}시간 전"
+                        elif comment_time_diff.seconds // 60 > 0:
+                            comment_time_ago = f"{comment_time_diff.seconds // 60}분 전"
+
+                        comments_data.append({
+                            'id': c.id,
+                            'user': c.user,
+                            'username': c.user.nickname or c.user.username,
+                            'auth_id': c.user.auth_id if hasattr(c.user, 'auth_id') else '',
+                            'content': c.content,
+                            'reg_dt_formatted': c.reg_dt.strftime('%Y.%m.%d %H:%M'),
+                            'time_ago': comment_time_ago,
+                            'is_author': request.user == c.user,
+                            'profile_image_url': c.user.profile_image.url if hasattr(c.user, 'profile_image') and c.user.profile_image else None,
+                        })
+
+                    time_diff = django_timezone.now() - post.reg_dt
+                    time_ago = "방금 전"
+                    if time_diff.days > 0:
+                        time_ago = f"{time_diff.days}일 전"
+                    elif time_diff.seconds // 3600 > 0:
+                        time_ago = f"{time_diff.seconds // 3600}시간 전"
+                    elif time_diff.seconds // 60 > 0:
+                        time_ago = f"{time_diff.seconds // 60}분 전"
+
+                    is_liked = False
+                    is_worried = False
+                    if request.user.is_authenticated:
+                        like_obj = FreeBoardLike.objects.filter(free_board=post, user=request.user).first()
+                        if like_obj:
+                            is_liked = like_obj.is_liked
+                            is_worried = like_obj.is_worried
+
+                    dart_link_for_detail = None
+                    company_name_for_detail = None
+                    if post.category == 'API공시':
+                        company_name_for_detail, dart_link_for_detail = extract_api_disclosure_info(post.content)
+
+                    content_with_image = post.content.replace("[사진]", f'<img src="{post.image.url}" alt="Uploaded Image">' if post.image else "")
+
+                    post_data = {
+                        'id': post.id,
+                        'user': post.user,
+                        'username': post.user.nickname or post.user.get_username(),
+                        'auth_id': post.user.auth_id if hasattr(post.user, 'auth_id') else '',
+                        'profile_image_url': post.user.profile_image.url if hasattr(post.user, 'profile_image') and post.user.profile_image else None,
+                        'title': post.title,
+                        'content': content_with_image,
+                        'image_url': post.image.url if post.image else None,
+                        'time_ago': time_ago,
+                        'reg_dt_formatted': post.reg_dt.strftime('%Y.%m.%d %H:%M'),
+                        'likes_count': post.likes_count,
+                        'worried_count': post.worried_count,
+                        'comments_count': post.comments.filter(is_deleted=False).exclude(user_id__in=blocked_user_ids).count(),
+                        'view_count': post.view_count,
+                        'is_liked_by_user': is_liked,
+                        'is_worried_by_user': is_worried,
+                        'is_author': request.user == post.user,
+                        'category': post.category,
+                        'category_display': post.get_category_display(),
+                        'dart_link': dart_link_for_detail,
+                        'company_name_for_api_disclosure': company_name_for_detail,
+                    }
+
+                    return render(request, 'community_detail.html', {
+                        'post': post_data,
+                        'comments': comments_data,
+                        'error_message': '댓글에 부적절한 표현이 포함되어 있습니다.'
+                    })
             try:
                 comment.content = content
                 comment.save(update_fields=['content', 'up_dt'])
                 return redirect(f"{comment.free_board.get_absolute_url()}#comment-{comment.id}")
             except Exception as e:
                 logger.error(f"Comment edit failed for comment {pk}: {str(e)}")
+                # 아래도 동일하게 직접 데이터 구성
+                post = comment.free_board
+                blocked_user_ids = BlockedUser.objects.filter(blocker=request.user).values_list('blocked_id', flat=True) if request.user.is_authenticated else []
+                comments_qs = FreeBoardComment.objects.filter(
+                    free_board=post,
+                    is_deleted=False
+                ).exclude(user_id__in=blocked_user_ids).select_related('user').order_by('reg_dt')
+
+                comments_data = []
+                for c in comments_qs:
+                    comment_time_diff = django_timezone.now() - c.reg_dt
+                    comment_time_ago = "방금 전"
+                    if comment_time_diff.days > 0:
+                        comment_time_ago = f"{comment_time_diff.days}일 전"
+                    elif comment_time_diff.seconds // 3600 > 0:
+                        comment_time_ago = f"{comment_time_diff.seconds // 3600}시간 전"
+                    elif comment_time_diff.seconds // 60 > 0:
+                        comment_time_ago = f"{comment_time_diff.seconds // 60}분 전"
+
+                    comments_data.append({
+                        'id': c.id,
+                        'user': c.user,
+                        'username': c.user.nickname or c.user.username,
+                        'auth_id': c.user.auth_id if hasattr(c.user, 'auth_id') else '',
+                        'content': c.content,
+                        'reg_dt_formatted': c.reg_dt.strftime('%Y.%m.%d %H:%M'),
+                        'time_ago': comment_time_ago,
+                        'is_author': request.user == c.user,
+                        'profile_image_url': c.user.profile_image.url if hasattr(c.user, 'profile_image') and c.user.profile_image else None,
+                    })
+
+                time_diff = django_timezone.now() - post.reg_dt
+                time_ago = "방금 전"
+                if time_diff.days > 0:
+                    time_ago = f"{time_diff.days}일 전"
+                elif time_diff.seconds // 3600 > 0:
+                    time_ago = f"{time_diff.seconds // 3600}시간 전"
+                elif time_diff.seconds // 60 > 0:
+                    time_ago = f"{time_diff.seconds // 60}분 전"
+
+                is_liked = False
+                is_worried = False
+                if request.user.is_authenticated:
+                    like_obj = FreeBoardLike.objects.filter(free_board=post, user=request.user).first()
+                    if like_obj:
+                        is_liked = like_obj.is_liked
+                        is_worried = like_obj.is_worried
+
+                dart_link_for_detail = None
+                company_name_for_detail = None
+                if post.category == 'API공시':
+                    company_name_for_detail, dart_link_for_detail = extract_api_disclosure_info(post.content)
+
+                content_with_image = post.content.replace("[사진]", f'<img src="{post.image.url}" alt="Uploaded Image">' if post.image else "")
+
+                post_data = {
+                    'id': post.id,
+                    'user': post.user,
+                    'username': post.user.nickname or post.user.get_username(),
+                    'auth_id': post.user.auth_id if hasattr(post.user, 'auth_id') else '',
+                    'profile_image_url': post.user.profile_image.url if hasattr(post.user, 'profile_image') and post.user.profile_image else None,
+                    'title': post.title,
+                    'content': content_with_image,
+                    'image_url': post.image.url if post.image else None,
+                    'time_ago': time_ago,
+                    'reg_dt_formatted': post.reg_dt.strftime('%Y.%m.%d %H:%M'),
+                    'likes_count': post.likes_count,
+                    'worried_count': post.worried_count,
+                    'comments_count': post.comments.filter(is_deleted=False).exclude(user_id__in=blocked_user_ids).count(),
+                    'view_count': post.view_count,
+                    'is_liked_by_user': is_liked,
+                    'is_worried_by_user': is_worried,
+                    'is_author': request.user == post.user,
+                    'category': post.category,
+                    'category_display': post.get_category_display(),
+                    'dart_link': dart_link_for_detail,
+                    'company_name_for_api_disclosure': company_name_for_detail,
+                }
+
                 return render(request, 'community_detail.html', {
-                    'post': get_post_data(comment.free_board, request),
-                    'comments': get_comments_data(comment.free_board, request),
+                    'post': post_data,
+                    'comments': comments_data,
                     'error_message': '댓글 수정 중 오류가 발생했습니다. 다시 시도해주세요.'
                 })
         else:
+            # content가 비어있을 때
+            post = comment.free_board
+            blocked_user_ids = BlockedUser.objects.filter(blocker=request.user).values_list('blocked_id', flat=True) if request.user.is_authenticated else []
+            comments_qs = FreeBoardComment.objects.filter(
+                free_board=post,
+                is_deleted=False
+            ).exclude(user_id__in=blocked_user_ids).select_related('user').order_by('reg_dt')
+
+            comments_data = []
+            for c in comments_qs:
+                comment_time_diff = django_timezone.now() - c.reg_dt
+                comment_time_ago = "방금 전"
+                if comment_time_diff.days > 0:
+                    comment_time_ago = f"{comment_time_diff.days}일 전"
+                elif comment_time_diff.seconds // 3600 > 0:
+                    comment_time_ago = f"{comment_time_diff.seconds // 3600}시간 전"
+                elif comment_time_diff.seconds // 60 > 0:
+                    comment_time_ago = f"{comment_time_diff.seconds // 60}분 전"
+
+                comments_data.append({
+                    'id': c.id,
+                    'user': c.user,
+                    'username': c.user.nickname or c.user.username,
+                    'auth_id': c.user.auth_id if hasattr(c.user, 'auth_id') else '',
+                    'content': c.content,
+                    'reg_dt_formatted': c.reg_dt.strftime('%Y.%m.%d %H:%M'),
+                    'time_ago': comment_time_ago,
+                    'is_author': request.user == c.user,
+                    'profile_image_url': c.user.profile_image.url if hasattr(c.user, 'profile_image') and c.user.profile_image else None,
+                })
+
+            time_diff = django_timezone.now() - post.reg_dt
+            time_ago = "방금 전"
+            if time_diff.days > 0:
+                time_ago = f"{time_diff.days}일 전"
+            elif time_diff.seconds // 3600 > 0:
+                time_ago = f"{time_diff.seconds // 3600}시간 전"
+            elif time_diff.seconds // 60 > 0:
+                time_ago = f"{time_diff.seconds // 60}분 전"
+
+            is_liked = False
+            is_worried = False
+            if request.user.is_authenticated:
+                like_obj = FreeBoardLike.objects.filter(free_board=post, user=request.user).first()
+                if like_obj:
+                    is_liked = like_obj.is_liked
+                    is_worried = like_obj.is_worried
+
+            dart_link_for_detail = None
+            company_name_for_detail = None
+            if post.category == 'API공시':
+                company_name_for_detail, dart_link_for_detail = extract_api_disclosure_info(post.content)
+
+            content_with_image = post.content.replace("[사진]", f'<img src="{post.image.url}" alt="Uploaded Image">' if post.image else "")
+
+            post_data = {
+                'id': post.id,
+                'user': post.user,
+                'username': post.user.nickname or post.user.get_username(),
+                'auth_id': post.user.auth_id if hasattr(post.user, 'auth_id') else '',
+                'profile_image_url': post.user.profile_image.url if hasattr(post.user, 'profile_image') and post.user.profile_image else None,
+                'title': post.title,
+                'content': content_with_image,
+                'image_url': post.image.url if post.image else None,
+                'time_ago': time_ago,
+                'reg_dt_formatted': post.reg_dt.strftime('%Y.%m.%d %H:%M'),
+                'likes_count': post.likes_count,
+                'worried_count': post.worried_count,
+                'comments_count': post.comments.filter(is_deleted=False).exclude(user_id__in=blocked_user_ids).count(),
+                'view_count': post.view_count,
+                'is_liked_by_user': is_liked,
+                'is_worried_by_user': is_worried,
+                'is_author': request.user == post.user,
+                'category': post.category,
+                'category_display': post.get_category_display(),
+                'dart_link': dart_link_for_detail,
+                'company_name_for_api_disclosure': company_name_for_detail,
+            }
+
             return render(request, 'community_detail.html', {
-                'post': get_post_data(comment.free_board, request),
-                'comments': get_comments_data(comment.free_board, request),
+                'post': post_data,
+                'comments': comments_data,
             })
 
     # GET 요청: 인라인 폼은 템플릿에서 처리, 별도 페이지 필요 시 주석 해제
