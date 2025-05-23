@@ -130,31 +130,53 @@
               </span>
             </div>
           </div>
-          {% if user.is_authenticated and user != post.user and post.user.auth_id != 'admin' %}
           <div class="dropdown">
             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="postOptions" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-three-dots-vertical"></i>
             </button>
+            <!-- add1_250522_16_49 -->
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
-              {% if request.user.is_authenticated and request.user == post.user %}
-                <li><a class="dropdown-item" href="{% url 'community:edit' post.id %}"><i class="bi bi-pencil"></i> 수정하기</a></li>
-                <li><a class="dropdown-item" href="{% url 'community:delete' post.id %}"><i class="bi bi-trash"></i> 삭제하기</a></li>
-              {% elif request.user.is_authenticated %}
+            {% if request.user.is_authenticated and request.user == post.user %}
+                <!-- 본인 글: 수정/삭제 (form 방식) -->
+                <li>
+                  <form action="{% url 'community:edit' post.id %}" method="get" style="display:inline;">
+                    <button type="submit" class="dropdown-item">
+                      <i class="bi bi-pencil"></i> 수정하기
+                    </button>
+                  </form>
+                </li>
+                <li>
+                  <form action="{% url 'community:delete' post.id %}" method="get" style="display:inline;">
+                    <button type="submit" class="dropdown-item">
+                      <i class="bi bi-trash"></i> 삭제하기
+                    </button>
+                  </form>
+                </li>
+              {% elif request.user.is_authenticated and request.user != post.user and post.user.auth_id != 'admin' %}
+                <!-- 타인 글(운영자 제외): 차단하기 -->
                 <li>
                   <form action="{% url 'community:block_user' post.id %}" method="post" onsubmit="return confirm('{{ post.username }}님을 차단하시겠습니까?');">
                     {% csrf_token %}
                     <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
                   </form>
                 </li>
-              {% endif %}
+            {% endif %}
             </ul>
+            <!-- add2 -->
           </div>
-          {% endif %}
         </div>
-        <div class="post-title">{{ post.title }}</div>
+        <!-- org1 -->
+        <!-- <div class="post-title">{{ post.title }}</div>
         <div class="post-content">
           {{ post.content|safe }}
+        </div> -->
+        <!-- org2 -->
+        <!-- edit1 -->
+        <div class="post-title">{{ post.title|filter_curse }}</div>
+        <div class="post-content">
+          {{ post.content|filter_curse|safe }}
         </div>
+        <!-- edit2 -->
         <div class="reaction-bar d-flex align-items-center">
           {% if request.user.is_authenticated and request.user != post.user %}
             <button class="like-btn btn p-0 border-0 bg-transparent {% if post.is_liked_by_user %}liked{% endif %}" data-post-id="{{ post.id }}" data-action="like">
