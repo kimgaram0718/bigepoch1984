@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load static community_filters %}
 
 <body data-mypage-url="{% url 'mypage:mypage' %}" data-logout-url="{% url 'account:logout' %}" data-main-url="{% url 'main:main' %}" data-user-nickname="{{ request.user.username|default:'사용자' }}" data-is-authenticated="{{ request.user.is_authenticated|lower }}">
 
@@ -56,7 +56,7 @@
         </div>
         <div class="profile-body p-2">
             <ul class="list-unstyled m-0">
-                <li class="px-3 py-2 hover-bg text-muted" onclick="location.href='{% url 'mypage:edit_profile' %}'">나의 정보수정</li>
+                <li class="px-3 py-2 hover-bg text-muted" onclick="location.href='{% url 'mypage:edit_profile' %}'">프로필 수정</li>
                 <li class="px-3 py-2 hover-bg text-muted" onclick="performLogout()">로그아웃</li>
             </ul>
         </div>

@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load static community_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -178,8 +178,12 @@
             </div>
             <a href="{% url 'community:detail' post.id %}" class="d-flex mb-2 text-decoration-none text-dark">
               <div class="community-text-area">
-                <div class="title d-block">{{ post.title }}</div>
-                <div class="content">{{ post.content|truncatechars:100 }}</div>
+                <!-- add1 -->
+                <!-- <div class="title d-block">{{ post.title }}</div>
+                <div class="content">{{ post.content|truncatechars:100 }}</div> -->
+                <div class="title d-block">{{ post.title|filter_curse|safe }}</div>
+                <div class="content">{{ post.content|truncatechars:100|filter_curse|safe }}</div>
+                <!-- add2 -->
               </div>
               {% if post.image %}
                 <div class="ms-3 flex-shrink-0">
