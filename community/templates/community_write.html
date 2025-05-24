@@ -20,6 +20,39 @@
     #captcha-refresh-btn { width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; }
     #captcha-btn { font-family: monospace; }
     #captcha-error { color: red; font-size: 0.9em; margin-top: 5px; display: none; }
+    .btn-gradient {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(45deg, #6a11cb, #2575fc);
+      border: none;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-gradient i {
+      margin-right: 5px;
+      font-size: 16px;
+    }
+
+    .btn-gradient:hover {
+      background: linear-gradient(45deg, #2575fc, #6a11cb);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+      color: #fff; /* hover 시 텍스트 색상을 흰색으로 유지 */
+      text-decoration: none; /* 텍스트 밑줄 제거 */
+    }
+
+    .btn-gradient:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 <body
@@ -31,7 +64,7 @@
   {% include 'main_header.html' %}
 
   <nav class="navbar bg-white px-3 py-2 border-bottom">
-    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="history.back()">←</button>
+    <button type="button" class="btn-gradient btn-sm me-2" onclick="history.back()">←</button>
     <span class="ms-2 fw-bold">게시글 작성</span>
   </nav>
 
