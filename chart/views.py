@@ -113,6 +113,7 @@ def get_stock_price(symbol_or_name):
         previous_close_val = info.get('regularMarketPreviousClose')
         change_val = None
         calculated_change_percent = None
+        market_cap = info.get('marketCap')  # 시가총액 정보 가져오기
 
         if current_price_val is not None and previous_close_val is not None:
             change_val = current_price_val - previous_close_val
@@ -126,7 +127,8 @@ def get_stock_price(symbol_or_name):
             'change': change_val,
             'change_percent': calculated_change_percent,
             'name': display_name,
-            'code': final_symbol_for_yf.split('.')[0]
+            'code': final_symbol_for_yf.split('.')[0],
+            'market_cap': market_cap  # 시가총액 정보 추가
         }
     except Exception as e:
         print(f"[ERROR][chart_app] Error fetching stock data for symbol: {final_symbol_for_yf}, Exception: {e}")
@@ -192,6 +194,47 @@ def chart_view(request):
     stock_info_yf = get_stock_price(query)
     df_fdr, stock_name_display = get_stock_price_data(query, period)
 
+    # 시가총액 순위 데이터 가져오기
+    market_cap_rankings = []
+    try:
+        kospi_stocks = fdr.StockListing('KOSPI')
+        kosdaq_stocks = fdr.StockListing('KOSDAQ')
+
+        # 실제 컬럼명 확인
+        print('[DEBUG] KOSPI columns:', kospi_stocks.columns)
+        print('[DEBUG] KOSDAQ columns:', kosdaq_stocks.columns)
+
+        # 컬럼명 매핑
+        code_col = 'Symbol' if 'Symbol' in kospi_stocks.columns else 'Code'
+        market_cap_col = 'MarketCap'
+        if market_cap_col not in kospi_stocks.columns:
+            if 'Marcap' in kospi_stocks.columns:
+                market_cap_col = 'Marcap'
+            elif '시가총액' in kospi_stocks.columns:
+                market_cap_col = '시가총액'
+            else:
+                raise Exception('시가총액 컬럼을 찾을 수 없습니다.')
+
+        # 필요한 컬럼만 선택하고 결측치 제거
+        kospi_stocks = kospi_stocks[['Name', code_col, 'Market', market_cap_col]].dropna(subset=[market_cap_col])
+        kosdaq_stocks = kosdaq_stocks[['Name', code_col, 'Market', market_cap_col]].dropna(subset=[market_cap_col])
+
+        all_stocks = pd.concat([kospi_stocks, kosdaq_stocks])
+        top_30 = all_stocks.nlargest(30, market_cap_col)
+
+        market_cap_rankings = []
+        for _, stock in top_30.iterrows():
+            market_cap_rankings.append({
+                'name': stock['Name'],
+                'code': stock[code_col],
+                'market_cap': int(stock[market_cap_col]),
+                'market': 'KOSPI' if stock['Market'] == 'KOSPI' else 'KOSDAQ'
+            })
+        print(f"[INFO][chart_app] Successfully fetched {len(market_cap_rankings)} market cap rankings")
+    except Exception as e:
+        print(f"[ERROR][chart_app] Error fetching market cap rankings: {e}")
+        traceback.print_exc()
+
     candle_dates = []
     open_prices, high_prices, low_prices, close_prices, volume_data = [], [], [], [], []
     ma5_data, ma20_data = [], []
@@ -224,12 +267,19 @@ def chart_view(request):
 
     top5_kospi_gainers_list = []
     top5_kosdaq_gainers_list = []
+    top5_kospi_losers_list = []
+    top5_kosdaq_losers_list = []
     if StockPrice:
         latest_stock_data_date_obj = StockPrice.objects.order_by('-date').first()
         if latest_stock_data_date_obj:
             latest_date = latest_stock_data_date_obj.date
+            # 급등주 TOP 5
             kospi_top5 = StockPrice.objects.filter(market_name='KOSPI', date=latest_date, change_percent__isnull=False).order_by('-change_percent')[:5]
             kosdaq_top5 = StockPrice.objects.filter(market_name='KOSDAQ', date=latest_date, change_percent__isnull=False).order_by('-change_percent')[:5]
+            
+            # 급락주 TOP 5
+            kospi_bottom5 = StockPrice.objects.filter(market_name='KOSPI', date=latest_date, change_percent__isnull=False).order_by('change_percent')[:5]
+            kosdaq_bottom5 = StockPrice.objects.filter(market_name='KOSDAQ', date=latest_date, change_percent__isnull=False).order_by('change_percent')[:5]
             
             for stock in kospi_top5:
                 status_color = "price-change-up" if stock.change_percent > 0 else "price-change-down" if stock.change_percent < 0 else "price-change-neutral"
@@ -243,6 +293,26 @@ def chart_view(request):
             for stock in kosdaq_top5:
                 status_color = "price-change-up" if stock.change_percent > 0 else "price-change-down" if stock.change_percent < 0 else "price-change-neutral"
                 top5_kosdaq_gainers_list.append({
+                    'name': stock.stock_name, 
+                    'code': stock.stock_code, 
+                    'change_display': f"{'+' if stock.change_percent > 0 else ''}{stock.change_percent:.2f}%",
+                    'status': status_color,
+                    'close': stock.close_price
+                })
+            
+            # 급락주 데이터 추가
+            for stock in kospi_bottom5:
+                status_color = "price-change-up" if stock.change_percent > 0 else "price-change-down" if stock.change_percent < 0 else "price-change-neutral"
+                top5_kospi_losers_list.append({
+                    'name': stock.stock_name, 
+                    'code': stock.stock_code, 
+                    'change_display': f"{'+' if stock.change_percent > 0 else ''}{stock.change_percent:.2f}%",
+                    'status': status_color,
+                    'close': stock.close_price
+                })
+            for stock in kosdaq_bottom5:
+                status_color = "price-change-up" if stock.change_percent > 0 else "price-change-down" if stock.change_percent < 0 else "price-change-neutral"
+                top5_kosdaq_losers_list.append({
                     'name': stock.stock_name, 
                     'code': stock.stock_code, 
                     'change_display': f"{'+' if stock.change_percent > 0 else ''}{stock.change_percent:.2f}%",
@@ -274,7 +344,10 @@ def chart_view(request):
         'fifty_two_week_low': fifty_two_week_low,
         'top5_kospi_gainers': top5_kospi_gainers_list,
         'top5_kosdaq_gainers': top5_kosdaq_gainers_list,
+        'top5_kospi_losers': top5_kospi_losers_list,
+        'top5_kosdaq_losers': top5_kosdaq_losers_list,
         'markets': markets_summary,
+        'market_cap_rankings': market_cap_rankings,  # 시가총액 순위 데이터 추가
     }
     # 템플릿 경로 수정: 'chart/chart.html' -> 'chart.html'
     # 이 변경은 chart 앱의 templates 폴더 바로 밑에 chart.html이 있다고 가정합니다.
