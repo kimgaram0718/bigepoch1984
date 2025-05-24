@@ -67,7 +67,7 @@
       max-height: calc(60vh + 80px);
       overflow-y: auto;
       background-color: #fff;
-      padding: 30px 10px 20px 10px; /* 상단 패딩 줄임 */
+      padding: 30px 10px 20px 10px;
       border-radius: 15px;
       margin: 10px 0 20px 0;
       box-shadow: 0 4px 16px rgba(0,0,0,0.07);
@@ -77,7 +77,6 @@
       gap: 10px;
       scroll-behavior: smooth;
     }
-    /* add1 */
     .chat-bubble-row {
       display: flex;
       align-items: flex-end;
@@ -130,7 +129,6 @@
       flex-direction: row;
       justify-content: flex-end;
     }
-    /* add2 */
     .chat-input {
       display: flex;
       gap: 10px;
@@ -183,15 +181,12 @@
   {% include 'main_header.html' %}
 
   <div id="app">
-    <!-- 바깥 상단에 닫기 버튼 -->
     <div class="chatbot-close-outer">
       <button class="close-btn" onclick="history.back()">
         <i class="bi bi-x"></i>
       </button>
     </div>
-    <div class="chat-messages" id="chatMessages">
-      <!-- 대화 내용이 여기에 동적으로 추가됨 -->
-    </div>
+    <div class="chat-messages" id="chatMessages"></div>
     <div class="chat-input">
       <input type="text" id="chatInput" placeholder="질문을 입력하세요...">
       <button id="sendBtn">전송</button>
@@ -207,75 +202,88 @@
     const sendBtn = document.getElementById('sendBtn');
     const botProfileImgUrl = "{% static 'img/bigepoch1984_round_square_logo.png' %}";
 
-    // (아까 CSRF 토큰 사용 방식 쓰려면 이 getCookie 함수 다시 추가해야 해!)
-    // @csrf_exempt 썼으면 필요 없지만, 보안을 위해 나중에는 사용 추천!
-    // function getCookie(name) { ... }
+    // CSRF 토큰 가져오기
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
 
     // 최초 진입 시 챗봇 인사
     window.addEventListener('DOMContentLoaded', function() {
-      appendBubble('아트로포스입니다 무엇을 도와드릴까요?', 'bot');
+      appendBubble('아트로포스입니다. 무엇을 도와드릴까요?', 'bot');
     });
 
-    function appendBubble(message, sender) {
-      const row = document.createElement('div');
-      row.className = 'chat-bubble-row ' + (sender === 'user' ? 'user-row' : 'bot-row');
-      if (sender === 'bot') {
-        const img = document.createElement('img');
-        img.src = botProfileImgUrl;
-        img.alt = '챗봇 프로필';
-        img.className = 'bot-profile-img';
-        row.appendChild(img);
+    function appendBubble(message, sender, rowElement = null) {
+      let row;
+      if (rowElement) {
+        // 기존 말풍선 업데이트
+        row = rowElement;
+        const bubble = row.querySelector('.chat-bubble');
+        bubble.innerHTML = message.replace(/\n/g, '<br>');
+      } else {
+        // 새 말풍선 추가
+        row = document.createElement('div');
+        row.className = 'chat-bubble-row ' + (sender === 'user' ? 'user-row' : 'bot-row');
+        if (sender === 'bot') {
+          const img = document.createElement('img');
+          img.src = botProfileImgUrl;
+          img.alt = '챗봇 프로필';
+          img.className = 'bot-profile-img';
+          row.appendChild(img);
+        }
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + sender;
+        bubble.innerHTML = message.replace(/\n/g, '<br>');
+        row.appendChild(bubble);
+        chatMessages.appendChild(row);
       }
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble ' + sender;
-      // 필터링된 메시지에 HTML 태그가 포함될 수 있으므로 innerHTML 사용
-      // Django filter_curse에서 mark_safe를 사용했다면 안전
-      bubble.innerHTML = message.replace(/\n/g, '<br>');
-      row.appendChild(bubble);
-      if (sender === 'user') {
-        row.style.justifyContent = 'flex-end';
-      }
-      chatMessages.appendChild(row);
       chatMessages.scrollTop = chatMessages.scrollHeight;
+      return row;
     }
 
-    sendBtn.addEventListener('click', async function() {
-      const originalMessage = chatInput.value.trim(); // 사용자가 입력한 원본 메시지
+    async function sendMessage() {
+      const originalMessage = chatInput.value.trim();
       if (!originalMessage) return;
 
       chatInput.value = ''; // 입력창 비우기
 
-      // CSRF 토큰 가져오기 (CSRF exemption 사용 시 주석 처리하거나 이 함수 제거)
-      // const csrftoken = getCookie('csrftoken');
+      // 사용자가 입력한 메시지를 즉시 표시 (필터링 전 원본)
+      const userRow = appendBubble(originalMessage, 'user');
 
-      let filteredMessage = originalMessage; // 필터링될 메시지를 저장할 변수, 기본값은 원본
-
-      // 1. 서버의 filter_message 뷰를 호출하여 메시지 필터링
+      // 필터링 요청
       try {
-        const filterRes = await fetch('/chatbot/filter_message/', {
+        const filterResponse = await fetch('/chatbot/filter_message/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // 'X-CSRFToken': csrftoken // CSRF exemption 사용 시 주석 처리
+            'X-CSRFToken': csrftoken
           },
-          body: JSON.stringify({ message: originalMessage }) // 원본 메시지를 필터링 요청으로 보냄
+          body: JSON.stringify({ message: originalMessage })
         });
-        const filterData = await filterRes.json();
+        const filterData = await filterResponse.json();
+
         if (filterData.status === 'success') {
-          filteredMessage = filterData.message; // 필터링 성공 시 filteredMessage 업데이트
+          // 필터링된 메시지로 사용자 말풍선 업데이트
+          appendBubble(filterData.message, 'user', userRow);
         } else {
-          console.error("Filtering failed:", filterData.message);
-          // 필터링 실패 시 원본 메시지로 진행하거나 사용자에게 알림
+          console.error('Filter error:', filterData.message);
         }
-      } catch (e) {
-        console.error("Error calling filter API:", e);
-        // API 호출 실패 시 원본 메시지로 진행하거나 사용자에게 알림
+      } catch (error) {
+        console.error('Filter request failed:', error);
       }
 
-      // 2. 사용자 말풍선에 필터링된 메시지 표시
-      appendBubble(filteredMessage, 'user');
-
-      // 3. 챗봇 로딩 메시지 표시
+      // 로딩 메시지 표시
       const loadingRow = document.createElement('div');
       loadingRow.className = 'chat-bubble-row bot-row';
       const loadingImg = document.createElement('img');
@@ -290,38 +298,39 @@
       chatMessages.appendChild(loadingRow);
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      // 4. 서버의 chat_response 뷰를 호출하여 챗봇 응답 받기
       try {
         const response = await fetch('/chatbot/chat/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // 'X-CSRFToken': csrftoken // CSRF exemption 사용 시 주석 처리
+            'X-CSRFToken': csrftoken
           },
-          body: JSON.stringify({ message: filteredMessage }) // 봇에게는 필터링된 메시지 전달
+          body: JSON.stringify({ message: originalMessage })
         });
         const data = await response.json();
 
-        // 로딩 메시지 제거 및 챗봇 응답 표시
+        // 로딩 메시지 제거
         chatMessages.removeChild(loadingRow);
+
         if (data.status === 'success') {
-             appendBubble(data.message, 'bot'); // 봇 응답은 필터링 없이 그대로 표시
+          // 챗봇 응답 표시 (필터링 없음)
+          appendBubble(data.bot_response, 'bot');
         } else {
-             console.error("Chat API failed:", data.message);
-             appendBubble('챗봇 응답 오류: ' + data.message, 'bot');
+          // 서버에서 반환된 오류 메시지 표시
+          appendBubble('API 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'bot');
         }
-
       } catch (error) {
-        console.error("Error calling chat API:", error);
+        // 네트워크 오류 또는 API 호출 실패 시
         chatMessages.removeChild(loadingRow);
-        appendBubble('서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.', 'bot');
+        appendBubble('API 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'bot');
       }
-    });
+    }
 
+    sendBtn.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
-        e.preventDefault(); // Enter 키의 기본 동작(새 줄) 방지
-        sendBtn.click(); // 보내기 버튼 클릭
+        e.preventDefault();
+        sendMessage();
       }
     });
   </script>
