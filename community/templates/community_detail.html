@@ -91,6 +91,39 @@
     .comment.active .comment-edit-form {
       display: block;
     }
+    .btn-gradient {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(45deg, #6a11cb, #2575fc);
+      border: none;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-gradient i {
+      margin-right: 5px;
+      font-size: 16px;
+    }
+
+    .btn-gradient:hover {
+      background: linear-gradient(45deg, #2575fc, #6a11cb);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+      color: #fff; /* hover 시 텍스트 색상을 흰색으로 유지 */
+      text-decoration: none; /* 텍스트 밑줄 제거 */
+    }
+
+    .btn-gradient:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 <body class="bg-light"
@@ -113,7 +146,7 @@
       <div class="post-card">
         <div class="post-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center">
-            <a href="{% url 'community:community' %}" class="btn btn-outline-secondary btn-sm me-2">
+            <a href="{% url 'community:community' %}" class="btn-gradient btn-sm me-2" aria-label="커뮤니티로 돌아가기">
               <i class="bi bi-arrow-left"></i>
             </a>
             <div class="profile-preview me-2">
@@ -130,13 +163,12 @@
               </span>
             </div>
           </div>
+          {% if request.user.is_authenticated and request.user == post.user %}
           <div class="dropdown">
             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="postOptions" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-three-dots-vertical"></i>
             </button>
-            <!-- add1_250522_16_49 -->
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
-            {% if request.user.is_authenticated and request.user == post.user %}
                 <!-- 본인 글: 수정/삭제 (form 방식) -->
                 <li>
                   <form action="{% url 'community:edit' post.id %}" method="get" style="display:inline;">
@@ -152,7 +184,14 @@
                     </button>
                   </form>
                 </li>
-              {% elif request.user.is_authenticated and request.user != post.user and post.user.auth_id != 'admin' %}
+            </ul>
+          </div>
+          {% elif request.user.is_authenticated and request.user != post.user and post.user.auth_id != 'admin' %}
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="postOptions" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
                 <!-- 타인 글(운영자 제외): 차단하기 -->
                 <li>
                   <form action="{% url 'community:block_user' post.id %}" method="post" onsubmit="return confirm('{{ post.username }}님을 차단하시겠습니까?');">
@@ -160,10 +199,9 @@
                     <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
                   </form>
                 </li>
-            {% endif %}
             </ul>
-            <!-- add2 -->
           </div>
+          {% endif %}
         </div>
         <!-- org1 -->
         <!-- <div class="post-title">{{ post.title }}</div>
