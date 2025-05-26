@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="{% static 'css/community_detail.css' %}">
   <style>
     .like-btn.liked i, .worry-btn.worried i {
-      color: #ff4d4f;
+      color: #e63946;
       transition: transform 0.2s ease, color 0.2s ease;
     }
     .like-btn.liked i:hover, .worry-btn.worried i:hover {
@@ -23,7 +23,7 @@
       color: #ff9800;
     }
     .worry-btn.worried i {
-      color: #ff5722;
+      color: #f57c00;
     }
     .view-count {
       margin-left: 15px;
@@ -55,6 +55,35 @@
     }
     .reaction-bar button {
       margin-right: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .reaction-bar button:hover {
+      background-color: #f5f6f8;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .reaction-bar .reaction-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px;
+    }
+    .reaction-bar .reaction-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: #212529;
+    }
+    .reaction-bar .reaction-count {
+      font-size: 14px;
+      font-weight: 500;
+      color: #212529;
     }
     .dropdown-menu {
       min-width: 120px;
@@ -106,20 +135,17 @@
       transition: all 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-
     .btn-gradient i {
       margin-right: 5px;
       font-size: 16px;
     }
-
     .btn-gradient:hover {
       background: linear-gradient(45deg, #2575fc, #6a11cb);
       transform: translateY(-2px);
       box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-      color: #fff; /* hover 시 텍스트 색상을 흰색으로 유지 */
-      text-decoration: none; /* 텍스트 밑줄 제거 */
+      color: #fff;
+      text-decoration: none;
     }
-
     .btn-gradient:active {
       transform: translateY(0);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -169,7 +195,6 @@
               <i class="bi bi-three-dots-vertical"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
-                <!-- 본인 글: 수정/삭제 (form 방식) -->
                 <li>
                   <form action="{% url 'community:edit' post.id %}" method="get" style="display:inline;">
                     <button type="submit" class="dropdown-item">
@@ -192,7 +217,6 @@
               <i class="bi bi-three-dots-vertical"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions">
-                <!-- 타인 글(운영자 제외): 차단하기 -->
                 <li>
                   <form action="{% url 'community:block_user' post.id %}" method="post" onsubmit="return confirm('{{ post.username }}님을 차단하시겠습니까?');">
                     {% csrf_token %}
@@ -203,14 +227,6 @@
           </div>
           {% endif %}
         </div>
-        <!-- org1 -->
-        <!-- <div class="post-title">{{ post.title }}</div>
-        <div class="post-content">
-          {{ post.content|safe }}
-        </div> -->
-        <!-- org2 -->
-        <!-- edit1 -->
-        <!-- 제목 -->
         <div class="post-title">
           {% if post.auth_id == 'admin' %}
             {{ post.title|safe }}
@@ -218,7 +234,6 @@
             {{ post.title|filter_curse|safe }}
           {% endif %}
         </div>
-        <!-- 내용 -->
         <div class="post-content">
           {% if post.auth_id == 'admin' %}
             {{ post.content|safe }}
@@ -226,18 +241,29 @@
             {{ post.content|filter_curse|safe }}
           {% endif %}
         </div>
-        <!-- edit2 -->
         <div class="reaction-bar d-flex align-items-center">
           {% if request.user.is_authenticated and request.user != post.user %}
             <button class="like-btn btn p-0 border-0 bg-transparent {% if post.is_liked_by_user %}liked{% endif %}" data-post-id="{{ post.id }}" data-action="like">
-              <i class="bi bi-heart-fill"></i><br><span>{{ post.likes_count }}</span>
+              <i class="bi bi-heart-fill me-1"></i>
+              <span class="reaction-count">{{ post.likes_count }}</span>
+              <span class="reaction-text">좋아요</span>
             </button>
             <button class="worry-btn btn p-0 border-0 bg-transparent {% if post.is_worried_by_user %}worried{% endif %}" data-post-id="{{ post.id }}" data-action="worry">
-              <i class="bi bi-exclamation-triangle-fill"></i><br><span>{{ post.worried_count }}</span>
+              <i class="bi bi-emoji-frown me-1"></i>
+              <span class="reaction-count">{{ post.worried_count }}</span>
+              <span class="reaction-text">걱정돼요</span>
             </button>
           {% else %}
-            <div class="reaction-icon"><i class="bi bi-heart-fill"></i><br>{{ post.likes_count }}</div>
-            <div class="reaction-icon"><i class="bi bi-exclamation-triangle-fill"></i><br>{{ post.worried_count }}</div>
+            <div class="reaction-icon">
+              <i class="bi bi-heart-fill me-1"></i>
+              <span class="reaction-count">{{ post.likes_count }}</span>
+              <span class="reaction-text">좋아요</span>
+            </div>
+            <div class="reaction-icon">
+              <i class="bi bi-emoji-frown me-1"></i>
+              <span class="reaction-count">{{ post.worried_count }}</span>
+              <span class="reaction-text">걱정돼요</span>
+            </div>
           {% endif %}
           <span class="view-count">조회: {{ post.view_count }}</span>
         </div>
@@ -278,7 +304,6 @@
                   <span class="badge bg-primary ms-1">
                     {% if comment.auth_id == 'admin' %}운영자{% else %}일반회원{% endif %}
                   </span><br>
-                  <!-- <span class="comment-content">{{ comment.content }}</span> -->
                   <span class="comment-content">{{ comment.content|filter_curse|safe }}</span>
                   <form method="post" action="{% url 'community:comment_edit' comment.id %}" class="comment-edit-form">
                     {% csrf_token %}
@@ -302,21 +327,19 @@
                   </form>
                 </div>
               {% elif comment.auth_id != 'admin' %}
-                <!-- add1 -->
                 <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="commentOptions{{ comment.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-three-dots-vertical"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentOptions{{ comment.id }}">
-                  <li>
-                    <form action="{% url 'community:block_user_by_comment' comment.id %}" method="post" onsubmit="return confirm('{{ comment.username }}님을 차단하시겠습니까?');">
-                      {% csrf_token %}
-                      <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
-                    </form>
-                  </li>
-                </ul>
-              </div>
-                <!-- add2 -->
+                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="commentOptions{{ comment.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentOptions{{ comment.id }}">
+                    <li>
+                      <form action="{% url 'community:block_user_by_comment' comment.id %}" method="post" onsubmit="return confirm('{{ comment.username }}님을 차단하시겠습니까?');">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item"><i class="bi bi-person-x"></i> 차단하기</button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
               {% endif %}
             </div>
           {% empty %}
@@ -363,3 +386,5 @@
       });
     });
   </script>
+</body>
+</html>
