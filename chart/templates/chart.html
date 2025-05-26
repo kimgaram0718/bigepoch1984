@@ -1,5 +1,6 @@
 {% load static %}
 {% load humanize %}
+{% load chart_extras %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -730,6 +731,9 @@
   {% include 'main_header.html' %}
 
   <div id="app" style="padding-top: 60px;">
+    <div class="text-center mb-4">
+        <h2>차트페이지</h2>
+    </div>
     <div class="container mt-3 mb-3">
       <form method="get" class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center search-form-chart pretty-search-form">
         <div class="input-group flex-grow-1 pretty-input-group" style="margin-right: 1rem;">
@@ -768,7 +772,7 @@
                 전일 종가: {{ stock_info.previous_close|floatformat:0|intcomma|default:"-" }}원
                 {% if stock_info.market_cap %}
                 <br>
-                시가총액: {{ stock_info.market_cap|intcomma|default:"-" }}원
+                시가총액: {{ stock_info.market_cap|to_eok|default:"-" }}원
                 {% endif %}
             </div>
           </div>
@@ -799,8 +803,8 @@
       <div class="pretty-chart-box position-relative">
         <div class="chart-controls">
           <div class="d-flex gap-2">
-            <button onclick="toggleMA5()" class="btn btn-sm active" id="ma5Btn">5일 이동평균선</button>
-            <button onclick="toggleMA20()" class="btn btn-sm active" id="ma20Btn">20일 이동평균선</button>
+            <button onclick="toggleMA5()" class="btn btn-sm" id="ma5Btn">5일 이동평균선</button>
+            <button onclick="toggleMA20()" class="btn btn-sm" id="ma20Btn">20일 이동평균선</button>
             <button onclick="toggleAvgPrice()" class="btn btn-sm active" id="avgPriceBtn">평균 가격</button>
           </div>
           <div class="d-flex gap-2 ms-auto">
@@ -950,7 +954,7 @@
                             <div class="stock-market">{{ stock.market }}</div>
                         </div>
                         <div class="market-cap-value">
-                            {{ stock.market_cap|intcomma }}원
+                            {{ stock.market_cap|to_eok }}
                         </div>
                     </div>
                     {% endfor %}
@@ -1006,8 +1010,8 @@
       // 차트 상태 관리
       window.chartState = {
         theme: document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-        showMA5: true,
-        showMA20: true,
+        showMA5: false,
+        showMA20: false,
         showAvgPrice: true
       };
 
@@ -1041,7 +1045,7 @@
                 width: 1.5
             },
             yaxis: 'y1',
-            visible: chartState.showMA5
+            visible: false
         };
 
         // 20일 이동평균선
@@ -1056,7 +1060,7 @@
                 width: 1.5
             },
             yaxis: 'y1',
-            visible: chartState.showMA20
+            visible: false
         };
 
         // 평균 가격선
@@ -1072,7 +1076,7 @@
                 dash: 'dot'
             },
             yaxis: 'y1',
-            visible: chartState.showAvgPrice
+            visible: true
         };
 
         // 거래량 색상 계산
@@ -1313,6 +1317,8 @@
                     const searchInput = document.getElementById('stockQueryInputChart');
                     if (searchInput) {
                         searchInput.value = stockName;
+                        // 검색창 위치로 부드럽게 스크롤
+                        searchInput.scrollIntoView({ behavior: 'smooth' });
                         // 폼 제출
                         searchInput.closest('form').submit();
                     }
