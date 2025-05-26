@@ -68,7 +68,11 @@ class StockPrice(models.Model):
     market_cap = models.BigIntegerField(verbose_name="시가총액 (원)", null=True, blank=True, help_text="해당일의 시가총액 또는 최근 스냅샷 값")
     per = models.FloatField(verbose_name="PER", null=True, blank=True, help_text="Price Earning Ratio")
     pbr = models.FloatField(verbose_name="PBR", null=True, blank=True, help_text="Price Book-value Ratio")
-
+    eps = models.FloatField(verbose_name="EPS", null=True, blank=True, help_text="Earnings Per Share")
+    bps = models.FloatField(verbose_name="BPS", null=True, blank=True, help_text="Book-value Per Share")
+    dps = models.FloatField(verbose_name="DPS", null=True, blank=True, help_text="Dividend Per Share")
+    roe = models.FloatField(verbose_name="ROE", null=True, blank=True, help_text="Return On Equity")
+    
     class Meta:
         verbose_name = "개별 종목 상세 정보"
         verbose_name_plural = "개별 종목 상세 정보 목록"
