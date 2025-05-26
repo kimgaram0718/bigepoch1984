@@ -28,3 +28,12 @@
 </footer>
 
 <link rel="stylesheet" href="{% static 'css/community.css' %}">
+<style>
+
+  /* 데스크탑일때 footer영역 display none */
+  @media (min-width: 992px) {
+    footer.footer {
+      display: none !important;
+    }
+  }
+</style>

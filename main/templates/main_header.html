@@ -9,6 +9,25 @@
         <a href="{% url 'main:main' %}"> 
             <img src="{% static 'img/bigepoch1984_circular_logo.png' %}" alt="로고" style="width:32px;height:32px; border-radius:50%;">
         </a>
+        <!-- 데스크탑일때만 시작 -->
+        <div class="desktop-nav d-none d-lg-flex gap-3 ms-4 align-items-center">
+            <a href="{% url 'main:main' %}" class="footer-item" id="footer-home">
+        <div class="footer-text">홈</div>
+            </a>
+            <a href="{% url 'chart:chart' %}" class="footer-item" id="footer-chart">
+        <div class="footer-text">차트</div>
+            </a>
+            <a href="{% url 'predict_info:predict_info_page' %}" class="footer-item" id="footer-predict">
+        <div class="footer-text">예측정보</div>
+            </a>
+            <a href="{% url 'community:community' %}" class="footer-item" id="footer-community">
+        <div class="footer-text">커뮤니티</div>
+            </a>
+            <a href="{% url 'mypage:mypage' %}" class="footer-item" id="footer-mypage">
+        <div class="footer-text">마이페이지</div>
+            </a>
+        </div>
+        <!-- 데스크탑일때만 종료 -->
     </div>
 
     <div class="d-flex align-items-center gap-3">
@@ -101,6 +120,18 @@
     #notification-popup, #profile-popup {
         animation: slideDown 0.3s ease-in-out;
     }
+
+    /* 데스크탑일때만 시작 */
+    .desktop-nav .footer-text {
+        font-size: 16px;      /* 글자 크기 증가 */
+        font-weight: 500;     /* 굵게 */
+        color: #212529;       /* 진한 회색 계열 (거의 검정) */
+    }
+
+    .desktop-nav .footer-text:hover {
+        color: #0d6efd;        /* 호버 시 파란색 (부트스트랩 기본) */
+    }
+    /* 데스크탑일때만 종료 */
 </style>
 
 <script src="{% static 'js/script.js' %}"></script>
