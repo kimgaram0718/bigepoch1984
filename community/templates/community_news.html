@@ -61,7 +61,8 @@
     {% endif %}
 
     <div class="bg-white d-flex justify-content-around border-bottom py-2 mt-3" id="news-tab-menu">
-      <a href="?tab=news&subtab=realtime" class="nav-tab-item {% if active_subtab == 'realtime' %}active{% endif %}" data-subtab="realtime">
+      <a href="{% url 'community:community' %}?tab=news"
+       class="btn btn-sm fw-bold px-4 py-1 rounded-pill {% if active_tab == 'news' %}bg-white text-dark{% else %}bg-transparent text-muted{% endif %}">
          실시간 뉴스
       </a>
       <a href="?tab=news&subtab=disclosure" class="nav-tab-item {% if active_subtab == 'disclosure' %}active{% endif %}" data-subtab="disclosure">
