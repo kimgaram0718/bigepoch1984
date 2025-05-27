@@ -1,4 +1,3 @@
-# predict_info/views.py
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
@@ -6,523 +5,470 @@ import pandas as pd
 import numpy as np
 import FinanceDataReader as fdr
 from datetime import datetime, timedelta, date as date_type
-# from pandas.tseries.offsets import BDay # get_future_trading_dates_list에서 사용
 import os
 import traceback
-import holidays # get_future_trading_dates_list에서 사용
+import holidays
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 import json
+import joblib # 스케일러 로드/저장
+import tensorflow as tf # 모델 로드
+from django.utils import timezone
 
-from .utils import calculate_all_features, get_market_macro_data, PANDAS_TA_AVAILABLE # calculate_all_features는 직접 사용 안함 (generate_daily_predictions에서 사용)
-from .models import PredictedStockPrice, FavoriteStock # StockPrice는 직접 사용 안함 (generate_daily_predictions에서 사용)
+from .utils import (
+    get_market_macro_data, PANDAS_TA_AVAILABLE,
+    add_fundamental_indicator_features,
+    get_krx_stock_list, get_future_trading_dates_list, calculate_all_features,
+    get_kr_holidays, 
+    get_past_trading_dates_list # utils.py에 이 함수가 정의되어 있어야 합니다.
+)
+from .models import PredictedStockPrice, FavoriteStock, StockPrice
 
 ML_MODELS_DIR = settings.ML_MODELS_DIR
 
-# --- 모델 입력 피처 정의 ---
-# 이 부분은 사용자의 새로운 데이터셋 및 학습된 모델의 실제 입력 피처와 정확히 일치해야 합니다.
-# 코랩에서 최종적으로 모델 학습에 사용한 피처 목록을 여기에 반영해야 합니다.
-
-# 1. 기본 OHLCV 및 변동률
-BASE_OHLCV_COLS = ['Open', 'High', 'Low', 'Close', 'Volume', 'Change']
-
-# 2. 기술적 지표 (기존 + 신규, 컬럼명은 pandas-ta 생성 기준 또는 사용자가 CSV에 저장한 이름 기준)
-# startup_tasks.py에서 CSV 생성 시 컬럼명과 일치해야 함
-EXISTING_TA_COLS = [
-    'ATR_14', 
-    'BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', # 볼린저밴드
-    'RSI_14',
-    'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9', # MACD
-]
-NEW_TA_COLS = [ # startup_tasks.py와 일치
-    'STOCHk_14_3_3', 'STOCHd_14_3_3', # 스토캐스틱
-    'OBV', # On Balance Volume
-    'ADX_14', 'DMP_14', 'DMN_14' # ADX, DMI
-]
-# 만약 사용자의 새로운 데이터셋에 추가적인 기술적 지표가 있다면 여기에 추가해야 합니다.
-# 예: USER_CUSTOM_TA_COLS = ['EMA_50', 'WILLR_14']
-
-# 3. 시장 지수 데이터 (KOSPI 또는 KOSDAQ) - market_name_upper에 따라 동적으로 결정됨
-# get_feature_columns_for_market 함수 내에서 처리
-
-# 4. 거시경제 지표
-MACRO_DATA_COLS = ['USD_KRW_Close', 'USD_KRW_Change']
-
-# 5. 투자자별 매매동향
-INVESTOR_COLS_MODEL_INPUT = ['Indi', 'Foreign', 'Organ'] # startup_tasks.py의 INVESTOR_COLS_FOR_CSV와 일치
-
-# 6. 펀더멘털 데이터
-FUNDAMENTAL_COLS_MODEL_INPUT = ['Marcap', 'PER', 'PBR'] # startup_tasks.py의 FUNDAMENTAL_COLS_FOR_CSV와 일치
-# 만약 사용자의 새로운 데이터셋에 추가 펀더멘털 지표(예: EPS, BPS, DPS, ROE 등)가 있다면 여기에 추가해야 합니다.
-# 예: USER_CUSTOM_FUNDAMENTAL_COLS = ['EPS', 'BPS', 'DPS', 'ROE']
-
-
-def get_feature_columns_for_market(market_name_upper):
-    """
-    지정된 시장에 대한 모델 입력 피처 컬럼 목록을 반환합니다.
-    이 함수는 generate_daily_predictions.py에서도 동일하게 사용될 수 있도록 일관성을 유지해야 합니다.
-    사용자의 새로운 데이터셋에 맞춰 피처 목록을 정확하게 정의해야 합니다.
-    """
-    market_specific_index_cols = []
-    if market_name_upper == "KOSPI":
-        market_specific_index_cols = ['KOSPI_Close', 'KOSPI_Change']
-    elif market_name_upper == "KOSDAQ":
-        market_specific_index_cols = ['KOSDAQ_Close', 'KOSDAQ_Change']
-    else:
-        # 이 경우는 발생하지 않도록 호출하는 쪽에서 시장명을 KOSPI 또는 KOSDAQ으로 표준화해야 함
-        error_message = f"Unsupported market '{market_name_upper}' for feature column definition."
-        # print(f"[ERROR][get_feature_columns_for_market] {error_message}") # 로깅
-        raise ValueError(error_message) 
-
-    # 모든 피처 그룹을 조합
-    final_columns = (
-        BASE_OHLCV_COLS + 
-        EXISTING_TA_COLS + 
-        NEW_TA_COLS + 
-        # USER_CUSTOM_TA_COLS + # 필요시 추가
-        market_specific_index_cols + 
-        MACRO_DATA_COLS +
-        INVESTOR_COLS_MODEL_INPUT +
-        FUNDAMENTAL_COLS_MODEL_INPUT
-        # USER_CUSTOM_FUNDAMENTAL_COLS # 필요시 추가
-    )
-    
-    # 모델 학습 시 사용된 피처의 정확한 개수와 일치해야 함
-    # 이 값은 실제 학습된 모델의 입력 피처 수에 따라 달라져야 합니다.
-    # 예를 들어, 기존 30개에서 새로운 피처가 추가/삭제되었다면 이 값을 조정해야 합니다.
-    EXPECTED_FEATURE_COUNT = len(final_columns) # 동적으로 계산된 피처 수
-    
-    # print(f"[DEBUG][get_feature_columns_for_market] For {market_name_upper}, expected features ({EXPECTED_FEATURE_COUNT}): {final_columns}")
-
-    if len(final_columns) == 0 : # 피처 정의가 아예 안된 경우 방지
-         error_message = (f"Feature column definition IS EMPTY for {market_name_upper}.")
-         raise ValueError(error_message)
-
-    # # 주석 처리: 피처 개수 고정 검증은 실제 모델에 따라 유동적이므로, 일단 제거. 필요시 활성화.
-    # # 현재는 동적으로 계산된 피처 수를 사용하므로, 이 검증은 항상 통과하게 됨.
-    # # 만약 특정 개수로 고정해야 한다면, EXPECTED_FEATURE_COUNT를 상수로 정의하고 아래 주석 해제.
-    # FIXED_EXPECTED_COUNT = 30 # 예시: 만약 항상 30개여야 한다면
-    # if len(final_columns) != FIXED_EXPECTED_COUNT:
-    #     error_message = (f"Feature column definition error for {market_name_upper}: "
-    #                      f"{len(final_columns)} features defined, expected {FIXED_EXPECTED_COUNT}. Features: {final_columns}")
-    #     # print(f"[ERROR][get_feature_columns_for_market] {error_message}") # 로깅
-    #     raise ValueError(error_message) 
-    
-    return final_columns
-
-# --- 나머지 전역 변수 및 함수들은 기존과 거의 동일하게 유지 ---
 TIME_STEPS = 10 
 FUTURE_TARGET_DAYS = 5 
-MIN_DATA_DAYS_FOR_PREDICT = 150 # 예측을 위해 필요한 최소 과거 데이터 일수 (TA 계산 등 고려)
 
 models_cache = {}
 scalers_X_cache = {}
 scalers_y_cache = {}
+model_info_cache = {}
 
-def load_model_and_scalers(model_key_name):
-    """지정된 모델 키에 해당하는 모델과 스케일러를 로드하고 캐시합니다."""
-    if model_key_name in models_cache:
-        # print(f"[INFO][load_model_and_scalers] Using cached model/scalers for {model_key_name}.")
-        return models_cache[model_key_name], scalers_X_cache[model_key_name], scalers_y_cache[model_key_name]
+KOSPI_TECH_LSTM_FEATURES = [
+    'Open', 'High', 'Low', 'Close', 'Volume', 'Change', 'ATR_14', 'BBL_20_2.0',
+    'BBM_20_2.0', 'BBU_20_2.0', 'RSI_14', 'MACD_12_26_9', 'MACDh_12_26_9',
+    'MACDs_12_26_9', 'STOCHk_14_3_3', 'STOCHd_14_3_3', 'OBV', 'ADX_14',
+    'DMP_14', 'DMN_14', 'KOSPI_Close', 'KOSPI_Change', 'USD_KRW_Close',
+    'USD_KRW_Change', 'Indi', 'Foreign', 'Organ', 'MarketCap', 'PBR', 'PER',
+    'MarketCap_is_nan', 'PBR_is_nan', 'PER_is_nan', 'PER_is_zero'
+]
+KOSPI_LOG_TRANSFORMED_FEATURES = [
+    'Open', 'High', 'Low', 'Close', 'KOSPI_Close', 'USD_KRW_Close',
+    'BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', 'MarketCap', 'PBR', 'PER'
+]
 
-    market_type_from_key = model_key_name.split("_")[0].lower() # 'kospi' or 'kosdaq'
-    analysis_type_from_key = "_".join(model_key_name.split("_")[1:]) # 'technical' or 'comprehensive' 등
+KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER = KOSPI_TECH_LSTM_FEATURES.copy() 
+KOSDAQ_LOG_TRANSFORMED_FEATURES_PLACEHOLDER = KOSPI_LOG_TRANSFORMED_FEATURES.copy()
+if 'KOSPI_Close' in KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER:
+    idx = KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER.index('KOSPI_Close')
+    KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER[idx] = 'KOSDAQ_Close'
+if 'KOSPI_Change' in KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER:
+    idx = KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER.index('KOSPI_Change')
+    KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER[idx] = 'KOSDAQ_Change'
+if 'KOSPI_Close' in KOSDAQ_LOG_TRANSFORMED_FEATURES_PLACEHOLDER: 
+    idx_log = KOSDAQ_LOG_TRANSFORMED_FEATURES_PLACEHOLDER.index('KOSPI_Close')
+    KOSDAQ_LOG_TRANSFORMED_FEATURES_PLACEHOLDER[idx_log] = 'KOSDAQ_Close'
 
-    # 파일명 규칙: {market}_{analysis_type}_model.keras, {market}_{analysis_type}_scaler_X.joblib 등
-    model_file = f"{market_type_from_key}_{analysis_type_from_key}_model.keras"
-    scaler_x_file = f"{market_type_from_key}_{analysis_type_from_key}_scaler_X.joblib"
-    scaler_y_file = f"{market_type_from_key}_{analysis_type_from_key}_scaler_y.joblib"
+KOSPI_GENERAL_LSTM_FEATURES_PLACEHOLDER = KOSPI_TECH_LSTM_FEATURES.copy() 
+KOSPI_GENERAL_LOG_FEATURES_PLACEHOLDER = KOSPI_LOG_TRANSFORMED_FEATURES.copy()
 
-    model_path = os.path.join(ML_MODELS_DIR, model_file)
-    scaler_x_path = os.path.join(ML_MODELS_DIR, scaler_x_file)
-    scaler_y_path = os.path.join(ML_MODELS_DIR, scaler_y_file)
+KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER = KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER.copy() 
+KOSDAQ_GENERAL_LOG_FEATURES_PLACEHOLDER = KOSDAQ_LOG_TRANSFORMED_FEATURES_PLACEHOLDER.copy()
+if 'KOSPI_Close' in KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER:
+    idx = KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER.index('KOSPI_Close')
+    KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER[idx] = 'KOSDAQ_Close'
+if 'KOSPI_Change' in KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER:
+    idx = KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER.index('KOSPI_Change')
+    KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER[idx] = 'KOSDAQ_Change'
+if 'KOSPI_Close' in KOSDAQ_GENERAL_LOG_FEATURES_PLACEHOLDER: 
+    idx_log = KOSDAQ_GENERAL_LOG_FEATURES_PLACEHOLDER.index('KOSPI_Close')
+    KOSDAQ_GENERAL_LOG_FEATURES_PLACEHOLDER[idx_log] = 'KOSDAQ_Close'
 
-    # print(f"[DEBUG][load_model_and_scalers] Attempting to load for key '{model_key_name}':")
-    # print(f"  Model: {model_path}")
-    # print(f"  Scaler X: {scaler_x_path}")
-    # print(f"  Scaler Y: {scaler_y_path}")
+DEFAULT_MODEL_PARAMS = {
+    'kospi_technical_lstm': {
+        'model_filename': 'kospi_technical_model.keras',
+        'scaler_X_filename': 'kospi_technical_scaler_X.joblib',
+        'scaler_y_filename': 'kospi_technical_scaler_y.joblib',
+        'time_steps': TIME_STEPS, 'model_was_log_trained': True, 
+        'market_name_for_features': 'KOSPI', 
+        'trained_feature_list': KOSPI_TECH_LSTM_FEATURES,
+        'log_transformed_input_features': KOSPI_LOG_TRANSFORMED_FEATURES,
+    },
+    'kosdaq_technical_lstm': {
+        'model_filename': 'kosdaq_technical_model.keras', 
+        'scaler_X_filename': 'kosdaq_technical_scaler_X.joblib',
+        'scaler_y_filename': 'kosdaq_technical_scaler_y.joblib',
+        'time_steps': TIME_STEPS, 'model_was_log_trained': True, 
+        'market_name_for_features': 'KOSDAQ',
+        'trained_feature_list': KOSDAQ_TECH_LSTM_FEATURES_PLACEHOLDER, 
+        'log_transformed_input_features': KOSDAQ_LOG_TRANSFORMED_FEATURES_PLACEHOLDER, 
+    },
+    'kospi_lstm': { 
+        'model_filename': 'kospi_lstm_model.keras', 
+        'scaler_X_filename': 'kospi_lstm_scaler_X.joblib',
+        'scaler_y_filename': 'kospi_lstm_scaler_y.joblib',
+        'time_steps': TIME_STEPS, 'model_was_log_trained': True, 
+        'market_name_for_features': 'KOSPI',
+        'trained_feature_list': KOSPI_GENERAL_LSTM_FEATURES_PLACEHOLDER, 
+        'log_transformed_input_features': KOSPI_GENERAL_LOG_FEATURES_PLACEHOLDER, 
+    },
+    'kosdaq_lstm': { 
+        'model_filename': 'kosdaq_lstm_model.keras', 
+        'scaler_X_filename': 'kosdaq_lstm_scaler_X.joblib',
+        'scaler_y_filename': 'kosdaq_lstm_scaler_y.joblib',
+        'time_steps': TIME_STEPS, 'model_was_log_trained': True, 
+        'market_name_for_features': 'KOSDAQ',
+        'trained_feature_list': KOSDAQ_GENERAL_LSTM_FEATURES_PLACEHOLDER, 
+        'log_transformed_input_features': KOSDAQ_GENERAL_LOG_FEATURES_PLACEHOLDER, 
+    }
+}
 
-    loaded_model = None
-    loaded_scaler_X = None
-    loaded_scaler_y = None
-    
+def load_model_and_scalers(market_name, model_type_key):
+    full_model_key = f"{market_name.lower()}_{model_type_key}"
+    if full_model_key in models_cache:
+        return (models_cache.get(full_model_key), scalers_X_cache.get(full_model_key),
+                scalers_y_cache.get(full_model_key), model_info_cache.get(full_model_key))
+    params = DEFAULT_MODEL_PARAMS.get(full_model_key)
+    if not params:
+        print(f"[ERROR][load_model_and_scalers] No model parameters for key: {full_model_key}")
+        return None, None, None, None
+    if not params.get('trained_feature_list'):
+         print(f"[ERROR][load_model_and_scalers] 'trained_feature_list' missing for model: {full_model_key}")
+         return None, None, None, None
+    model_path = os.path.join(ML_MODELS_DIR, params['model_filename'])
+    scaler_X_path = os.path.join(ML_MODELS_DIR, params['scaler_X_filename'])
+    scaler_y_path = os.path.join(ML_MODELS_DIR, params['scaler_y_filename'])
     try:
-        import tensorflow as tf 
-        import joblib
-
-        if os.path.exists(model_path):
-            try:
-                loaded_model = tf.keras.models.load_model(model_path)
-                # print(f"[INFO][load_model_and_scalers] Successfully loaded model: {model_file}")
-            except Exception as e_model:
-                print(f"[ERROR][load_model_and_scalers] Error loading model file {model_file}: {e_model}")
-        else:
-            print(f"[ERROR][load_model_and_scalers] Model file not found: {model_path}")
-
-        if os.path.exists(scaler_x_path):
-            try:
-                loaded_scaler_X = joblib.load(scaler_x_path)
-                # print(f"[INFO][load_model_and_scalers] Successfully loaded scaler X: {scaler_x_file}")
-            except Exception as e_scaler_x:
-                print(f"[ERROR][load_model_and_scalers] Error loading scaler X file {scaler_x_file}: {e_scaler_x}")
-        else:
-            print(f"[ERROR][load_model_and_scalers] Scaler X file not found: {scaler_x_path}")
-
-        if os.path.exists(scaler_y_path):
-            try:
-                loaded_scaler_y = joblib.load(scaler_y_path)
-                # print(f"[INFO][load_model_and_scalers] Successfully loaded scaler Y: {scaler_y_file}")
-            except Exception as e_scaler_y:
-                print(f"[ERROR][load_model_and_scalers] Error loading scaler Y file {scaler_y_file}: {e_scaler_y}")
-        else:
-            print(f"[ERROR][load_model_and_scalers] Scaler Y file not found: {scaler_y_path}")
-        
-        if not all([loaded_model, loaded_scaler_X, loaded_scaler_y]):
-            print(f"[ERROR][load_model_and_scalers] One or more components failed to load for {model_key_name}.")
-            return None, None, None # 하나라도 실패하면 모두 None 반환
-            
-        models_cache[model_key_name] = loaded_model
-        scalers_X_cache[model_key_name] = loaded_scaler_X
-        scalers_y_cache[model_key_name] = loaded_scaler_y
-        # print(f"[INFO][load_model_and_scalers] Loaded and cached {model_key_name} model and scalers.")
-        return loaded_model, loaded_scaler_X, loaded_scaler_y
-
-    except ImportError as ie:
-        print(f"[CRITICAL ERROR][load_model_and_scalers] Import error for tensorflow or joblib: {ie}. Please ensure they are installed.")
-        traceback.print_exc()
-        return None, None, None
+        if not os.path.exists(model_path): raise FileNotFoundError(f"Model file not found: {model_path}")
+        if not os.path.exists(scaler_X_path): raise FileNotFoundError(f"Scaler X not found: {scaler_X_path}")
+        if not os.path.exists(scaler_y_path): raise FileNotFoundError(f"Scaler Y not found: {scaler_y_path}")
+        model = tf.keras.models.load_model(model_path, compile=False)
+        scaler_X = joblib.load(scaler_X_path)
+        scaler_y = joblib.load(scaler_y_path)
+        current_model_info = {
+            'time_steps': params['time_steps'],
+            'model_was_log_trained': params['model_was_log_trained'], 
+            'market_name_for_features': params['market_name_for_features'], 
+            'trained_feature_list': params.get('trained_feature_list'),
+            'log_transformed_input_features': params.get('log_transformed_input_features', []) 
+        }
+        models_cache[full_model_key] = model
+        scalers_X_cache[full_model_key] = scaler_X
+        scalers_y_cache[full_model_key] = scaler_y
+        model_info_cache[full_model_key] = current_model_info
+        print(f"[INFO][load_model_and_scalers] Loaded model/scalers for {full_model_key}")
+        return model, scaler_X, scaler_y, current_model_info
+    except FileNotFoundError as fnf_err:
+        print(f"[ERROR][load_model_and_scalers] File not found for {full_model_key}: {fnf_err}")
     except Exception as e:
-        print(f"[CRITICAL ERROR][load_model_and_scalers] An unexpected exception occurred during loading components for {model_key_name}: {e}")
-        traceback.print_exc()
-        return None, None, None
-
-# 앱 시작 시 주요 모델 미리 로드 (선택 사항, 최초 요청 시 지연 감소 효과)
-# 실제 운영 환경에서는 apps.py의 ready() 메소드에서 호출하는 것을 고려할 수 있습니다.
-# def preload_main_models():
-# print("[INFO][views.py] Preloading main KOSPI/KOSDAQ technical models...")
-# load_model_and_scalers("kospi_technical")
-# load_model_and_scalers("kosdaq_technical")
-# print("[INFO][views.py] Main models preloading attempt finished.")
-# preload_main_models() # 개발 중에는 주석 처리 가능
-
-
-def get_krx_stock_list_predict_cached():
-    """FDR을 통해 KRX 전체 종목 목록(종목명, 코드, 시장구분)을 가져와 캐시합니다."""
-    cache_key = 'krx_stock_list_predict_app_v6_with_market_standardized' # 캐시 키 버전 관리
-    cached_list = cache.get(cache_key)
-    if cached_list is not None:
-        # print(f"[DEBUG][get_krx_stock_list_predict_cached] Using cached stock list (found {len(cached_list)} items).")
-        return cached_list
-    
-    # print("[DEBUG][get_krx_stock_list_predict_cached] Cache miss. Fetching new stock list from FDR.")
-    try:
-        df_krx_fdr = fdr.StockListing('KRX') 
-        if df_krx_fdr.empty:
-            # print("[WARNING][get_krx_stock_list_predict_cached] FDR StockListing('KRX') returned empty DataFrame.")
-            cache.set(cache_key, [], timeout=60*5) # 짧은 시간 캐시 후 재시도 유도
-            return []
-
-        # 컬럼명 일관성 처리 ('Symbol' 또는 'Code')
-        code_col = 'Symbol' if 'Symbol' in df_krx_fdr.columns else 'Code'
-        if 'Name' not in df_krx_fdr.columns or code_col not in df_krx_fdr.columns or 'Market' not in df_krx_fdr.columns: 
-            # print(f"[ERROR][get_krx_stock_list_predict_cached] Required columns (Name, {code_col}, Market) not found in FDR result.")
-            cache.set(cache_key, [], timeout=60*5)
-            return []
-
-        # 필요한 컬럼만 선택 및 결측치 처리, 중복 제거
-        df_krx_fdr = df_krx_fdr[['Name', code_col, 'Market']].dropna(subset=['Name', code_col, 'Market'])
-        df_krx_fdr = df_krx_fdr.drop_duplicates(subset=[code_col]) 
-        
-        stock_list = []
-        for _, r in df_krx_fdr.iterrows():
-            market_name = str(r['Market']).strip().upper()
-            # 시장명 표준화 (예: "KOSDAQ GLOBAL" -> "KOSDAQ")
-            if "KOSDAQ GLOBAL" in market_name: standardized_market = "KOSDAQ"
-            elif "KONEX" in market_name: standardized_market = "KONEX" # 코넥스도 별도 처리
-            elif market_name in ["KOSPI", "KOSDAQ"]: standardized_market = market_name
-            else: standardized_market = "OTHER" # 기타 시장 (예측 대상에서 제외될 수 있음)
-            
-            stock_list.append({
-                'name': str(r['Name']).strip(), 
-                'code': str(r[code_col]).strip(), 
-                'market_original': market_name, # FDR 원본 시장명
-                'market_standardized': standardized_market # 예측 로직에서 사용할 표준화된 시장명
-            })
-        
-        # print(f"[INFO][get_krx_stock_list_predict_cached] Successfully fetched and processed {len(stock_list)} stock items from FDR.")
-        cache.set(cache_key, stock_list, timeout=60*60*12) # 12시간 캐시
-        return stock_list
-    except Exception as e:
-        print(f"[ERROR][get_krx_stock_list_predict_cached] KRX stock list fetch/processing error: {e}")
-        traceback.print_exc()
-        cache.set(cache_key, [], timeout=60*5)
-        return []
-
-def get_stock_info_for_predict(stock_input_query):
-    """입력된 종목명 또는 코드를 기반으로 표준화된 시장 정보, 코드, 이름 등을 반환합니다."""
-    list_of_stock_dicts = get_krx_stock_list_predict_cached()
-    if not list_of_stock_dicts:
-        # print(f"[WARNING][get_stock_info_for_predict] Stock list is empty. Cannot find info for '{stock_input_query}'.")
-        return None, None, None, None 
-    
-    found_stock_dict = None
-    processed_input = stock_input_query.strip()
-    processed_input_upper = processed_input.upper()
-
-    # 6자리 숫자인 경우 코드로 먼저 검색
-    if processed_input.isdigit() and len(processed_input) == 6:
-        found_stock_dict = next((s for s in list_of_stock_dicts if s.get('code') == processed_input), None)
-    
-    # 코드로 못 찾았거나, 코드가 아닌 경우 이름으로 검색
-    if not found_stock_dict:
-        found_stock_dict = next((s for s in list_of_stock_dicts if s.get('name') and s.get('name').strip().upper() == processed_input_upper), None)
-        # 부분 일치 검색 (필요시 추가)
-        # if not found_stock_dict:
-        #     found_stock_dict = next((s for s in list_of_stock_dicts if s.get('name') and processed_input_upper in s.get('name').strip().upper()), None)
-
-    if found_stock_dict:
-        standardized_market = found_stock_dict.get('market_standardized')
-        original_market_name = found_stock_dict.get('market_original')
-        stock_code = found_stock_dict.get('code')
-        stock_name = found_stock_dict.get('name')
-
-        if not standardized_market or not stock_code or not stock_name: # 필수 정보 누락 체크
-            # print(f"[WARNING][get_stock_info_for_predict] Found stock dict for '{stock_input_query}' but essential info missing: {found_stock_dict}")
-            return None, None, None, None
-            
-        # print(f"[DEBUG][get_stock_info_for_predict] Found for '{stock_input_query}': Code={stock_code}, Name={stock_name}, StandardMarket={standardized_market}, OriginalMarket={original_market_name}")
-        return standardized_market, stock_code, stock_name, original_market_name
-    
-    # print(f"[INFO][get_stock_info_for_predict] No stock info found for query: '{stock_input_query}'")
+        print(f"[ERROR][load_model_and_scalers] Error loading for {full_model_key}: {e}\n{traceback.format_exc()}")
     return None, None, None, None
 
-
-def get_future_trading_dates_list(start_date_input, num_days):
-    """주어진 시작일 다음 거래일부터 향후 num_days 만큼의 거래일 목록을 반환합니다."""
-    from pandas.tseries.offsets import BDay # 함수 내에서 임포트
-
-    if not isinstance(start_date_input, date_type):
-        try: start_date_input = pd.to_datetime(start_date_input).date()
-        except: start_date_input = datetime.now().date() 
-    
-    # 휴일 계산 범위를 좀 더 동적으로 설정 (예: 시작 연도부터 +2년)
-    # 또는 매년 휴일 데이터를 업데이트하는 별도 로직 필요
-    kr_holidays_years = list(set([start_date_input.year + i for i in range(3)])) # 시작년도, +1년, +2년
-    kr_holidays = holidays.KR(years=kr_holidays_years)
-    
-    future_dates = []
-    # 시작일 다음 날부터 계산 시작
-    current_date_pd = pd.Timestamp(start_date_input) + BDay(1) 
-    
-    # current_date_pd가 주말이거나 휴일이면 다음 거래일로 이동
-    while current_date_pd.weekday() >= 5 or current_date_pd.date() in kr_holidays:
-        current_date_pd += BDay(1)
-        
-    while len(future_dates) < num_days:
-        future_dates.append(current_date_pd.date())
-        current_date_pd += BDay(1) # 다음 날로 이동
-        # 다시 주말/휴일 체크
-        while current_date_pd.weekday() >= 5 or current_date_pd.date() in kr_holidays:
-            current_date_pd += BDay(1)
-            
-    return future_dates
-
-
 def predict_info_view(request):
-    """주가 예측 페이지를 렌더링합니다. URL 파라미터로 초기 검색어 처리."""
-    context = {
-        'stock_name_for_display': '', 
-        'ticker': '', 
-        'error_message': None, 
-        'is_favorite': False, 
-        'market_name': '' # FDR 원본 시장명 (표시용)
-    }
-    initial_query = request.GET.get('stock_query', '').strip()
-
-    if initial_query:
-        # get_stock_info_for_predict는 표준화된 시장명, 코드, 이름, 원본 시장명을 반환
-        std_market, code, name, original_market = get_stock_info_for_predict(initial_query) 
-        if code and name: 
-            context['stock_name_for_display'] = name
-            context['ticker'] = code
-            context['market_name'] = original_market # 표시용은 원본 시장명 사용
-            if request.user.is_authenticated:
-                context['is_favorite'] = FavoriteStock.objects.filter(user=request.user, stock_code=code).exists()
-        else: 
-            context['stock_name_for_display'] = initial_query # 검색 실패 시 입력값 그대로 표시
-            context['error_message'] = f"'{initial_query}'에 대한 종목 정보를 찾을 수 없습니다. 정확한 종목명 또는 6자리 코드를 입력해주세요."
-            
+    user = request.user
+    initial_stock_code, initial_stock_name, initial_market_name = None, None, None
+    is_favorite, stock_name_for_display = False, ""
+    if user.is_authenticated:
+        favorite = FavoriteStock.objects.filter(user=user).order_by('added_at').first()
+        if favorite:
+            initial_stock_code, initial_stock_name, initial_market_name = favorite.stock_code, favorite.stock_name, favorite.market_name
+            is_favorite, stock_name_for_display = True, initial_stock_name
+    stock_query_from_url = request.GET.get('stock_query')
+    if stock_query_from_url:
+        temp_stock_info = None
+        krx_list_all_markets = get_krx_stock_list(market='KOSPI,KOSDAQ')
+        if stock_query_from_url.isdigit() and len(stock_query_from_url) == 6:
+            found_stock = next((s for s in krx_list_all_markets if s['Code'] == stock_query_from_url), None)
+            if found_stock: temp_stock_info = found_stock
+        else:
+            found_stock = next((s for s in krx_list_all_markets if stock_query_from_url.lower() in s['Name'].lower()), None)
+            if found_stock: temp_stock_info = found_stock
+        if temp_stock_info:
+            initial_stock_code, initial_stock_name, initial_market_name = temp_stock_info['Code'], temp_stock_info['Name'], temp_stock_info['Market']
+            stock_name_for_display = initial_stock_name
+            if user.is_authenticated: is_favorite = FavoriteStock.objects.filter(user=user, stock_code=initial_stock_code).exists()
+            else: is_favorite = False
+        else: stock_name_for_display = stock_query_from_url
+    context = {'ticker': initial_stock_code, 'stock_name_for_display': stock_name_for_display,
+               'market_name': initial_market_name, 'is_favorite': is_favorite,
+               'max_favorites': settings.MAX_FAVORITES_PER_USER if hasattr(settings, 'MAX_FAVORITES_PER_USER') else 5}
     return render(request, 'predict_info/predict_info.html', context)
 
-
 def predict_stock_price_ajax(request):
-    """
-    AJAX 요청을 통해 특정 종목의 예측 가격을 DB에서 조회하여 반환합니다.
-    이 함수는 직접 예측을 수행하지 않고, generate_daily_predictions.py에 의해 미리 계산된 결과를 사용합니다.
-    """
     if request.method == 'POST':
-        stock_input = request.POST.get('stock_input', '').strip()
-        analysis_type_req = request.POST.get('analysis_type', 'technical').strip().lower()
+        stock_input_from_frontend = request.POST.get('stock_input')
+        analysis_type_from_frontend = request.POST.get('analysis_type', 'technical') 
+        if not stock_input_from_frontend:
+            return JsonResponse({'error': '종목명 또는 코드를 입력해주세요.'}, status=400)
+        resolved_stock_code, resolved_stock_name, resolved_market_name = None, None, None
+        krx_list = get_krx_stock_list(market='KOSPI,KOSDAQ')
+        if stock_input_from_frontend.isdigit() and len(stock_input_from_frontend) == 6:
+            found_stock = next((s for s in krx_list if s['Code'] == stock_input_from_frontend), None)
+            if found_stock:
+                resolved_stock_code, resolved_stock_name, resolved_market_name = found_stock['Code'], found_stock['Name'], found_stock['Market'].upper()
+        else:
+            found_stock = next((s for s in krx_list if stock_input_from_frontend.lower() in s['Name'].lower()), None)
+            if found_stock:
+                resolved_stock_code, resolved_stock_name, resolved_market_name = found_stock['Code'], found_stock['Name'], found_stock['Market'].upper()
+        if not resolved_stock_code or not resolved_market_name:
+            return JsonResponse({'error': f"'{stock_input_from_frontend}'에 해당하는 종목을 찾을 수 없습니다."}, status=400)
 
-        if not stock_input: 
-            return JsonResponse({'error': '종목명 또는 종목코드를 입력해주세요.'}, status=400)
-
-        # 입력값을 바탕으로 표준화된 시장 정보, 코드, 이름, 원본 시장명 조회
-        standardized_market, stock_code, stock_name, original_market_name_for_display = get_stock_info_for_predict(stock_input)
+        model_type_key_for_load = 'technical_lstm' if analysis_type_from_frontend == 'technical' else ('lstm' if analysis_type_from_frontend == 'lstm' else 'technical_lstm')
         
-        if not standardized_market or not stock_code or not stock_name: 
-            return JsonResponse({'error': f"'{stock_input}'에 해당하는 종목 정보를 찾을 수 없습니다. 자동완성 기능을 이용하거나 정확한 정보를 입력해주세요."}, status=400)
-
-        # 현재는 KOSPI, KOSDAQ만 지원 (모델이 준비된 시장)
-        if standardized_market not in ["KOSPI", "KOSDAQ"]: 
-            return JsonResponse({'error': f"'{stock_name}'({original_market_name_for_display}) 시장은 현재 예측을 지원하지 않습니다. (지원 시장: KOSPI, KOSDAQ)"}, status=400)
-
-        # DB에서 예측 결과 조회
         try:
-            # 가장 최근 예측 기준일의 예측 결과 가져오기
-            latest_prediction_entry = PredictedStockPrice.objects.filter(
-                stock_code=stock_code,
-                analysis_type=analysis_type_req, # 요청된 분석 유형 사용
-                market_name=standardized_market.upper() # DB에는 대문자로 저장되어 있을 것이므로
-            ).order_by('-prediction_base_date').first()
-
-            if not latest_prediction_entry:
-                return JsonResponse({'error': f"'{stock_name}'에 대한 '{analysis_type_req}' 분석 예측 결과를 찾을 수 없습니다. (데이터 업데이트 전이거나 해당 종목/분석 유형의 예측이 생성되지 않았을 수 있습니다.)"}, status=404)
-
-            prediction_base_date_from_db = latest_prediction_entry.prediction_base_date
+            model, scaler_X, scaler_y, model_info = load_model_and_scalers(resolved_market_name, model_type_key=model_type_key_for_load)
+            if not model or not scaler_X or not scaler_y or not model_info:
+                return JsonResponse({'error': f'{resolved_market_name} 시장의 {model_type_key_for_load} 모델/스케일러를 로드할 수 없습니다.'}, status=500)
             
-            # 해당 기준일의 모든 예측일자 데이터 가져오기
-            predictions_from_db = PredictedStockPrice.objects.filter(
-                stock_code=stock_code,
-                prediction_base_date=prediction_base_date_from_db,
-                analysis_type=analysis_type_req,
-                market_name=standardized_market.upper()
-            ).order_by('predicted_date')
+            trained_feature_list = model_info.get('trained_feature_list')
+            if not trained_feature_list: 
+                return JsonResponse({'error': f"모델 '{resolved_market_name}_{model_type_key_for_load}'에 대한 학습된 피처 목록이 정의되지 않았습니다."}, status=500)
 
-            if predictions_from_db.exists():
-                predictions_output = [{'date': p.predicted_date.strftime('%Y-%m-%d'), 
-                                       'price': round(float(p.predicted_price))} 
-                                      for p in predictions_from_db]
-                
-                is_favorite_stock = False
-                if request.user.is_authenticated:
-                    is_favorite_stock = FavoriteStock.objects.filter(user=request.user, stock_code=stock_code).exists()
+            log_transformed_input_features = model_info.get('log_transformed_input_features', [])
+            time_steps = model_info['time_steps']
+            model_was_log_trained_target = model_info['model_was_log_trained']
+            market_name_for_feature_calc = model_info.get('market_name_for_features', resolved_market_name)
 
-                return JsonResponse({
-                    'stock_code': stock_code, 
-                    'stock_name': stock_name, 
-                    'market_name': original_market_name_for_display, # 표시용은 원본 시장명
-                    'analysis_type': analysis_type_req, 
-                    'predictions': predictions_output,
-                    'last_data_date': prediction_base_date_from_db.strftime('%Y-%m-%d'), 
-                    'is_favorite': is_favorite_stock, 
-                    'data_source': 'database_prediction', # 데이터 출처 명시
-                    'is_authenticated': request.user.is_authenticated 
-                })
-            else:
-                # 이 경우는 latest_prediction_entry는 있었는데, filter 결과가 없는 이상한 상황
-                print(f"[ERROR][predict_stock_price_ajax] Inconsistency for {stock_name}({stock_code}). Base entry found for {prediction_base_date_from_db}, but no series predictions.")
-                return JsonResponse({'error': f"'{stock_name}'에 대한 예측 데이터 구성에 문제가 있습니다. 관리자에게 문의해주세요."}, status=500)
-        
-        except Exception as e_db_lookup:
-            print(f"[ERROR][predict_stock_price_ajax] DB 조회 중 예외 발생 ({stock_name}, {analysis_type_req}): {e_db_lookup}")
-            traceback.print_exc()
-            return JsonResponse({'error': f"'{stock_name}'의 예측 결과를 가져오는 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}, status=500)
+            latest_data_in_db = StockPrice.objects.filter(stock_code=resolved_stock_code).order_by('-date').first()
+            if not latest_data_in_db:
+                return JsonResponse({'error': f'{resolved_stock_name}({resolved_stock_code}) DB에 데이터가 없습니다.'}, status=400)
             
-    return JsonResponse({'error': '잘못된 요청입니다 (POST 요청 필요).'}, status=400)
+            prediction_base_date_for_model_input = latest_data_in_db.date 
 
-
-def search_stocks_ajax(request):
-    """종목 검색 자동완성을 위한 AJAX 핸들러."""
-    term = request.GET.get('term', '').strip()
-    limit = int(request.GET.get('limit', 7)) 
-    
-    if not term: 
-        return JsonResponse([], safe=False)
-        
-    all_stocks_list = get_krx_stock_list_predict_cached()
-    if not all_stocks_list: 
-        # print("[WARNING][search_stocks_ajax] Stock list for autocomplete is empty.")
-        return JsonResponse({'error': '종목 목록을 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.'}, status=500)
-        
-    results = []
-    term_upper = term.upper() 
-    
-    for item in all_stocks_list:
-        stock_name_val = item.get('name','')
-        stock_code_val = item.get('code','')
-        # market_val = item.get('market_standardized','') # 표준화된 시장명
-        market_display_val = item.get('market_original', item.get('market_standardized', '')) # 표시용은 원본, 없으면 표준
-
-        # 코넥스 및 기타 시장은 자동완성에서 제외 (선택적)
-        if item.get('market_standardized') not in ['KOSPI', 'KOSDAQ']:
-            continue
-
-        if term_upper in stock_name_val.upper() or term_upper in stock_code_val:
-            results.append({
-                'label': f"{stock_name_val} ({stock_code_val}) - {market_display_val}", 
-                'value': stock_name_val, # 자동완성 선택 시 입력창에 채워질 값
-                'code': stock_code_val, 
-                'market': market_display_val # 선택 시 활용할 시장 정보 (원본)
-            })
-        if len(results) >= limit: 
-            break
+            min_ta_window = 120
+            min_records_needed_for_sequence_and_ta = min_ta_window + time_steps
+            calendar_day_fetch_multiplier = 1.7 
+            fetch_buffer_days = 45 
+            required_history_calendar_days = int(min_records_needed_for_sequence_and_ta * calendar_day_fetch_multiplier) + fetch_buffer_days
+            db_start_date = prediction_base_date_for_model_input - timedelta(days=required_history_calendar_days)
             
-    return JsonResponse(results, safe=False)
+            stock_price_qs = StockPrice.objects.filter(
+                stock_code=resolved_stock_code, 
+                date__gte=db_start_date, 
+                date__lte=prediction_base_date_for_model_input
+            ).order_by('date')
 
+            if stock_price_qs.count() < min_records_needed_for_sequence_and_ta:
+                 return JsonResponse({'error': f'{resolved_stock_name}({resolved_stock_code}) 예측을 위한 DB 데이터 부족 (필요: {min_records_needed_for_sequence_and_ta}일, 현재: {stock_price_qs.count()}일). 기준일: {prediction_base_date_for_model_input}'}, status=400)
 
-@login_required 
-def toggle_favorite_stock_ajax(request):
-    """관심 종목 추가/삭제를 처리하는 AJAX 핸들러."""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            stock_code = data.get('stock_code')
-            stock_name = data.get('stock_name')
-            # market_name은 FDR 원본 시장명을 받도록 HTML에서 수정됨
-            market_name_from_frontend = data.get('market_name') 
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': '잘못된 JSON 형식입니다.'}, status=400)
+            raw_df_from_db = pd.DataFrame(list(stock_price_qs.values()))
+            raw_df_from_db['date'] = pd.to_datetime(raw_df_from_db['date']) # 'date' 컬럼을 datetime으로 변환
+            raw_df_from_db.set_index('date', inplace=True) # DatetimeIndex로 설정
+            
+            past_data_for_graph = []
+            if len(raw_df_from_db) >= 5:
+                past_df_slice = raw_df_from_db.iloc[-5:] 
+                for p_date_idx, p_row in past_df_slice.iterrows():
+                    past_data_for_graph.append({
+                        'date': p_date_idx.strftime('%Y-%m-%d'), 
+                        'price': round(float(p_row['close_price']), 2) if pd.notna(p_row['close_price']) else None
+                    })
+            
+            base_cols_map_for_calc = {
+                'Open': 'open_price', 'High': 'high_price', 'Low': 'low_price', 'Close': 'close_price', 'Volume': 'volume',
+                'MarketCap': 'market_cap', 'PBR': 'pbr', 'PER': 'per',
+                'Indi': 'indi_volume', 'Foreign': 'foreign_volume', 'Organ': 'organ_volume'
+            }
+            # df_for_feature_calc는 raw_df_from_db (DatetimeIndex를 가짐)를 기반으로 생성
+            df_for_feature_calc = pd.DataFrame(index=raw_df_from_db.index) 
+            for calc_col, db_field_name in base_cols_map_for_calc.items():
+                if db_field_name in raw_df_from_db:
+                    df_for_feature_calc[calc_col] = raw_df_from_db[db_field_name]
+                else:
+                    if calc_col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+                         return JsonResponse({'error': f"DB에 필수 컬럼 '{db_field_name}'({calc_col}) 없음"}, status=500)
+                    df_for_feature_calc[calc_col] = np.nan
 
-        if not all([stock_code, stock_name, market_name_from_frontend]):
-            return JsonResponse({'status': 'error', 'message': '종목 코드, 이름, 시장 정보가 모두 필요합니다.'}, status=400)
+            if 'Close' in df_for_feature_calc.columns:
+                df_for_feature_calc['Change'] = df_for_feature_calc['Close'].pct_change()
+            else: df_for_feature_calc['Change'] = np.nan
 
-        user = request.user
-        MAX_FAVORITES = getattr(settings, 'MAX_FAVORITE_STOCKS', 10) # 설정에서 최대 개수 가져오기
-
-        try:
-            favorite_obj, created = FavoriteStock.objects.get_or_create(
-                user=user,
-                stock_code=stock_code,
-                defaults={
-                    'stock_name': stock_name, 
-                    'market_name': market_name_from_frontend # 프론트에서 받은 시장명 저장
-                }
+            calc_start_date_str = df_for_feature_calc.index.min().strftime('%Y-%m-%d')
+            calc_end_date_str = df_for_feature_calc.index.max().strftime('%Y-%m-%d')
+            
+            other_market_for_mm_calc = 'KOSDAQ' if market_name_for_feature_calc.upper() == 'KOSPI' else 'KOSPI'
+            market_macro_df_calc = get_market_macro_data(
+                calc_start_date_str, calc_end_date_str, 
+                market_name_for_feature_calc.upper(),
+                other_market_name_for_index=other_market_for_mm_calc
             )
 
-            if created: 
-                if FavoriteStock.objects.filter(user=user).count() > MAX_FAVORITES:
-                    favorite_obj.delete() # 한도 초과 시 방금 만든 것 삭제
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': f'관심 종목은 최대 {MAX_FAVORITES}개까지 추가할 수 있습니다.',
-                        'is_favorite': False # 실제로는 추가 안됨
-                    })
-                return JsonResponse({
-                    'status': 'success', 
-                    'message': f"'{stock_name}'을(를) 관심 종목에 추가했습니다.",
-                    'is_favorite': True
-                })
-            else: # 이미 존재하면 삭제 (토글)
-                favorite_obj.delete()
-                return JsonResponse({
-                    'status': 'success',
-                    'message': f"'{stock_name}'을(를) 관심 종목에서 삭제했습니다.",
-                    'is_favorite': False
-                })
-        except Exception as e:
-            print(f"[ERROR][toggle_favorite_stock_ajax] 관심종목 처리 중 오류 ({user.username}, {stock_code}): {e}")
-            traceback.print_exc()
-            return JsonResponse({'status': 'error', 'message': '관심 종목 처리 중 오류가 발생했습니다. 다시 시도해주세요.'}, status=500)
+            processed_df_superset = calculate_all_features(
+                stock_df_ohlcv=df_for_feature_calc[['Open', 'High', 'Low', 'Close', 'Volume', 'Change']],
+                market_macro_data_df=market_macro_df_calc,
+                investor_df=df_for_feature_calc[['Indi', 'Foreign', 'Organ']],
+                fundamental_df=df_for_feature_calc[['MarketCap', 'PBR', 'PER']],
+                pandas_ta_available=PANDAS_TA_AVAILABLE
+            )
+            processed_df_superset = add_fundamental_indicator_features(processed_df_superset) 
+            
+            final_features_df = pd.DataFrame(index=processed_df_superset.index)
+            missing_features_in_superset = []
+            for feature_name in trained_feature_list:
+                if feature_name in processed_df_superset:
+                    final_features_df[feature_name] = processed_df_superset[feature_name]
+                else:
+                    missing_features_in_superset.append(feature_name)
+            
+            if missing_features_in_superset:
+                return JsonResponse({'error': f"필수 피처 누락: {missing_features_in_superset}"}, status=500)
+            
+            for col in final_features_df.columns: 
+                if final_features_df[col].dtype == 'object':
+                    try: final_features_df[col] = pd.to_numeric(final_features_df[col], errors='coerce')
+                    except Exception as e_conv:
+                        print(f"Warning: Col {col} to numeric failed for {resolved_stock_code}. Err: {e_conv}")
+                        final_features_df[col] = np.nan 
+                if not pd.api.types.is_float_dtype(final_features_df[col]) and pd.api.types.is_numeric_dtype(final_features_df[col]):
+                     if col not in ['MarketCap_is_nan', 'PBR_is_nan', 'PER_is_nan', 'PER_is_zero']:
+                        try: final_features_df[col] = final_features_df[col].astype(float)
+                        except ValueError: final_features_df[col] = pd.to_numeric(final_features_df[col], errors='coerce')
 
-    return JsonResponse({'status': 'error', 'message': '잘못된 요청입니다 (POST 방식 필요).'}, status=400)
+            if 'Change' in final_features_df.columns:
+                final_features_df['Change'] = pd.to_numeric(final_features_df['Change'], errors='coerce').fillna(0)
+            final_features_df = final_features_df.ffill().bfill()
+
+            if log_transformed_input_features:
+                for col_to_log in log_transformed_input_features:
+                    if col_to_log in final_features_df.columns:
+                        numeric_col = pd.to_numeric(final_features_df[col_to_log], errors='coerce')
+                        final_features_df[col_to_log] = np.log1p(numeric_col.clip(lower=0)) if not numeric_col.isnull().all() else np.nan
+                    else: print(f"[WARN] Col '{col_to_log}' for log transform not found for {resolved_stock_code}.")
+                final_features_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+                final_features_df = final_features_df.ffill().bfill()
+
+            if final_features_df.isnull().values.any():
+                nan_counts = final_features_df.isnull().sum()
+                nan_cols_with_counts = nan_counts[nan_counts > 0]
+                cols_to_check_for_nan_warn = [c for c in nan_cols_with_counts.index if not c.endswith('_is_nan') and not c.endswith('_is_zero')]
+                if cols_to_check_for_nan_warn:
+                    print(f"[WARN] NaNs before scaling for {resolved_stock_code} in non-indicator: {nan_cols_with_counts[cols_to_check_for_nan_warn]}")
+
+            if final_features_df.shape[0] < time_steps:
+                 return JsonResponse({'error': f'최종 데이터 부족 (필요: {time_steps}일, 현재: {final_features_df.shape[0]}일).'}, status=400)
+
+            if hasattr(scaler_X, 'n_features_in_') and scaler_X.n_features_in_ != final_features_df.shape[1]:
+                return JsonResponse({'error': f"스케일러 X 피처 불일치 ({scaler_X.n_features_in_} vs {final_features_df.shape[1]})"}, status=500)
+
+            try:
+                scaled_features = scaler_X.transform(final_features_df.astype(float).values)
+            except ValueError as e_scale:
+                if 'Input contains NaN' in str(e_scale):
+                    print(f"[WARN] Scaler X NaNs for {resolved_stock_code}. Filling with 0.")
+                    scaled_features = scaler_X.transform(final_features_df.fillna(0).astype(float).values)
+                else: raise e_scale
+
+            last_sequence = scaled_features[-time_steps:]
+            last_sequence_reshaped = np.reshape(last_sequence, (1, time_steps, last_sequence.shape[1]))
+            predicted_scaled_values = model.predict(last_sequence_reshaped, verbose=0)
+
+            try:
+                predicted_actual_values = scaler_y.inverse_transform(predicted_scaled_values)
+            except ValueError as ve_scaler_y:
+                if predicted_scaled_values.shape[1] == FUTURE_TARGET_DAYS and hasattr(scaler_y, 'n_features_in_') and scaler_y.n_features_in_ == 1:
+                    single_day_pred_scaled = predicted_scaled_values[:, 0].reshape(-1,1)
+                    predicted_actual_values = np.full((1, FUTURE_TARGET_DAYS), scaler_y.inverse_transform(single_day_pred_scaled)[0,0])
+                else: return JsonResponse({'error': f"Scaler Y 오류: {ve_scaler_y}"}, status=500)
+
+            if model_was_log_trained_target:
+                predicted_actual_values = np.expm1(predicted_actual_values)
+            
+            # IndexError 해결: df_for_feature_calc의 마지막 행의 'Close' 값을 사용
+            if not df_for_feature_calc.empty:
+                last_actual_close_for_clipping = df_for_feature_calc['Close'].iloc[-1]
+                if pd.isna(last_actual_close_for_clipping): # 마지막 값이 NaN이면 그 이전 유효한 값으로
+                    last_actual_close_for_clipping = df_for_feature_calc['Close'].ffill().iloc[-1]
+            else:
+                last_actual_close_for_clipping = 0 
+                print(f"[WARN] df_for_feature_calc is empty for {resolved_stock_code}, cannot get last_actual_close_for_clipping.")
+
+
+            kr_holidays_for_future = get_kr_holidays([prediction_base_date_for_model_input.year, prediction_base_date_for_model_input.year + 1])
+            future_dates = get_future_trading_dates_list(prediction_base_date_for_model_input, FUTURE_TARGET_DAYS, kr_holidays_for_future)
+
+            predictions_list = []
+            current_reference_price_for_clipping = last_actual_close_for_clipping if pd.notna(last_actual_close_for_clipping) else 0
+
+            for i in range(FUTURE_TARGET_DAYS):
+                predicted_price = predicted_actual_values[0, i]
+                # 예측값이 NaN이거나 유효하지 않으면 클리핑하지 않고 None으로 처리할 수 있음
+                if pd.isna(predicted_price):
+                    clipped_price = np.nan # 또는 None
+                else:
+                    price_change_limit_factor = 0.30 
+                    upper_limit = current_reference_price_for_clipping * (1 + price_change_limit_factor)
+                    lower_limit = current_reference_price_for_clipping * (1 - price_change_limit_factor)
+                    clipped_price = np.clip(predicted_price, lower_limit, upper_limit)
+                
+                predictions_list.append({
+                    'date': future_dates[i].strftime('%Y-%m-%d'),
+                    'price': round(float(clipped_price), 2) if pd.notna(clipped_price) else None
+                })
+                current_reference_price_for_clipping = clipped_price if pd.notna(clipped_price) else current_reference_price_for_clipping
+            
+            is_favorite_for_user = False
+            if request.user.is_authenticated:
+                is_favorite_for_user = FavoriteStock.objects.filter(user=request.user, stock_code=resolved_stock_code).exists()
+
+            return JsonResponse({
+                'stock_code': resolved_stock_code,
+                'stock_name': resolved_stock_name,
+                'market_name': resolved_market_name,
+                'prediction_base_date': prediction_base_date_for_model_input.strftime('%Y-%m-%d'),
+                'last_actual_close': round(float(last_actual_close_for_clipping), 2) if pd.notna(last_actual_close_for_clipping) else None,
+                'past_data': past_data_for_graph, 
+                'predictions': predictions_list,
+                'is_favorite': is_favorite_for_user,
+                'is_authenticated': request.user.is_authenticated
+            })
+
+        except FileNotFoundError as e_fnf:
+            return JsonResponse({'error': f'모델 관련 파일을 찾을 수 없습니다: {e_fnf}'}, status=500)
+        except Exception as e:
+            print(f"[ERROR][predict_stock_price_ajax] Prediction error for {resolved_stock_code} ({resolved_market_name}): {e}\n{traceback.format_exc()}")
+            return JsonResponse({'error': f'예측 중 오류 발생: {str(e)}'}, status=500)
+    else:
+        return JsonResponse({'error': '잘못된 요청입니다 (POST 방식 필요).'}, status=400)
+
+def search_stocks_ajax(request):
+    query = request.GET.get('term', '').strip()
+    if len(query) < 1 and '*' not in query : return JsonResponse([], safe=False)
+    cache_key = f"stock_search_all_{query}"
+    cached_results = cache.get(cache_key)
+    if cached_results: return JsonResponse(cached_results, safe=False)
+    results = []
+    try:
+        all_krx_stocks = get_krx_stock_list(market='KOSPI,KOSDAQ')
+        if query == '*':
+            results = [{"label": f"{s['Name']} ({s['Code']}, {s['Market']})", "value": s['Name'], "code": s['Code'], "market": s['Market']} for s in all_krx_stocks[:200]]
+        else:
+            for stock in all_krx_stocks:
+                if query.lower() in stock['Name'].lower() or query in stock['Code']:
+                    results.append({"label": f"{stock['Name']} ({stock['Code']}, {stock['Market']})", "value": stock['Name'], "code": stock['Code'], "market": stock['Market']})
+                if len(results) >= 20: break
+        cache.set(cache_key, results, timeout=60*15)
+    except Exception as e:
+        print(f"[ERROR][search_stocks_ajax] Error searching stocks for query '{query}': {e}")
+        return JsonResponse({'error': '검색 중 오류가 발생했습니다.'}, safe=False)
+    return JsonResponse(results, safe=False)
+
+MAX_FAVORITES = settings.MAX_FAVORITES_PER_USER if hasattr(settings, 'MAX_FAVORITES_PER_USER') else 5
+@login_required
+def toggle_favorite_stock_ajax(request):
+    if request.method == 'POST':
+        try: data = json.loads(request.body)
+        except json.JSONDecodeError: return JsonResponse({'status': 'error', 'message': '잘못된 JSON 형식입니다.'}, status=400)
+        stock_code = data.get('stock_code')
+        stock_name = data.get('stock_name')
+        market_name = data.get('market_name')
+        if not stock_code or not stock_name or not market_name:
+            return JsonResponse({'status': 'error', 'message': '필수 정보(종목코드, 종목명, 시장)가 누락되었습니다.'}, status=400)
+        user = request.user
+        try:
+            favorite_obj, created = FavoriteStock.objects.get_or_create(user=user, stock_code=stock_code, defaults={'stock_name': stock_name, 'market_name': market_name})
+            if created:
+                if FavoriteStock.objects.filter(user=user).count() > MAX_FAVORITES:
+                    favorite_obj.delete()
+                    return JsonResponse({'status': 'error', 'message': f'관심 종목은 최대 {MAX_FAVORITES}개까지 추가할 수 있습니다.', 'is_favorite': False})
+                return JsonResponse({'status': 'success', 'message': f"'{stock_name}'을(를) 관심 종목에 추가했습니다.", 'is_favorite': True})
+            else:
+                if favorite_obj.stock_name != stock_name or favorite_obj.market_name != market_name:
+                    favorite_obj.stock_name = stock_name
+                    favorite_obj.market_name = market_name
+                    favorite_obj.save()
+                favorite_obj.delete()
+                return JsonResponse({'status': 'success', 'message': f"'{stock_name}'을(를) 관심 종목에서 삭제했습니다.", 'is_favorite': False})
+        except Exception as e:
+            print(f"[ERROR][toggle_favorite_stock_ajax] 관심종목 처리 중 오류 ({user.username}, {stock_code}): {e}\n{traceback.format_exc()}")
+            return JsonResponse({'status': 'error', 'message': '관심 종목 처리 중 오류가 발생했습니다.'}, status=500)
+    return JsonResponse({'status': 'error', 'message': '잘못된 요청입니다 (POST 방식, JSON 필요).'}, status=400)
