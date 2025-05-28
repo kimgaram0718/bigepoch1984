@@ -1,0 +1,642 @@
+    :root {
+      --primary-color: #2962ff;
+      --secondary-color: #0039cb;
+      --success-color: #00c853;
+      --danger-color: #d50000;
+      --warning-color: #ffd600;
+      --info-color: #00b0ff;
+      --light-color: #f5f5f5;
+      --dark-color: #212121;
+      --chart-bg: #ffffff; /* 기본 차트 배경은 흰색 유지 */
+      --chart-grid: #e0e0e0;
+      --chart-text: #424242;
+      --price-up: #ff1744;
+      --price-down: #00e676; /* 이전에는 #00e676 이었으나, 가독성을 위해 #2979FF 와 같은 파란색 계열도 고려 가능 */
+      --ma5-color: #ffd700;
+      --ma20-color: #00e676;
+      --volume-color: #448aff;
+    }
+
+    /* 다크 테마 CSS 변수는 유지하되, 
+      chart.js 에서 Plotly 차트 레이아웃에 직접 다크 테마 색상을 적용하므로,
+      이 CSS 변수들이 차트 자체의 다크모드에 직접적인 영향을 주지는 않음.
+      페이지 전체 다크모드 지원 시 활용 가능.
+    */
+    [data-theme="dark"] {
+      --primary-color: #448aff;
+      --secondary-color: #2979ff;
+      --success-color: #00e676;
+      --danger-color: #ff1744;
+      --warning-color: #ffea00;
+      --info-color: #40c4ff;
+      --light-color: #424242; /* 페이지 배경 */
+      --dark-color: #f5f5f5;  /* 페이지 텍스트 */
+      /* --chart-bg: #1a1d23; /* chart.js에서 직접 설정하므로 주석 처리 또는 제거 가능 */
+      /* --chart-grid: #424242; */
+      /* --chart-text: #e0e0e0; */
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      font-size: 0.95rem;
+      background-color: var(--light-color); /* body 배경은 light-color 변수 따름 */
+      color: var(--dark-color); /* body 텍스트는 dark-color 변수 따름 */
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .theme-switch {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .pretty-chart-box {
+      background: var(--chart-bg); /* 기본 흰색 배경 */
+      border: 1px solid var(--chart-grid);
+      border-radius: 1rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      margin-top: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    /* Plotly 차트 자체의 배경은 chart.js에서 #1E1E1E로 설정됨 */
+    /* 이 CSS는 Plotly 차트를 감싸는 pretty-chart-box div의 배경임 */
+
+
+    .stock-info-header {
+      background: var(--chart-bg);
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .current-price-lg {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .price-change-up {
+      color: var(--price-up);
+      font-weight: 600;
+    }
+
+    .price-change-down {
+      color: var(--price-down); /* 초록색 계열 */
+      /* color: #2979FF; 파란색 계열도 고려 가능 */
+      font-weight: 600;
+    }
+    .price-change-neutral {
+        color: var(--chart-text); /* 중립은 기본 텍스트 색상 */
+    }
+
+
+    .search-form-chart {
+      background: var(--chart-bg);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      margin-bottom: 1.5rem;
+    }
+
+    .search-form-chart .form-control {
+      border-radius: 0.5rem;
+      border: 2px solid var(--chart-grid);
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .search-form-chart .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(41, 98, 255, 0.25);
+    }
+
+    .search-form-chart .btn {
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .fiftytwo-section {
+      background: linear-gradient(135deg, var(--chart-bg) 0%, var(--light-color) 100%);
+      border: 1px solid var(--chart-grid);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .fiftytwo-section .label {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .fiftytwo-section .value {
+      color: var(--dark-color);
+      font-weight: 700;
+    }
+
+    /* 자동완성 결과 스타일 수정 */
+    .pretty-input-group { /* 자동완성 컨테이너의 기준점이 될 부모 */
+        position: relative;
+    }
+
+    #autocompleteResultsChart {
+      position: absolute; /* 입력창 바로 아래에 위치하도록 변경 */
+      top: 100%; /* 부모 요소(input-group)의 바로 아래 */
+      left: 0;
+      right: 0; /* 너비를 부모 요소에 맞춤 */
+      background: var(--chart-bg); /* 배경색 */
+      border: 1px solid var(--chart-grid); /* 테두리 */
+      border-top: none; /* 입력창과의 테두리 중복 제거 */
+      border-radius: 0 0 0.5rem 0.5rem; /* 아래쪽 모서리만 둥글게 */
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15); /* 그림자 효과 강화 */
+      z-index: 1050; /* 다른 요소들 위에 표시 (부트스트랩 드롭다운 z-index 참고) */
+      max-height: 300px; /* 최대 높이 설정 */
+      overflow-y: auto; /* 내용 많을 시 스크롤 */
+      display: none; /* 기본적으로 숨김 */
+    }
+
+    #autocompleteResultsChart .list-group-item {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--chart-grid); /* 항목 구분선 */
+      background-color: transparent; /* 배경 투명하게 하여 #autocompleteResultsChart 배경색 사용 */
+      color: var(--dark-color); /* 텍스트 색상 */
+      transition: background-color 0.2s ease, color 0.2s ease;
+      cursor: pointer;
+    }
+     #autocompleteResultsChart .list-group-item:last-child {
+      border-bottom: none; /* 마지막 항목 구분선 제거 */
+    }
+
+    #autocompleteResultsChart .list-group-item:hover,
+    #autocompleteResultsChart .list-group-item.active { /* 마우스 오버 또는 활성 항목 */
+      background-color: var(--primary-color);
+      color: white;
+    }
+    #autocompleteResultsChart .list-group-item.text-danger {
+        background-color: var(--danger-color-bg, #f8d7da); /* 부트스트랩 danger 배경색 유사하게 */
+        color: var(--danger-color-text, #721c24); /* 부트스트랩 danger 텍스트색 유사하게 */
+    }
+
+
+    .chart-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: var(--chart-bg); /* 컨트롤 배경도 페이지 배경 따름 */
+      border-radius: 0.5rem;
+      border: 1px solid var(--chart-grid);
+    }
+
+    .chart-controls .btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      transition: all 0.3s ease;
+    }
+
+    .chart-controls .btn:hover,
+    .chart-controls .btn.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .chart-controls .btn i {
+      font-size: 1rem;
+    }
+
+    .top-stocks-table tr {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .top-stocks-table tr:hover {
+      background-color: var(--light-color); /* 테이블 행 호버 시 배경 */
+    }
+
+    .top-stocks-table td {
+      position: relative;
+    }
+
+    .top-stocks-table td::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--chart-grid);
+      transform: scaleX(0);
+      transition: transform 0.2s ease;
+    }
+
+    .top-stocks-table tr:hover td::after {
+      transform: scaleX(1);
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.8); /* 로딩 오버레이 배경 (밝은 테마 기준) */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] .loading-overlay { /* 다크모드 시 로딩 오버레이 */
+        background: rgba(30, 30, 30, 0.8);
+    }
+
+
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--chart-grid);
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 767.98px) {
+      .pretty-chart-box {
+        padding: 1rem;
+      }
+      
+      .current-price-lg {
+        font-size: 1.5rem;
+      }
+
+      .search-form-chart {
+        padding: 1rem;
+      }
+
+      .chart-controls {
+        flex-wrap: wrap;
+      }
+      #autocompleteResultsChart { /* 모바일에서는 너비 조정 */
+        font-size: 0.9rem;
+      }
+    }
+
+    .chart-tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 1000;
+    }
+
+    /* .chart-controls button.active 는 위에서 이미 정의됨 */
+    /* .chart-controls button 관련 ripple 효과는 유지 */
+
+    .top-stocks-table .price-change-up {
+      color: var(--price-up);
+    }
+
+    .top-stocks-table .price-change-down {
+      color: var(--price-down);
+    }
+
+    .market-summary-bottom .price-change-up {
+      color: var(--price-up);
+    }
+
+    .market-summary-bottom .price-change-down {
+      color: var(--price-down);
+    }
+
+    .market-cap-slider-container {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        background: var(--chart-bg);
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .market-cap-slider {
+        display: flex;
+        transition: transform 0.5s ease;
+        gap: 1rem;
+    }
+
+    .market-cap-item {
+        flex: 0 0 calc(33.333% - 1rem);
+        background: var(--light-color); /* 슬라이더 아이템 배경 */
+        border-radius: 0.75rem;
+        padding: 1rem;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 250px;
+    }
+
+    .market-cap-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .rank-badge {
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        background: var(--primary-color);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .stock-info {
+        margin-bottom: 0.5rem;
+    }
+
+    .stock-name {
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .stock-code {
+        color: var(--chart-text);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .stock-market {
+        font-size: 0.8rem;
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+
+    .market-cap-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    /* 슬라이더 네비게이션 버튼 관련 스타일은 유지 */
+    .slider-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .slider-nav:hover {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .slider-nav.prev {
+        left: 1rem;
+    }
+
+    .slider-nav.next {
+        right: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .market-cap-item {
+            flex: 0 0 calc(50% - 1rem);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .market-cap-item {
+            flex: 0 0 calc(100% - 1rem);
+        }
+    }
+
+    /* 슬라이더 네비게이션 그룹 관련 스타일 유지 */
+    .slider-nav-group, .slider-nav-group-bottom { display: none !important; }
+    .slider-nav-group-bottom {
+        display: flex;
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        gap: 1rem;
+        z-index: 9999;
+        width: auto;
+    }
+    .slider-nav.bottom-nav { /* 이 클래스명이 실제 HTML에 있는지 확인 필요 */
+        width: 44px;
+        height: 44px;
+        font-size: 1.8rem;
+        background: #2962ff;
+        color: #fff;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0.95;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+        transition: all 0.2s;
+    }
+    .slider-nav.bottom-nav:hover {
+        background: #0039cb;
+        color: #fff;
+        opacity: 1;
+    }
+     @media (max-width: 576px) {
+        .slider-nav.bottom-nav {
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+        }
+        .slider-nav-group-bottom {
+            gap: 0.5rem;
+            bottom: 8px;
+        }
+    }
+
+
+    .slider-nav-bottom-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 18px;
+        margin-bottom: 8px;
+    }
+    /* .slider-nav.bottom-nav 중복 정의로 보임, 위와 동일하므로 하나로 통합 또는 확인 필요 */
+
+
+    .search-btn-long, .pretty-btn {
+        white-space: nowrap;
+    }
+    @media (max-width: 576px) {
+        .search-btn-long, .pretty-btn {
+            min-width: 54px;
+            padding-left: 0.9em;
+            padding-right: 0.9em;
+            font-size: 0.98rem;
+            white-space: nowrap;
+        }
+    }
+
+    .pretty-search-form {
+        background: #fff;
+        border-radius: 1.2rem;
+        box-shadow: 0 4px 24px rgba(41,98,255,0.07);
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .pretty-input-group {
+        border-radius: 0.8rem;
+        box-shadow: 0 2px 8px rgba(41,98,255,0.06);
+        background: #f7f9fc;
+        overflow: hidden; /* 자동완성 결과가 가려지지 않도록 visible 또는 overflow 제거 고려 */
+        border: none !important;
+        /* position: relative; 이미 위에서 추가함 */
+    }
+    .pretty-input-icon {
+        background: transparent;
+        border: none !important;
+        color: #2962ff;
+        font-size: 1.1rem;
+        padding-left: 0.8rem;
+        padding-right: 0.3rem;
+    }
+    .pretty-input {
+        border: none !important;
+        background: transparent;
+        box-shadow: none;
+        font-size: 1.05rem;
+        padding-left: 0.2rem;
+    }
+    .pretty-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #2962ff33;
+        background: #eef3fb;
+        border: none !important;
+    }
+    .pretty-select {
+        border-radius: 0.7rem;
+        box-shadow: 0 2px 8px rgba(41,98,255,0.06);
+        border: 1.5px solid #e0e7ff;
+        background: #f7f9fc;
+        font-size: 1.01rem;
+    }
+    .pretty-btn {
+        border-radius: 0.7rem;
+        box-shadow: 0 2px 8px rgba(41,98,255,0.10);
+        font-weight: 600;
+        font-size: 1.07rem;
+    }
+    .ad-banner-section {
+        width: 100%;
+        min-height: 120px;
+        max-width: 100%;
+        background: #f5f6fa;
+        border-radius: 1.2rem;
+        box-shadow: 0 2px 12px rgba(41,98,255,0.07);
+        margin: 0 auto;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .ad-text {
+        color: #888;
+        font-size: 1.2rem;
+        font-weight: 500;
+        letter-spacing: 1px;
+    }
+    @media (max-width: 576px) {
+        .ad-banner-section {
+            min-height: 60px;
+            font-size: 0.95rem;
+            border-radius: 0.7rem;
+        }
+    }
+    .ad-banner-section-lg {
+        width: 100%;
+        min-height: 180px;
+        max-width: 1200px;
+        margin: 2rem auto 2rem auto;
+        background: #f0f4ff;
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 24px rgba(41,98,255,0.09);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .ad-text-lg {
+        color: #5a6b8a;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+    }
+    @media (max-width: 768px) {
+        .ad-banner-section-lg {
+            min-height: 100px;
+            border-radius: 1rem;
+        }
+        .ad-text-lg {
+            font-size: 1.05rem;
+        }
+    }
+    .data-placeholder { /* 데이터 없을 시 메시지 스타일 */
+        color: #757575;
+        padding: 2rem;
+        text-align: center;
+        background-color: #f9f9f9;
+        border-radius: 0.5rem;
+        border: 1px dashed #e0e0e0;
+    }

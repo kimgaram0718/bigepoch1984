@@ -10,5 +10,6 @@ urlpatterns = [
     path('update-greeting/', views.update_greeting_message, name='update_greeting_message'),
     path('unblock/<int:blocked_id>/', views.unblock_user, name='unblock_user'),
     # --- 관심 종목 예측 데이터 AJAX URL 추가 ---
-    path('get_favorite_prediction/', views.get_favorite_stock_prediction_ajax, name='get_favorite_prediction_ajax'),
+    # path('get_favorite_prediction/', views.get_favorite_stock_prediction_ajax, name='get_favorite_prediction_ajax'),
+    
 ]

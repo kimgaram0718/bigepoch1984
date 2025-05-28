@@ -21,7 +21,12 @@
             padding-top: 70px; 
         }
         .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .prediction-container { max-width: 800px; margin: 2rem auto; padding: 1.5rem; }
+        /* 컨테이너 너비 확장 */
+        .prediction-container { 
+            max-width: 1000px; /* 기존 800px에서 확장 */
+            margin: 2rem auto; 
+            padding: 1.5rem; 
+        }
         .prediction-card { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
         .prediction-card h3 { color: #333; font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
         .form-control-lg { border-radius: 8px; box-shadow: none; }
@@ -53,8 +58,28 @@
         .prediction-table th { background-color: #6c757d; color: white; font-weight: 500; }
         .prediction-table td { vertical-align: middle; }
 
-        #predictionChartContainer { width: 100%; margin: 1.5rem auto 0 auto; padding: 1rem; border-radius: 8px; background-color: #fff; border: 1px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        canvas#predictionChart { max-height: 400px; }
+        /* 차트 컨테이너 및 캔버스 크기 조정 */
+        #predictionChartContainer { 
+            width: 100%; 
+            margin: 1.5rem auto 0 auto; 
+            padding: 1.5rem; /* 패딩 증가 */
+            border-radius: 8px; 
+            background-color: #fff; 
+            border: 1px solid #e9ecef; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        }
+        canvas#predictionChart { 
+            max-height: 500px; /* 기존 400px에서 증가 */
+            width: 100% !important; /* 너비 100% 강제 */
+            height: auto !important; /* 높이 자동 조정 */
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 1rem;
+        }
         
 
         /* 관심 종목 아이콘 스타일 */
@@ -102,7 +127,7 @@
                            value="{{ stock_name_for_display }}" 
                            placeholder="종목명 또는 6자리 코드를 입력하세요 (예: 삼성전자 또는 005930)" 
                            class="form-control form-control-lg" autocomplete="off"
-                           data-initial-market-name="{{ market_name|default:'' }}"> {# 초기 시장 정보 #}
+                           data-initial-market-name="{{ market_name|default:'' }}">
                     <div id="autocompleteResults" class="list-group"></div>
                 </div>
                 <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
@@ -122,9 +147,9 @@
                     <h4>
                         <span id="predictedStockName">{% if stock_name_for_display %}{{ stock_name_for_display }}{% else %}종목 검색 후 예측 버튼을 클릭하세요{% endif %}</span>
                         <span id="predictedStockCode" class="text-muted">{% if ticker %}({{ ticker }}){% endif %}</span>
-                        - <span id="predictionTypeDisplay" class="fw-bold"></span> 5 영업일 예측
+                        - <span id="predictionTypeDisplay" class="fw-bold"></span> 
+                        <span id="predictionPeriodDisplay">5 영업일 예측</span> {# 예측 기간 표시용 span 추가 #}
                     </h4>
-                    {# 관심 종목 아이콘: 초기에는 숨김, 로그인 & 예측 성공 시 표시 #}
                     <i id="favoriteStockIcon" 
                        class="bi favorite-icon {% if is_favorite %}bi-heart-fill active{% else %}bi-heart{% endif %}" 
                        title="{% if is_favorite %}관심 종목에서 삭제{% else %}관심 종목으로 추가{% endif %}" 
@@ -150,6 +175,7 @@
                     {% endif %}
                 </div>
                  <div id="predictionChartContainer" style="display: none;">
+                    <p class="chart-title" id="chartTitle">과거 5일 및 예측 5일 주가 추이</p> {# 차트 제목 추가 #}
                     <canvas id="predictionChart"></canvas>
                 </div>
             </div>
@@ -159,7 +185,6 @@
     {% include 'main_footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    {# <script src="{% static 'js/script.js' %}"></script> #} {# 필요시 공용 스크립트 로드 #}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -172,27 +197,28 @@
             const predictedStockNameSpan = document.getElementById('predictedStockName');
             const predictedStockCodeSpan = document.getElementById('predictedStockCode');
             const predictionTypeDisplaySpan = document.getElementById('predictionTypeDisplay');
+            const predictionPeriodDisplaySpan = document.getElementById('predictionPeriodDisplay'); 
             
             const chartContainer = document.getElementById('predictionChartContainer');
             const chartCanvas = document.getElementById('predictionChart');
+            const chartTitleElement = document.getElementById('chartTitle'); 
             let predictionChartInstance = null;
 
             const autocompleteResultsDiv = document.getElementById('autocompleteResults');
             let autocompleteRequestTimeout;
+            let isAutocompleteItemSelected = false; 
 
             const favoriteStockIcon = document.getElementById('favoriteStockIcon');
             const feedbackMessageArea = document.getElementById('feedbackMessageArea');
 
-            // 현재 예측된 종목의 정보를 저장할 객체
             let currentPredictedStockInfo = { 
                 code: document.getElementById('predictedStockCode').textContent.replace(/[()]/g, '') || null, 
                 name: document.getElementById('predictedStockName').textContent || null,
-                market: stockQueryInput.dataset.initialMarketName || null // 초기 시장 정보
+                market: stockQueryInput.dataset.initialMarketName || null
             };
             
-            // 페이지 로드 시 초기 종목명 설정
             if (!predictedStockNameSpan.textContent.includes('검색 후')) {
-                 predictionTypeDisplaySpan.textContent = "기술적 분석"; // 기본 분석 유형
+                 predictionTypeDisplaySpan.textContent = "기술적 분석"; 
             }
 
             function showFeedbackMessage(message, type = 'info', duration = 3000) {
@@ -212,9 +238,12 @@
 
             if (stockQueryInput && autocompleteResultsDiv) {
                 stockQueryInput.addEventListener('input', function() {
+                    if (isAutocompleteItemSelected) { 
+                        isAutocompleteItemSelected = false;
+                        return;
+                    }
                     const query = this.value.trim();
                     clearTimeout(autocompleteRequestTimeout);
-                    // 입력 중에는 아이콘 숨김 (선택 후 예측 시 다시 표시)
                     if (favoriteStockIcon) favoriteStockIcon.style.display = 'none'; 
 
                     if (query.length < 1) {
@@ -237,12 +266,14 @@
                                         div.innerHTML = `<span class="stock-name">${item.value}</span> <small class="stock-code-market">${item.code} | ${item.market}</small>`;
                                         div.addEventListener('click', function(e) {
                                             e.preventDefault();
-                                            stockQueryInput.value = item.value; // 종목명으로 입력창 채움
-                                            // 자동완성 선택 시 currentPredictedStockInfo 업데이트
+                                            e.stopPropagation(); 
+                                            stockQueryInput.value = item.value; 
                                             currentPredictedStockInfo.code = item.code;
                                             currentPredictedStockInfo.name = item.value;
-                                            currentPredictedStockInfo.market = item.market; // 시장 정보도 저장
+                                            currentPredictedStockInfo.market = item.market; 
                                             autocompleteResultsDiv.style.display = 'none';
+                                            isAutocompleteItemSelected = true; 
+                                            stockQueryInput.focus(); 
                                         });
                                         autocompleteResultsDiv.appendChild(div);
                                     });
@@ -258,6 +289,14 @@
                             });
                     }, 250);
                 });
+                
+                stockQueryInput.addEventListener('blur', function() {
+                    setTimeout(() => {
+                        if (!autocompleteResultsDiv.matches(':hover')) { 
+                           autocompleteResultsDiv.style.display = 'none';
+                        }
+                    }, 150);
+                });
 
                 document.addEventListener('click', function(event) {
                     if (!stockQueryInput.contains(event.target) && !autocompleteResultsDiv.contains(event.target)) {
@@ -266,60 +305,46 @@
                 });
             }
 
-            // 관심 종목 아이콘 이벤트 리스너
             if (favoriteStockIcon) {
                 favoriteStockIcon.addEventListener('click', function() {
                     const isAuthenticated = document.body.dataset.isAuthenticated === 'true';
                     if (!isAuthenticated) {
                         const loginUrl = document.body.dataset.loginUrl;
-                        // 현재 페이지를 next 파라미터로 전달하여 로그인 후 돌아오도록 함
                         const nextUrl = window.location.pathname + window.location.search;
                         showFeedbackMessage(`관심 종목 기능은 로그인 후 이용 가능합니다. <a href="${loginUrl}?next=${encodeURIComponent(nextUrl)}" class="alert-link">로그인</a>`, 'error', 5000);
                         return;
                     }
-
                     if (!currentPredictedStockInfo.code || !currentPredictedStockInfo.name || !currentPredictedStockInfo.market) {
                         showFeedbackMessage('먼저 종목을 검색하고 예측을 실행해주세요.', 'error');
                         return;
                     }
-
                     const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
                     if (!csrfToken) {
                         showFeedbackMessage('오류: CSRF 토큰이 없습니다. 페이지를 새로고침해주세요.', 'error');
                         return;
                     }
-                    
-                    // 로딩 중 표시 (옵션)
-                    // favoriteStockIcon.classList.add('disabled'); // 아이콘 비활성화 효과
-
                     fetch("{% url 'predict_info:toggle_favorite_stock_ajax' %}", {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json', // JSON으로 전송
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({ // 데이터를 JSON 문자열로 변환
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify({
                             'stock_code': currentPredictedStockInfo.code,
                             'stock_name': currentPredictedStockInfo.name,
-                            'market_name': currentPredictedStockInfo.market // 시장 정보 전달
+                            'market_name': currentPredictedStockInfo.market
                         })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // favoriteStockIcon.classList.remove('disabled'); // 로딩 완료 후 비활성화 해제
                         if (data.status === 'success') {
                             updateFavoriteIconVisual(data.is_favorite);
                             showFeedbackMessage(data.message, 'info');
                         } else {
                             showFeedbackMessage(data.message || '관심 종목 처리 중 오류가 발생했습니다.', 'error');
-                            // 오류 발생 시에도 서버에서 is_favorite 상태를 보내주면 아이콘 업데이트
                             if (typeof data.is_favorite !== 'undefined') { 
                                 updateFavoriteIconVisual(data.is_favorite);
                             }
                         }
                     })
                     .catch(error => {
-                        // favoriteStockIcon.classList.remove('disabled');
                         console.error("Favorite toggle error:", error);
                         showFeedbackMessage('관심 종목 처리 중 네트워크 오류가 발생했습니다.', 'error');
                     });
@@ -337,63 +362,48 @@
                     favoriteStockIcon.classList.add('bi-heart');
                     favoriteStockIcon.title = '관심 종목으로 추가';
                 }
-                // 아이콘은 로그인 상태이고, 종목 코드가 있을 때만 표시
                 const isAuthenticated = document.body.dataset.isAuthenticated === 'true';
                 favoriteStockIcon.style.display = (isAuthenticated && currentPredictedStockInfo.code) ? 'inline-block' : 'none';
             }
-
 
             predictButtons.forEach(button => {
                 button.addEventListener('click', function(event) {
                     event.preventDefault();
                     if (autocompleteResultsDiv) autocompleteResultsDiv.style.display = 'none';
-
                     const stockInputToPredict = stockQueryInput.value.trim();
                     const analysisType = this.dataset.analysisType;
                     const analysisTypeText = this.textContent.trim().replace(/<i[^>]*><\/i>|\s+/g, ' ').replace(' 예측', '').trim();
-
                     if (!csrfTokenInput) {
                         resultDiv.innerHTML = `<p class="error-message mt-3">오류: CSRF 토큰이 없습니다.</p>`;
                         return;
                     }
                     const csrfToken = csrfTokenInput.value;
-
                     if (!stockInputToPredict) {
                         resultDiv.innerHTML = `<p class="error-message mt-3">종목명 또는 코드를 입력해주세요.</p>`;
                         if (favoriteStockIcon) favoriteStockIcon.style.display = 'none';
                         return;
                     }
-
                     resultDiv.innerHTML = '<p class="data-placeholder"><i class="bi bi-info-circle me-1"></i>예측 결과를 기다립니다...</p>';
                     if (predictionChartInstance) predictionChartInstance.destroy();
                     chartContainer.style.display = 'none';
                     loadingDiv.style.display = 'block';
                     if (favoriteStockIcon) favoriteStockIcon.style.display = 'none'; 
-                    
                     predictedStockNameSpan.textContent = "처리 중...";
                     predictedStockCodeSpan.textContent = "";
                     predictionTypeDisplaySpan.textContent = analysisTypeText;
+                    predictionPeriodDisplaySpan.textContent = "5 영업일 예측"; 
+                    chartTitleElement.textContent = "과거 5일 및 예측 5일 주가 추이"; 
 
-                    // 예측 요청 전에 currentPredictedStockInfo가 자동완성으로 설정되지 않았다면, 입력값으로 설정 시도
                     if (!currentPredictedStockInfo.code && stockInputToPredict) {
-                        // 이 경우, market 정보는 알 수 없으므로, fetch 후 응답에서 받아야 함
                         currentPredictedStockInfo.name = stockInputToPredict; 
-                        // code는 6자리 숫자일 경우를 가정, 아니면 null
                         currentPredictedStockInfo.code = /^\d{6}$/.test(stockInputToPredict) ? stockInputToPredict : null;
-                        currentPredictedStockInfo.market = null; // 예측 후 업데이트
+                        currentPredictedStockInfo.market = null; 
                     }
-
 
                     fetch("{% url 'predict_info:predict_stock_price_ajax' %}", {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: new URLSearchParams({
-                            'stock_input': stockInputToPredict, // 사용자가 최종 입력한 값
-                            'analysis_type': analysisType
-                        })
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+                        body: new URLSearchParams({ 'stock_input': stockInputToPredict, 'analysis_type': analysisType })
                     })
                     .then(response => response.ok ? response.json() : response.json().then(err => Promise.reject(err)))
                     .then(data => {
@@ -402,29 +412,29 @@
                             resultDiv.innerHTML = `<p class="error-message mt-3">${data.error}</p>`;
                             predictedStockNameSpan.textContent = stockInputToPredict; 
                             if (favoriteStockIcon) favoriteStockIcon.style.display = 'none';
-                            // 오류 발생 시 currentPredictedStockInfo 초기화 또는 부분 업데이트
                             currentPredictedStockInfo.name = stockInputToPredict;
-                            currentPredictedStockInfo.code = null; // 오류 시 코드는 알 수 없음
+                            currentPredictedStockInfo.code = null; 
                             currentPredictedStockInfo.market = null;
                         } else if (data.predictions && data.predictions.length > 0) {
                             predictedStockNameSpan.textContent = data.stock_name || stockInputToPredict;
                             predictedStockCodeSpan.textContent = data.stock_code ? `(${data.stock_code})` : "";
                             predictionTypeDisplaySpan.textContent = analysisTypeText;
+                            predictionPeriodDisplaySpan.textContent = `${data.predictions.length} 영업일 예측`;
+                            chartTitleElement.textContent = `${data.stock_name || stockInputToPredict} - 과거 ${data.past_data ? data.past_data.length : 0}일 및 예측 ${data.predictions.length}일 주가 추이`;
 
-                            // 예측 성공 시 currentPredictedStockInfo 업데이트
                             currentPredictedStockInfo.code = data.stock_code;
                             currentPredictedStockInfo.name = data.stock_name;
-                            currentPredictedStockInfo.market = data.market_name; // 서버에서 받은 시장 정보
+                            currentPredictedStockInfo.market = data.market_name; 
 
-                            if (data.is_authenticated && favoriteStockIcon) { // 로그인 상태일 때만 아이콘 상태 업데이트
+                            if (data.is_authenticated && favoriteStockIcon) {
                                 updateFavoriteIconVisual(data.is_favorite);
                             } else if (favoriteStockIcon) {
-                                favoriteStockIcon.style.display = 'none'; // 비로그인 시 아이콘 숨김
+                                favoriteStockIcon.style.display = 'none'; 
                             }
 
                             let tableHtml = `
                                 <p class="small text-muted mb-2 text-end">
-                                    최근 데이터 기준일: ${data.last_data_date || 'N/A'}
+                                    예측 기준일 (최근 실제 데이터): ${data.prediction_base_date || 'N/A'} (종가: ${data.last_actual_close !== null ? Number(data.last_actual_close).toLocaleString() + ' 원' : 'N/A'})
                                 </p>
                                 <div class="table-responsive">
                                 <table class="table table-hover table-sm prediction-table align-middle">
@@ -436,13 +446,11 @@
                                 </thead>
                                 <tbody>`;
                             
-                            const labels = []; const prices = [];
                             data.predictions.forEach(pred => {
                                 tableHtml += `<tr>
                                                 <td class="text-center">${pred.date}</td>
-                                                <td class="text-end">${Number(pred.price).toLocaleString()}</td>
+                                                <td class="text-end">${pred.price !== null ? Number(pred.price).toLocaleString() : 'N/A'}</td>
                                               </tr>`;
-                                labels.push(pred.date); prices.push(pred.price);
                             });
                             tableHtml += '</tbody></table></div>';
                             resultDiv.innerHTML = tableHtml;
@@ -450,22 +458,108 @@
                             chartContainer.style.display = 'block';
                             const ctx = chartCanvas.getContext('2d');
                             if (predictionChartInstance) predictionChartInstance.destroy();
+
+                            // 그래프 데이터 준비
+                            const pastLabels = data.past_data ? data.past_data.map(d => d.date) : [];
+                            const pastPrices = data.past_data ? data.past_data.map(d => d.price) : [];
+                            
+                            const predictedLabels = data.predictions.map(p => p.date);
+                            const predictedPrices = data.predictions.map(p => p.price);
+
+                            // 전체 X축 레이블: 과거 날짜 + 예측 기준일 + 예측 날짜 (중복 제거 및 정렬)
+                            let allChartLabels = [];
+                            if (pastLabels.length > 0) {
+                                allChartLabels.push(...pastLabels);
+                            }
+                            if (data.prediction_base_date) { // 예측 기준일 추가
+                                allChartLabels.push(data.prediction_base_date);
+                            }
+                            allChartLabels.push(...predictedLabels);
+                            allChartLabels = [...new Set(allChartLabels)].sort(); // 중복 제거 및 정렬
+
+                            // 과거 데이터셋 준비
+                            const pastDataForChart = allChartLabels.map(label => {
+                                const pastIndex = pastLabels.indexOf(label);
+                                if (pastIndex !== -1) {
+                                    return pastPrices[pastIndex];
+                                }
+                                if (label === data.prediction_base_date) { // 예측 기준일의 실제 종가
+                                    return data.last_actual_close;
+                                }
+                                return null; // 그 외는 null
+                            });
+
+                            // 예측 데이터셋 준비 (예측 기준일의 실제 종가에서 시작)
+                            const predictedDataForChart = allChartLabels.map(label => {
+                                if (label === data.prediction_base_date) { // 예측 기준일의 실제 종가
+                                    return data.last_actual_close;
+                                }
+                                const predictedIndex = predictedLabels.indexOf(label);
+                                if (predictedIndex !== -1) {
+                                    return predictedPrices[predictedIndex];
+                                }
+                                return null; // 그 외는 null
+                            });
+                            
+                            const datasets = [];
+                            datasets.push({
+                                label: '과거 종가',
+                                data: pastDataForChart,
+                                borderColor: 'rgba(255, 99, 132, 1)', // 빨간색 계열
+                                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                tension: 0.1,
+                                pointRadius: 3,
+                                pointHoverRadius: 6,
+                                spanGaps: false, // 과거 데이터는 끊어진 부분은 그대로 둠
+                            });
+                            datasets.push({
+                                label: '예측 종가',
+                                data: predictedDataForChart,
+                                borderColor: 'rgba(54, 162, 235, 1)', // 파란색 계열
+                                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                                tension: 0.2, // 예측선은 약간 더 부드럽게
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                spanGaps: true, // 예측 데이터는 중간에 null이 있어도 이어지도록 (실제로는 예측 기준점에서 시작하므로 끊기지 않음)
+                                borderDash: [5, 5], // 예측선은 점선으로 표시 (선택 사항)
+                            });
+
                             predictionChartInstance = new Chart(ctx, {
                                 type: 'line',
                                 data: {
-                                    labels: labels,
-                                    datasets: [{
-                                        label: `${data.stock_name || stockInputToPredict} 5영업일 예측 종가`,
-                                        data: prices, borderColor: '#0d6efd', backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                                        fill: true, tension: 0.2, pointBackgroundColor: '#0d6efd', pointBorderColor: '#ffffff',
-                                        pointHoverBackgroundColor: '#ffffff', pointHoverBorderColor: '#0d6efd',
-                                        pointRadius: 4, pointHoverRadius: 7
-                                    }]
+                                    labels: allChartLabels, 
+                                    datasets: datasets
                                 },
-                                options: { /* 차트 옵션은 이전과 동일하게 유지 */
-                                    responsive: true, maintainAspectRatio: false,
-                                    scales: { y: { beginAtZero: false, ticks: { callback: function(value) { return value.toLocaleString() + ' 원'; }, font: { size: 10 }}}, x: { ticks: { font: { size: 10 }}}},
-                                    plugins: { legend: { display: true, labels: { font: { size: 12 }}}, tooltip: { enabled: true, mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { weight: 'bold', size: 14 }, bodyFont: { size: 12 }, padding: 10, callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) { label += ': '; } if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString() + ' 원'; } return label;}}}},
+                                options: { 
+                                    responsive: true, 
+                                    maintainAspectRatio: false, 
+                                    scales: { 
+                                        y: { 
+                                            beginAtZero: false, 
+                                            ticks: { callback: function(value) { return value !== null ? value.toLocaleString() + ' 원' : ''; }, font: { size: 11 } } 
+                                        }, 
+                                        x: { 
+                                            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 0 } 
+                                        }
+                                    },
+                                    plugins: { 
+                                        legend: { display: true, labels: { font: { size: 13 }}}, 
+                                        tooltip: { 
+                                            enabled: true, mode: 'index', intersect: false, 
+                                            backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { weight: 'bold', size: 14 }, 
+                                            bodyFont: { size: 12 }, padding: 10,
+                                            callbacks: { 
+                                                label: function(context) { 
+                                                    let label = context.dataset.label || ''; 
+                                                    if (label) { label += ': '; } 
+                                                    if (context.parsed.y !== null) { 
+                                                        label += context.parsed.y.toLocaleString() + ' 원'; 
+                                                    } 
+                                                    return label;
+                                                }
+                                            }
+                                        }
+                                    },
                                     hover: { mode: 'nearest', intersect: true }
                                 }
                             });
@@ -478,7 +572,7 @@
                     .catch(error => {
                         loadingDiv.style.display = 'none';
                         let errorMessageText = "오류 발생: ";
-                        if (error && error.error) { // 서버에서 보낸 JSON 오류 메시지가 있는 경우
+                        if (error && error.error) { 
                             errorMessageText += error.error;
                         } else if (error && typeof error === 'string') {
                             errorMessageText += error;
@@ -493,16 +587,12 @@
                 });
             });
 
-            // 페이지 로드 시 URL 파라미터로 stock_query가 있으면 해당 버튼 클릭
             const urlParams = new URLSearchParams(window.location.search);
             const initialStockQueryFromUrl = urlParams.get('stock_query');
             if (initialStockQueryFromUrl && initialStockQueryFromUrl.trim() !== "") {
                 stockQueryInput.value = initialStockQueryFromUrl.trim();
-                // 초기 is_favorite 상태는 predict_info_view에서 전달된 값을 사용 (아이콘 태그에 이미 반영됨)
-                // currentPredictedStockInfo도 초기값으로 설정됨
-                document.getElementById('technicalPredictButton').click(); // 기술적 분석을 기본으로 실행
+                document.getElementById('technicalPredictButton').click(); 
             } else if (currentPredictedStockInfo.code && favoriteStockIcon) {
-                 // URL 파라미터는 없지만, Django 템플릿 변수로 초기 종목 정보가 있고, 로그인 상태이면 아이콘 표시
                  const isAuthenticated = document.body.dataset.isAuthenticated === 'true';
                  favoriteStockIcon.style.display = (isAuthenticated) ? 'inline-block' : 'none';
             }
