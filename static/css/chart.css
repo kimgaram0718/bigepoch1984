@@ -11,17 +11,12 @@
       --chart-grid: #e0e0e0;
       --chart-text: #424242;
       --price-up: #ff1744;
-      --price-down: #00e676; /* 이전에는 #00e676 이었으나, 가독성을 위해 #2979FF 와 같은 파란색 계열도 고려 가능 */
+      --price-down: #00e676; 
       --ma5-color: #ffd700;
       --ma20-color: #00e676;
       --volume-color: #448aff;
     }
 
-    /* 다크 테마 CSS 변수는 유지하되, 
-      chart.js 에서 Plotly 차트 레이아웃에 직접 다크 테마 색상을 적용하므로,
-      이 CSS 변수들이 차트 자체의 다크모드에 직접적인 영향을 주지는 않음.
-      페이지 전체 다크모드 지원 시 활용 가능.
-    */
     [data-theme="dark"] {
       --primary-color: #448aff;
       --secondary-color: #2979ff;
@@ -29,18 +24,15 @@
       --danger-color: #ff1744;
       --warning-color: #ffea00;
       --info-color: #40c4ff;
-      --light-color: #424242; /* 페이지 배경 */
-      --dark-color: #f5f5f5;  /* 페이지 텍스트 */
-      /* --chart-bg: #1a1d23; /* chart.js에서 직접 설정하므로 주석 처리 또는 제거 가능 */
-      /* --chart-grid: #424242; */
-      /* --chart-text: #e0e0e0; */
+      --light-color: #424242; 
+      --dark-color: #f5f5f5;  
     }
 
     body {
       font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
       font-size: 0.95rem;
-      background-color: var(--light-color); /* body 배경은 light-color 변수 따름 */
-      color: var(--dark-color); /* body 텍스트는 dark-color 변수 따름 */
+      background-color: var(--light-color); 
+      color: var(--dark-color); 
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
@@ -52,7 +44,7 @@
     }
 
     .pretty-chart-box {
-      background: var(--chart-bg); /* 기본 흰색 배경 */
+      background: var(--chart-bg); 
       border: 1px solid var(--chart-grid);
       border-radius: 1rem;
       box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -61,9 +53,6 @@
       margin-top: 1.5rem;
       transition: all 0.3s ease;
     }
-    /* Plotly 차트 자체의 배경은 chart.js에서 #1E1E1E로 설정됨 */
-    /* 이 CSS는 Plotly 차트를 감싸는 pretty-chart-box div의 배경임 */
-
 
     .stock-info-header {
       background: var(--chart-bg);
@@ -87,12 +76,11 @@
     }
 
     .price-change-down {
-      color: var(--price-down); /* 초록색 계열 */
-      /* color: #2979FF; 파란색 계열도 고려 가능 */
+      color: var(--price-down); 
       font-weight: 600;
     }
     .price-change-neutral {
-        color: var(--chart-text); /* 중립은 기본 텍스트 색상 */
+        color: var(--chart-text); 
     }
 
 
@@ -143,47 +131,67 @@
       font-weight: 700;
     }
 
-    /* 자동완성 결과 스타일 수정 */
-    .pretty-input-group { /* 자동완성 컨테이너의 기준점이 될 부모 */
+    .pretty-input-group { 
         position: relative;
+        overflow: visible !important; /* 자동완성 목록이 보이도록 !important 추가 */
+        border-radius: 0.8rem; 
+        box-shadow: 0 2px 8px rgba(41,98,255,0.06); 
+        background: #f7f9fc; 
+        border: none !important; 
     }
 
     #autocompleteResultsChart {
-      position: absolute; /* 입력창 바로 아래에 위치하도록 변경 */
-      top: 100%; /* 부모 요소(input-group)의 바로 아래 */
+      position: absolute; 
+      top: 100%; 
       left: 0;
-      right: 0; /* 너비를 부모 요소에 맞춤 */
-      background: var(--chart-bg); /* 배경색 */
-      border: 1px solid var(--chart-grid); /* 테두리 */
-      border-top: none; /* 입력창과의 테두리 중복 제거 */
-      border-radius: 0 0 0.5rem 0.5rem; /* 아래쪽 모서리만 둥글게 */
-      box-shadow: 0 8px 16px rgba(0,0,0,0.15); /* 그림자 효과 강화 */
-      z-index: 1050; /* 다른 요소들 위에 표시 (부트스트랩 드롭다운 z-index 참고) */
-      max-height: 300px; /* 최대 높이 설정 */
-      overflow-y: auto; /* 내용 많을 시 스크롤 */
-      display: none; /* 기본적으로 숨김 */
+      right: 0; 
+      background: lightgoldenrodyellow !important; /* 디버깅: 배경색 눈에 띄게 변경 */
+      color: black !important;  
+      border: 3px solid rgb(182, 180, 180) !important; /* 디버깅: 테두리 매우 눈에 띄게 변경 */
+      border-top: none; 
+      border-radius: 0 0 0.5rem 0.5rem; 
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15); 
+      z-index: 2000 !important; /* 디버깅: z-index를 매우 높게 설정 */
+      max-height: 300px; 
+      min-height: 30px; /* 디버깅: 최소 높이 설정하여 내용 없어도 보이게 */
+      overflow-y: auto; 
+      display: none; /* JavaScript가 block으로 변경 */
+      opacity: 1 !important; 
+      visibility: visible !important; 
     }
 
     #autocompleteResultsChart .list-group-item {
       padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--chart-grid); /* 항목 구분선 */
-      background-color: transparent; /* 배경 투명하게 하여 #autocompleteResultsChart 배경색 사용 */
-      color: var(--dark-color); /* 텍스트 색상 */
+      border-bottom: 1px solid #ccc !important; /* 디버깅: 테두리 색상 명확히 */
+      background-color: white !important; 
+      color: black !important; 
       transition: background-color 0.2s ease, color 0.2s ease;
       cursor: pointer;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
     }
      #autocompleteResultsChart .list-group-item:last-child {
-      border-bottom: none; /* 마지막 항목 구분선 제거 */
+      border-bottom: none; 
     }
 
     #autocompleteResultsChart .list-group-item:hover,
-    #autocompleteResultsChart .list-group-item.active { /* 마우스 오버 또는 활성 항목 */
-      background-color: var(--primary-color);
-      color: white;
+    #autocompleteResultsChart .list-group-item.active { 
+      background-color: var(--primary-color) !important; 
+      color: white !important; 
     }
     #autocompleteResultsChart .list-group-item.text-danger {
-        background-color: var(--danger-color-bg, #f8d7da); /* 부트스트랩 danger 배경색 유사하게 */
-        color: var(--danger-color-text, #721c24); /* 부트스트랩 danger 텍스트색 유사하게 */
+        background-color: #f8d7da !important; /* 부트스트랩 danger 배경색 유사하게, important 추가 */
+        color: #721c24 !important; /* 부트스트랩 danger 텍스트색 유사하게, important 추가 */
+    }
+    #autocompleteResultsChart .stock-name {
+        font-weight: 500; 
+        color: inherit !important; 
+    }
+    #autocompleteResultsChart .stock-code-market {
+        font-size: 0.8em; 
+        color: #555 !important; /* 디버깅: 색상 좀 더 진하게 */
+        margin-left: 8px; 
     }
 
 
@@ -194,7 +202,7 @@
       gap: 1rem;
       margin-bottom: 1rem;
       padding: 0.5rem;
-      background: var(--chart-bg); /* 컨트롤 배경도 페이지 배경 따름 */
+      background: var(--chart-bg); 
       border-radius: 0.5rem;
       border: 1px solid var(--chart-grid);
     }
@@ -224,7 +232,7 @@
     }
 
     .top-stocks-table tr:hover {
-      background-color: var(--light-color); /* 테이블 행 호버 시 배경 */
+      background-color: var(--light-color); 
     }
 
     .top-stocks-table td {
@@ -253,16 +261,16 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(255,255,255,0.8); /* 로딩 오버레이 배경 (밝은 테마 기준) */
+      background: rgba(255,255,255,0.8); 
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: 1000; 
       opacity: 0;
       visibility: hidden;
       transition: all 0.3s ease;
     }
-    [data-theme="dark"] .loading-overlay { /* 다크모드 시 로딩 오버레이 */
+    [data-theme="dark"] .loading-overlay { 
         background: rgba(30, 30, 30, 0.8);
     }
 
@@ -302,7 +310,7 @@
       .chart-controls {
         flex-wrap: wrap;
       }
-      #autocompleteResultsChart { /* 모바일에서는 너비 조정 */
+      #autocompleteResultsChart { 
         font-size: 0.9rem;
       }
     }
@@ -318,8 +326,6 @@
         z-index: 1000;
     }
 
-    /* .chart-controls button.active 는 위에서 이미 정의됨 */
-    /* .chart-controls button 관련 ripple 효과는 유지 */
 
     .top-stocks-table .price-change-up {
       color: var(--price-up);
@@ -355,7 +361,7 @@
 
     .market-cap-item {
         flex: 0 0 calc(33.333% - 1rem);
-        background: var(--light-color); /* 슬라이더 아이템 배경 */
+        background: var(--light-color); 
         border-radius: 0.75rem;
         padding: 1rem;
         position: relative;
@@ -413,7 +419,6 @@
         color: var(--primary-color);
     }
 
-    /* 슬라이더 네비게이션 버튼 관련 스타일은 유지 */
     .slider-nav {
         position: absolute;
         top: 50%;
@@ -458,7 +463,6 @@
         }
     }
 
-    /* 슬라이더 네비게이션 그룹 관련 스타일 유지 */
     .slider-nav-group, .slider-nav-group-bottom { display: none !important; }
     .slider-nav-group-bottom {
         display: flex;
@@ -470,7 +474,7 @@
         z-index: 9999;
         width: auto;
     }
-    .slider-nav.bottom-nav { /* 이 클래스명이 실제 HTML에 있는지 확인 필요 */
+    .slider-nav.bottom-nav { 
         width: 44px;
         height: 44px;
         font-size: 1.8rem;
@@ -512,8 +516,6 @@
         margin-top: 18px;
         margin-bottom: 8px;
     }
-    /* .slider-nav.bottom-nav 중복 정의로 보임, 위와 동일하므로 하나로 통합 또는 확인 필요 */
-
 
     .search-btn-long, .pretty-btn {
         white-space: nowrap;
@@ -535,14 +537,7 @@
         padding: 1.2rem 1.5rem;
         margin-bottom: 1.5rem;
     }
-    .pretty-input-group {
-        border-radius: 0.8rem;
-        box-shadow: 0 2px 8px rgba(41,98,255,0.06);
-        background: #f7f9fc;
-        overflow: hidden; /* 자동완성 결과가 가려지지 않도록 visible 또는 overflow 제거 고려 */
-        border: none !important;
-        /* position: relative; 이미 위에서 추가함 */
-    }
+
     .pretty-input-icon {
         background: transparent;
         border: none !important;
@@ -632,7 +627,7 @@
             font-size: 1.05rem;
         }
     }
-    .data-placeholder { /* 데이터 없을 시 메시지 스타일 */
+    .data-placeholder { 
         color: #757575;
         padding: 2rem;
         text-align: center;

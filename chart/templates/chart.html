@@ -12,7 +12,6 @@
 
 </head>
 <body
-  {# data-theme 속성 제거: 페이지 전체 테마 대신 차트 자체에 다크 테마 적용 #}
   data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
   data-login-url="{% url 'account:login' %}"
   data-logout-url="{% url 'account:logout' %}"
@@ -23,9 +22,11 @@
   <div id="app" style="padding-top: 60px;">
     <div class="container mt-3 mb-3">
       <form method="get" class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center search-form-chart pretty-search-form">
-        <div class="input-group flex-grow-1 pretty-input-group" style="margin-right: 1rem;">
+        <div class="input-group flex-grow-1 pretty-input-group position-relative" style="margin-right: 1rem;"> {# position-relative 추가 #}
           <span class="input-group-text pretty-input-icon"><i class="bi bi-search"></i></span>
+          {# stockQueryInputChart 에 name="query" 가 있어야 GET 요청 시 올바른 파라미터로 전달됨 #}
           <input type="text" id="stockQueryInputChart" name="query" value="{{ stock_name_searched|default:'' }}" placeholder="종목명 또는 코드를 입력하세요" class="form-control form-control-sm pretty-input" autocomplete="off">
+          {# 자동완성 결과 표시 div: ID는 autocompleteResultsChart, 클래스는 list-group #}
           <div id="autocompleteResultsChart" class="list-group"></div>
         </div>
         <select name="period" class="form-select form-select-sm pretty-select" style="min-width: 100px; max-width: 120px; margin-right: 1rem;">
@@ -294,6 +295,90 @@
     }
   </script>
   <script src="{% static 'js/chart.js' %}"></script>
+  <script>
+    // predict_info.html의 자동완성 JavaScript 로직을 여기에 적용
+    document.addEventListener('DOMContentLoaded', function() {
+        const stockQueryInputChart = document.getElementById('stockQueryInputChart');
+        const autocompleteResultsChartDiv = document.getElementById('autocompleteResultsChart');
+        let autocompleteRequestTimeoutChart;
+        let isAutocompleteItemSelectedChart = false;
+
+        if (stockQueryInputChart && autocompleteResultsChartDiv) {
+            stockQueryInputChart.addEventListener('input', function() {
+                if (isAutocompleteItemSelectedChart) {
+                    isAutocompleteItemSelectedChart = false;
+                    // 선택 후 submit을 바로 하지 않으므로, 추가 입력이 가능하도록 return 제거
+                    // return; 
+                }
+                const query = this.value.trim();
+                clearTimeout(autocompleteRequestTimeoutChart);
+
+                if (query.length < 1) { // 1글자 미만 입력 시 목록 숨김
+                    autocompleteResultsChartDiv.innerHTML = '';
+                    autocompleteResultsChartDiv.style.display = 'none';
+                    return;
+                }
+
+                autocompleteRequestTimeoutChart = setTimeout(() => {
+                    // `chart:search_stocks_ajax_chart` URL 사용
+                    fetch(`{% url 'chart:search_stocks_ajax_chart' %}?term=${encodeURIComponent(query)}&limit=7`)
+                        .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
+                        .then(data => {
+                            autocompleteResultsChartDiv.innerHTML = '';
+                            if (data.error) {
+                                autocompleteResultsChartDiv.innerHTML = `<div class="list-group-item text-danger small p-2">${data.error}</div>`;
+                            } else if (data.length > 0) {
+                                data.forEach(item => {
+                                    const div = document.createElement('a');
+                                    div.href = '#'; // 클릭 시 페이지 이동 방지
+                                    div.classList.add('list-group-item', 'list-group-item-action', 'd-flex', 'justify-content-between', 'align-items-center');
+                                    // item.label은 "종목명 (종목코드, 시장)" 형식이므로 그대로 사용
+                                    // item.value는 종목명, item.code는 종목코드, item.market은 시장
+                                    div.innerHTML = `<span class="stock-name">${item.value}</span> <small class="stock-code-market">${item.code} | ${item.market}</small>`;
+                                    div.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        stockQueryInputChart.value = item.value; // 입력창에 종목명 설정
+                                        // 선택한 종목명으로 바로 form을 submit 할 수도 있고,
+                                        // 사용자가 "조회" 버튼을 누르도록 할 수도 있음.
+                                        // 현재는 입력창 값만 변경하고, "조회" 버튼 클릭 시 해당 값으로 검색.
+                                        autocompleteResultsChartDiv.style.display = 'none';
+                                        isAutocompleteItemSelectedChart = true;
+                                        stockQueryInputChart.focus(); // 입력창에 포커스 유지
+                                    });
+                                    autocompleteResultsChartDiv.appendChild(div);
+                                });
+                            } else {
+                                autocompleteResultsChartDiv.innerHTML = '<div class="list-group-item text-muted small p-2">검색 결과가 없습니다.</div>';
+                            }
+                            autocompleteResultsChartDiv.style.display = 'block';
+                        })
+                        .catch(error => {
+                            console.error('Chart Autocomplete error:', error);
+                            autocompleteResultsChartDiv.innerHTML = '<div class="list-group-item text-danger small p-2">검색 중 오류 발생</div>';
+                            autocompleteResultsChartDiv.style.display = 'block';
+                        });
+                }, 250); // 250ms 디바운스
+            });
+
+            stockQueryInputChart.addEventListener('blur', function() {
+                // blur 이벤트 발생 시 약간의 딜레이 후 목록을 숨김 (항목 클릭 이벤트 처리를 위함)
+                setTimeout(() => {
+                    if (!autocompleteResultsChartDiv.matches(':hover')) { // 마우스가 목록 위에 있지 않을 때만 숨김
+                       autocompleteResultsChartDiv.style.display = 'none';
+                    }
+                }, 150);
+            });
+
+            // 문서 전체 클릭 시 자동완성 목록 숨기기 (입력창과 목록 영역 제외)
+            document.addEventListener('click', function(event) {
+                if (!stockQueryInputChart.contains(event.target) && !autocompleteResultsChartDiv.contains(event.target)) {
+                    autocompleteResultsChartDiv.style.display = 'none';
+                }
+            });
+        }
+    });
+  </script>
 
 </body>
 </html>
