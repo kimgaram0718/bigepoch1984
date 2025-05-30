@@ -92,4 +92,4 @@ def detect_and_replace_curse(text):
         text = pattern.sub("**", text)
     
     return text
-#dit2
+#edit2

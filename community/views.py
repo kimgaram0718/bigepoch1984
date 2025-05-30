@@ -279,7 +279,7 @@ def community_view(request):
         sort_fields = {
             '최신순': '-reg_dt',
             '조회수순': '-view_count',
-            '중요순': '-likes_count',
+            '좋아요순': '-likes_count',
             '걱정순': '-worried_count',
         }
         all_posts_queryset = all_posts_queryset.order_by(sort_fields.get(sort, '-reg_dt'))
