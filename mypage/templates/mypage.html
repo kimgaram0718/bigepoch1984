@@ -53,7 +53,7 @@
           </div>
           <div>
             <div id="nickname" class="fw-semibold">{{ user.nickname|default:user.login_id }}</div>
-            <div class="text-muted" style="font-size: 11px;">{{ user.greeting_message|default:"본인을 설명해주세요" }}</div>
+            <!-- <div class="text-muted" style="font-size: 11px;">{{ user.greeting_message|default:"본인을 설명해주세요" }}</div> -->
           </div>
         </div>
         <a href="{% url 'mypage:edit_profile' %}" class="btn profile-view-btn">프로필 수정</a>
@@ -92,8 +92,10 @@
         <h6 class="fw-bold mb-2">내가 쓴 글</h6>
         <ul class="list-group" id="myPostsList">
         {% for post in my_posts_page_obj %}
-          <li class="list-group-item border-0 d-flex justify-content-between align-items-center">
-            <a href="{% url 'community:detail' post.id %}" class="fw-semibold text-dark text-decoration-none single-line-ellipsis">
+          <!-- <li class="list-group-item border-0 d-flex justify-content-between align-items-center">
+            <a href="{% url 'community:detail' post.id %}" class="fw-semibold text-dark text-decoration-none single-line-ellipsis"> -->
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'community:detail' post.id %}" class="fw-semibold text-dark text-decoration-none">
               {{ post.title|truncatechars:40|filter_curse|safe }}
             </a>
             <span class="text-muted small ms-2">
